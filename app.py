@@ -1,9 +1,9 @@
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QLabel, QLineEdit, 
-    QHBoxLayout, QVBoxLayout, QWidget, QPushButton, 
-    QMenu, QMenu, QStackedLayout
+    QVBoxLayout, QWidget, QPushButton, 
+    QMenu, QStackedLayout
 )
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QCloseEvent
 from PyQt6.QtCore import QSize, Qt
 
 from actions import onFileAction1, onFileAction2
@@ -13,9 +13,9 @@ from views.data_view import DataView
 from views.test_view import TestView
 
 
-class MainWindow(QMainWindow):
+class VehicleWindow(QMainWindow):
     def __init__(self):
-        super(MainWindow, self).__init__()
+        super().__init__()
 
         self.views = {
             0: ("CAN", CanView()), 
@@ -62,8 +62,6 @@ class MainWindow(QMainWindow):
 
         self.current_view_menu = menu.addMenu(self.views.get(self.main_layout.currentIndex())[0])
         self.current_view_menu.setDisabled(True)
-
-        
     
     def select_can_view(self):
         self.main_layout.setCurrentIndex(0)
@@ -76,8 +74,8 @@ class MainWindow(QMainWindow):
         self.current_view_menu.setTitle(self.views.get(2)[0])
 
 
-
-class MainWindow1(QMainWindow):
+# This is currently being used as a playground for exploring new widgets
+class NetworkWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
@@ -133,6 +131,66 @@ class MainWindow1(QMainWindow):
 
     def mouseDoubleClickEvent(self, e):
         self.event_label.setText("mouseDoubleClickEvent")
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.vehicle_window = None
+        self.network_window = None
+        self.sd_card_window = None
+        self.influxdb_window = None
+
+        self.setWindowTitle("Telemetry Hub")
+        self.setFixedSize(QSize(300, 220))
+
+        layout = QVBoxLayout()
+
+        title = QLabel("Telemetry Hub")
+        title.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+        title_font = title.font()
+        title_font.setBold(True)
+        title_font.setPointSize(20)
+        title.setFont(title_font)
+        layout.addWidget(title)
+
+        layout.addWidget(QLabel("Select an option below to connect to:"))
+        vehicle_button = QPushButton("Vehicle")
+        network_button = QPushButton("Network")
+        sd_card_button = QPushButton("SD Card")
+        influxdb_button = QPushButton("InfluxDB")
+        vehicle_button.clicked.connect(self.open_vehicle_window)
+        network_button.clicked.connect(self.open_network_window)
+        sd_card_button.clicked.connect(self.open_sd_card_window)
+        influxdb_button.clicked.connect(self.open_influxdb_window)
+        layout.addWidget(vehicle_button)
+        layout.addWidget(network_button)
+        layout.addWidget(sd_card_button)
+        layout.addWidget(influxdb_button)
+
+        widget = QWidget()
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
+
+    def open_vehicle_window(self):
+        if self.vehicle_window is None:
+            self.vehicle_window = VehicleWindow()
+            self.vehicle_window.show()
+        else:
+            self.vehicle_window.close()
+            self.vehicle_window = None
+    def open_network_window(self):
+        if self.network_window is None:
+            self.network_window = NetworkWindow()
+            self.network_window.show()
+        else:
+            self.network_window.close()
+            self.network_window = None
+    def open_sd_card_window(self):
+        pass
+    def open_influxdb_window(self):
+        pass
+    
 
 
 app = QApplication([])
