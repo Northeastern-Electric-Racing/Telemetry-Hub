@@ -1,53 +1,48 @@
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QLabel, QLineEdit, 
-    QHBoxLayout, QVBoxLayout, QWidget, QPushButton, 
-    QMenu, QMenu, QStackedLayout
+    QVBoxLayout, QWidget, QPushButton, 
+    QMenu, QStackedLayout
 )
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QCloseEvent
 from PyQt6.QtCore import QSize, Qt
 
 from actions import onFileAction1, onFileAction2
 
 from views.can_view import CanView
+from views.data_view import DataView
+from views.test_view import TestView
 
 
-class Test_View(QWidget):
+class VehicleWindow(QMainWindow):
     def __init__(self):
-        super(Test_View, self).__init__()
-        layout = QHBoxLayout()
-        layout.addWidget(QLabel("This is the TEST view"))
-        self.setLayout(layout)
+        super().__init__()
 
-class Data_View(QWidget):
-    def __init__(self):
-        super(Data_View, self).__init__()
-        layout = QHBoxLayout()
-        layout.addWidget(QLabel("This is the TEST view"))
-        self.setLayout(layout)
-
-
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super(MainWindow, self).__init__()
+        self.views = {
+            0: ("CAN", CanView()), 
+            1: ("Data", DataView()), 
+            2: ("Test", TestView())
+        }
 
         # Window config
         self.setWindowTitle("Telemetry Hub")
         self.setFixedSize(QSize(900, 500))
 
         # Multi-view config
-        main_layout = QStackedLayout()
-        main_layout.addWidget(CanView())
-        main_layout.addWidget(Test_View())
-        main_layout.addWidget(Data_View())
+        self.main_layout = QStackedLayout()
+        for view in self.views.values():
+            self.main_layout.addWidget(view[1])
 
         widget = QWidget()
-        widget.setLayout(main_layout)
+        widget.setLayout(self.main_layout)
         self.setCentralWidget(widget)
 
         # Menu bar
         menu = self.menuBar()
-
         file_menu = menu.addMenu("File")
+        help_menu = menu.addMenu("Edit")
+        edit_menu = menu.addMenu("Help")
+        views_menu = menu.addMenu("View")
+
         file_action_1 = QAction("file action 1", self)
         file_action_2 = QAction("file action 2", self)
         file_action_1.triggered.connect(onFileAction1)
@@ -55,20 +50,32 @@ class MainWindow(QMainWindow):
         file_menu.addAction(file_action_1)
         file_menu.addAction(file_action_2)
 
-        views_menu = menu.addMenu("View")
-        views_select_can = QAction("CAN", self)
-        views_select_data = QAction("Data/Graphs", self)
-        views_select_test = QAction("Tests", self)
+        views_select_can = QAction(self.views.get(0)[0], self)
+        views_select_data = QAction(self.views.get(1)[0], self)
+        views_select_test = QAction(self.views.get(2)[0], self)
+        views_select_can.triggered.connect(self.select_can_view)
+        views_select_data.triggered.connect(self.select_data_view)
+        views_select_test.triggered.connect(self.select_test_view)
         views_menu.addAction(views_select_can)
         views_menu.addAction(views_select_data)
         views_menu.addAction(views_select_test)
 
+        self.current_view_menu = menu.addMenu(self.views.get(self.main_layout.currentIndex())[0])
+        self.current_view_menu.setDisabled(True)
+    
+    def select_can_view(self):
+        self.main_layout.setCurrentIndex(0)
+        self.current_view_menu.setTitle(self.views.get(0)[0])
+    def select_data_view(self):
+        self.main_layout.setCurrentIndex(1)
+        self.current_view_menu.setTitle(self.views.get(1)[0])
+    def select_test_view(self):
+        self.main_layout.setCurrentIndex(2)
+        self.current_view_menu.setTitle(self.views.get(2)[0])
 
 
-
-
-
-class MainWindow1(QMainWindow):
+# This is currently being used as a playground for exploring new widgets
+class NetworkWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
@@ -124,6 +131,66 @@ class MainWindow1(QMainWindow):
 
     def mouseDoubleClickEvent(self, e):
         self.event_label.setText("mouseDoubleClickEvent")
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.vehicle_window = None
+        self.network_window = None
+        self.sd_card_window = None
+        self.influxdb_window = None
+
+        self.setWindowTitle("Telemetry Hub")
+        self.setFixedSize(QSize(300, 220))
+
+        layout = QVBoxLayout()
+
+        title = QLabel("Telemetry Hub")
+        title.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+        title_font = title.font()
+        title_font.setBold(True)
+        title_font.setPointSize(20)
+        title.setFont(title_font)
+        layout.addWidget(title)
+
+        layout.addWidget(QLabel("Select an option below to connect to:"))
+        vehicle_button = QPushButton("Vehicle")
+        network_button = QPushButton("Network")
+        sd_card_button = QPushButton("SD Card")
+        influxdb_button = QPushButton("InfluxDB")
+        vehicle_button.clicked.connect(self.open_vehicle_window)
+        network_button.clicked.connect(self.open_network_window)
+        sd_card_button.clicked.connect(self.open_sd_card_window)
+        influxdb_button.clicked.connect(self.open_influxdb_window)
+        layout.addWidget(vehicle_button)
+        layout.addWidget(network_button)
+        layout.addWidget(sd_card_button)
+        layout.addWidget(influxdb_button)
+
+        widget = QWidget()
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
+
+    def open_vehicle_window(self):
+        if self.vehicle_window is None:
+            self.vehicle_window = VehicleWindow()
+            self.vehicle_window.show()
+        else:
+            self.vehicle_window.close()
+            self.vehicle_window = None
+    def open_network_window(self):
+        if self.network_window is None:
+            self.network_window = NetworkWindow()
+            self.network_window.show()
+        else:
+            self.network_window.close()
+            self.network_window = None
+    def open_sd_card_window(self):
+        pass
+    def open_influxdb_window(self):
+        pass
+    
 
 
 app = QApplication([])
