@@ -9,45 +9,40 @@ from PyQt6.QtCore import QSize, Qt
 from actions import onFileAction1, onFileAction2
 
 from views.can_view import CanView
-
-
-class Test_View(QWidget):
-    def __init__(self):
-        super(Test_View, self).__init__()
-        layout = QHBoxLayout()
-        layout.addWidget(QLabel("This is the TEST view"))
-        self.setLayout(layout)
-
-class Data_View(QWidget):
-    def __init__(self):
-        super(Data_View, self).__init__()
-        layout = QHBoxLayout()
-        layout.addWidget(QLabel("This is the TEST view"))
-        self.setLayout(layout)
+from views.data_view import DataView
+from views.test_view import TestView
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
 
+        self.views = {
+            0: ("CAN", CanView()), 
+            1: ("Data", DataView()), 
+            2: ("Test", TestView())
+        }
+
         # Window config
         self.setWindowTitle("Telemetry Hub")
         self.setFixedSize(QSize(900, 500))
 
         # Multi-view config
-        main_layout = QStackedLayout()
-        main_layout.addWidget(CanView())
-        main_layout.addWidget(Test_View())
-        main_layout.addWidget(Data_View())
+        self.main_layout = QStackedLayout()
+        for view in self.views.values():
+            self.main_layout.addWidget(view[1])
 
         widget = QWidget()
-        widget.setLayout(main_layout)
+        widget.setLayout(self.main_layout)
         self.setCentralWidget(widget)
 
         # Menu bar
         menu = self.menuBar()
-
         file_menu = menu.addMenu("File")
+        help_menu = menu.addMenu("Edit")
+        edit_menu = menu.addMenu("Help")
+        views_menu = menu.addMenu("View")
+
         file_action_1 = QAction("file action 1", self)
         file_action_2 = QAction("file action 2", self)
         file_action_1.triggered.connect(onFileAction1)
@@ -55,16 +50,30 @@ class MainWindow(QMainWindow):
         file_menu.addAction(file_action_1)
         file_menu.addAction(file_action_2)
 
-        views_menu = menu.addMenu("View")
-        views_select_can = QAction("CAN", self)
-        views_select_data = QAction("Data/Graphs", self)
-        views_select_test = QAction("Tests", self)
+        views_select_can = QAction(self.views.get(0)[0], self)
+        views_select_data = QAction(self.views.get(1)[0], self)
+        views_select_test = QAction(self.views.get(2)[0], self)
+        views_select_can.triggered.connect(self.select_can_view)
+        views_select_data.triggered.connect(self.select_data_view)
+        views_select_test.triggered.connect(self.select_test_view)
         views_menu.addAction(views_select_can)
         views_menu.addAction(views_select_data)
         views_menu.addAction(views_select_test)
 
+        self.current_view_menu = menu.addMenu(self.views.get(self.main_layout.currentIndex())[0])
+        self.current_view_menu.setDisabled(True)
 
-
+        
+    
+    def select_can_view(self):
+        self.main_layout.setCurrentIndex(0)
+        self.current_view_menu.setTitle(self.views.get(0)[0])
+    def select_data_view(self):
+        self.main_layout.setCurrentIndex(1)
+        self.current_view_menu.setTitle(self.views.get(1)[0])
+    def select_test_view(self):
+        self.main_layout.setCurrentIndex(2)
+        self.current_view_menu.setTitle(self.views.get(2)[0])
 
 
 
