@@ -14,6 +14,10 @@ The application is written in python using the PyQt GUI toolkit. The following r
 - [Layouts](https://realpython.com/python-pyqt-layout/)
 - [Threading](https://realpython.com/python-pyqt-qthread/)
 
+Python resources:
+- [Object-Oriented Guide](https://www.pythontutorial.net/python-oop/)
+- [Documentation](https://realpython.com/documenting-python-code/)
+
 
 ## Setup and Installation
 The pipenv library is used to extablish a virtual project environment. The only prerequisite is that you have python installed ([here](https://www.python.org/downloads/))
