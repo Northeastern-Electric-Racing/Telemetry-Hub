@@ -7,7 +7,7 @@ class XBeeException(Exception):
 
 
 class XBee:
-    """ Represents an XBee wireless module. """
+    """ A class to represent an XBee wireless module. """
 
     def __init__(self, port, baud):
         self._callbacks = []

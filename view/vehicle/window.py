@@ -4,13 +4,9 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QSize
 
-
 from view.vehicle.can_view import CanView
 from view.vehicle.data_view import DataView
 from view.vehicle.test_view import TestView
-
-from utils import xbee
-from model.message_models import ReceiveMessageModel
 
 from actions import onFileAction1, onFileAction2
 
@@ -18,9 +14,6 @@ from actions import onFileAction1, onFileAction2
 class VehicleWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-
-        #self.connection = xbee.XBee("COM7", 115200)
-        #self.receive_model = ReceiveMessageModel()
 
         self.views = {
             0: ("CAN", CanView()), 
@@ -77,17 +70,3 @@ class VehicleWindow(QMainWindow):
     def select_test_view(self):
         self.main_layout.setCurrentIndex(2)
         self.current_view_menu.setTitle(self.views.get(2)[0])
-    
-    # def add(self):
-    #     """
-    #     Add an item to our todo list, getting the text from the QLineEdit .todoEdit
-    #     and then clearing it.
-    #     """
-    #     text = self.todoEdit.text()
-    #     if text: # Don't add empty strings.
-    #         # Access the list via the model.
-    #         self.model.todos.append((False, text))
-    #         # Trigger refresh.
-    #         self.model.layoutChanged.emit()
-    #         # Empty the input
-    #         self.todoEdit.setText("")
