@@ -16,7 +16,12 @@ void setup() {
 void sendMessage() {
   static unsigned long last = millis();
   if (millis() - last > 1000) {
-    Serial.print("1654705626 1 4 1 2 3 4s");
+    Serial.print(START_TOKEN);
+    Serial.print("1654705626 1 1 1");
+    Serial.print(START_TOKEN);
+    Serial.print("1654705626 2 4 1 2 3 4");
+    Serial.print(START_TOKEN);
+    Serial.print("1654705626 3 6 1 2 3 4 5 6");
     last = millis();
   }
 }

@@ -6,15 +6,13 @@ from PyQt6.QtWidgets import (
     QListView
 )
 
-from model.message_models import MessageModel
-
 
 class MessageFeed(QWidget):
-    def __init__(self):
+    def __init__(self, model):
         super(MessageFeed, self).__init__()
 
         self.view = QListView()
-        self.model = MessageModel()
+        self.model = model
         self.view.setModel(self.model)
 
         self.timestamp_entry = QLineEdit()
@@ -54,7 +52,6 @@ class MessageFeed(QWidget):
             data = [int(s) for s in data.split(" ")]
 
             self.model.addMessage(timestamp, id, length, data)
-            self.model.layoutChanged.emit()
         except Exception as e:
             # TODO: Add popup window for error
             print("Error with the fields")
@@ -71,17 +68,16 @@ class MessageFeed(QWidget):
             index = indexes[0]
             # Remove the item and refresh.
             self.model.deleteMessage(index)
-            self.model.layoutChanged.emit()
             self.view.clearSelection()
 
 
 
 class TestView(QWidget):
-    def __init__(self):
+    def __init__(self, model):
         super(TestView, self).__init__()
         
         layout = QVBoxLayout()
         layout.addWidget(QLabel("Test view for adding messages to the application model"))
-        layout.addWidget(MessageFeed())
+        layout.addWidget(MessageFeed(model))
 
         self.setLayout(layout)
