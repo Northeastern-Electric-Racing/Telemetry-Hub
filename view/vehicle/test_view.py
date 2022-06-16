@@ -6,6 +6,8 @@ from PyQt6.QtWidgets import (
     QListView
 )
 
+from model.message_models import Message
+
 
 class MessageFeed(QWidget):
     def __init__(self, model):
@@ -45,13 +47,14 @@ class MessageFeed(QWidget):
 
     def add(self):
         try:
-            timestamp = self.timestamp_entry.text()
+            timestamp = float(self.timestamp_entry.text())
             id = int(self.id_entry.text())
             length = int(self.length_entry.text())
             data = self.data_entry.text()
             data = [int(s) for s in data.split(" ")]
 
-            self.model.addMessage(timestamp, id, length, data)
+            msg = Message(timestamp, id, length, data)
+            self.model.addMessage(msg)
         except Exception as e:
             # TODO: Add popup window for error
             print("Error with the fields")

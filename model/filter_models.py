@@ -32,9 +32,11 @@ class ReceiveFilterModel(QAbstractListModel):
 
     def addFilter(self, id, interval=0):
         self._filters.append((id, interval))
+        self.layoutChanged.emit()
 
     def deleteFilter(self, index):
         del self._filters[index.row()]
+        self.layoutChanged.emit()
 
 
 
@@ -68,6 +70,8 @@ class SendFilterModel(QAbstractListModel):
 
     def addFilter(self, id, length, data, interval):
         self._filters.append((Message(0, id, length, data), interval))
+        self.layoutChanged.emit()
 
     def deleteFilter(self, index):
         del self._filters[index.row()]
+        self.layoutChanged.emit()

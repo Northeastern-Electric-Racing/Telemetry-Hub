@@ -77,8 +77,8 @@ class XBee:
             # Try to parse the current message and add to model
             try:
                 print(self.current_message)
-                timestamp, id, length, data = Message.parse_message(self.current_message)
-                self.model.addMessage(timestamp, id, length, data)
+                msg = Message.parse_message(self.current_message)
+                self.model.addMessage(msg)
                 self.message_started = False
             except MessageFormatException as mfe:
                 # Status of 0 means more data is needed, other means an error
