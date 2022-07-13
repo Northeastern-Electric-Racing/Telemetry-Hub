@@ -32,7 +32,6 @@ class VehicleWindow(QMainWindow):
 
         # Window config
         self.setWindowTitle("Telemetry Hub")
-        self.setFixedSize(QSize(900, 500))
 
         # Multi-view config
         self.main_layout = QStackedLayout()
