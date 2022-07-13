@@ -147,4 +147,4 @@ class DataView(QWidget):
 
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.graphs)
-        self.setLayout(main_layout)
+        self.setLayout(main_layout) 
