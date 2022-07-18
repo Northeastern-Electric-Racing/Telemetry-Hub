@@ -5,17 +5,18 @@ from PyQt6.QtWidgets import (
     QComboBox, QToolBar, QDialog,
     QGridLayout, QDialogButtonBox, QSplitter
 )
-from PyQt6.QtCharts import QLineSeries, QChart, QChartView
+from PyQt6.QtCharts import QLineSeries, QChart, QChartView, QVXYModelMapper
 from PyQt6.QtGui import QPainter, QTransform
 from PyQt6.QtCore import QRectF, QSize, Qt
 
+from model.data_models import DataModel
 
 
 class EditDialog(QDialog):
     def __init__(self, parent):
         super().__init__(parent)
         self._data_list = ["None", "data 1", "data 2", "data 3"]
-        self._format_list = ["format 1", "format 2", "format 3"]
+        self._format_list = ["Line Graph"]
 
         self.setWindowTitle("Edit Graph")
 
@@ -38,7 +39,7 @@ class EditDialog(QDialog):
         layout.addWidget(QLabel("Format:"), 3, 0)
         layout.addWidget(self.format_entry, 3, 1)
 
-        buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Apply | QDialogButtonBox.StandardButton.Cancel)
+        buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttonBox.accepted.connect(self.on_accept)
         buttonBox.rejected.connect(self.reject)
 
@@ -62,14 +63,14 @@ class EditDialog(QDialog):
 
 class Formats(Enum):
     LINE = 1
-    CURRENT = 2
 
 
 class GraphWidget(QWidget):
     def __init__(self, index, format=Formats.LINE):
         super(GraphWidget, self).__init__()
         self.index = index
-        
+
+        # Tool Bar Config
         self.setMinimumSize(QSize(300, 200))
         toolbar = QToolBar()
         config_button = QPushButton("Edit")
@@ -85,27 +86,28 @@ class GraphWidget(QWidget):
         toolbar.addWidget(start_button)
         toolbar.addWidget(record_button)
 
-        series = QLineSeries()
-        series.append(0, 1)
-        series.append(1, 4)
-        series.append(2, 6)
-        series.append(3, 2)
-        series.append(4, 5)
+        # Chart Config
+        self.chart = QChart()
+        self.chart.legend().hide()
+        self.chart.createDefaultAxes()
+        self.chart.setTitle(f"Graph {index}")
+        self.chart.setTheme(QChart.ChartTheme.ChartThemeLight)
+        self.chart.setAnimationOptions(QChart.AnimationOption.SeriesAnimations)
 
-        chart = QChart()
-        chart.legend().hide()
-        chart.addSeries(series)
-        chart.createDefaultAxes()
-        chart.setTitle(f"Graph {index}")
-
-        chart_view = QChartView(chart)
+        # View Config
+        chart_view = QChartView(self.chart)
         chart_view.setRenderHint(QPainter.RenderHint.Antialiasing)
+        chart_view.setStyleSheet("background-color: #f0f0f0")
 
+        # Model Config
+        self.add_series("Accel X", "Line 1")
+        
+        # Layout Config
         layout = QVBoxLayout()
         layout.addWidget(toolbar)
         layout.addWidget(chart_view)
-
         self.setLayout(layout)
+
 
     def edit(self):
         dlg = EditDialog(self)
@@ -118,6 +120,18 @@ class GraphWidget(QWidget):
     def record(self):
         pass
 
+    def add_series(self, data_type, series_name):
+        model = DataModel() # TODO: select based on data type
+        series = QLineSeries()
+        series.setName(series_name)
+        mapper = QVXYModelMapper(self)
+        mapper.setXColumn(0)
+        mapper.setYColumn(1)
+        mapper.setSeries(series)
+        mapper.setModel(model)
+        self.chart.addSeries(series)
+        self.chart.createDefaultAxes()
+
 
 
 class DataView(QWidget):
@@ -126,7 +140,7 @@ class DataView(QWidget):
         self.data_list = ["data 1", "data 2", "data 3"]
         self.format_list = ["format 1", "format 2", "format 3"]
 
-        self.setStyleSheet("QSplitter { background-color: white} QSplitterHandle { background-color: #999999 }")
+        self.setStyleSheet("QSplitter { background-color: #f0f0f0} QSplitterHandle { background-color: #999999 }")
 
         g1 = GraphWidget(1)
         g2 = GraphWidget(2)
