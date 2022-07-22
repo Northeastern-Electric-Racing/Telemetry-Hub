@@ -1,81 +1,215 @@
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QLabel, QLineEdit, 
     QHBoxLayout, QVBoxLayout, QWidget, QPushButton, 
-    QSlider, QMenu, QSpinBox
+    QSlider, QMenu, QSpinBox, QListView, QGridLayout,
+    QCheckBox
 )
 from PyQt6.QtGui import QAction, QPalette, QColor
 from PyQt6.QtCore import QSize, Qt
 
 
-class Color(QWidget):
-    def __init__(self, color):
-        super(Color, self).__init__()
-        self.setAutoFillBackground(True)
-
-        palette = self.palette()
-        palette.setColor(QPalette.ColorRole.Window, QColor(color))
-        self.setPalette(palette)
-
-
-class Feed(QWidget):
-    def __init__(self):
-        super(Feed, self).__init__()
-        self.setFixedSize(QSize(800, 300))
-
-        layout = QVBoxLayout()
-        layout.addWidget(Color('red'))
-        layout.addWidget(QPushButton("Start Feed"))
-
-        self.setLayout(layout)
-
 
 class ReceiveFilters(QWidget):
-    def __init__(self):
-            super(ReceiveFilters, self).__init__()
-            self.setFixedSize(QSize(300, 150))
+    def __init__(self, model):
+        super(ReceiveFilters, self).__init__()
 
-            layout = QVBoxLayout()
+        # Define basic widgets
+        self.header = QLabel("Receive Filters")
+        self.id_entry = QLineEdit()
+        self.interval_entry = QLineEdit()
 
-            header = QLabel("Receive Filters")
-            font = header.font()
-            font.setPointSize(30)
-            header.setFont(font)
-            header.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
-            layout.addWidget(header)
-            
-            layout.addWidget(QLineEdit())
-            layout.addWidget(QSlider(Qt.Orientation.Horizontal))
-            layout.addWidget(QSpinBox())
+        self.filter_view = QListView()
+        self.model = model
+        self.filter_view.setModel(self.model)
 
-            self.setLayout(layout)
+        self.add_button = QPushButton("Add")
+        self.del_button = QPushButton("Delete")
+        self.add_button.pressed.connect(self.add)
+        self.del_button.pressed.connect(self.delete)
 
+        # Style basic widgets
+        self.header.setStyleSheet("font-size: 30px; font-weight: bold")
+        self.header.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.add_button.setStyleSheet("color: white; background-color: #0693E3")
+        self.del_button.setStyleSheet("color: white; background-color: #FF5656")
+        
+        inputs_layout = QGridLayout()
+        inputs_layout.addWidget(QLabel("ID:"), 0, 0)
+        inputs_layout.addWidget(self.id_entry, 0, 1)
+        inputs_layout.addWidget(QLabel("Interval (ms):"), 0, 2)
+        inputs_layout.addWidget(self.interval_entry, 0, 3)
 
-class Message(QLineEdit):
-    def __init__(self):
-        super(Message, self).__init__()
-        self.setFixedSize(QSize(300, 150))
+        buttons_layout = QVBoxLayout()
+        buttons_layout.addWidget(self.add_button)
+        buttons_layout.addWidget(self.del_button)
+
+        display_layout = QHBoxLayout()
+        display_layout.addWidget(self.filter_view)
+        display_layout.addLayout(buttons_layout)
 
         layout = QVBoxLayout()
-        header = QLabel("Send Message")
-        font = header.font()
-        font.setPointSize(30)
-        header.setFont(font)
-        header.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
-        layout.addWidget(header)
+        layout.addWidget(self.header)
+        layout.addLayout(inputs_layout)
+        layout.addLayout(display_layout)
+        self.setLayout(layout)
+
+    def add(self):
+        try:
+            id = int(self.id_entry.text())
+            interval = int(self.interval_entry.text())
+
+            print("Adding Filter:")
+            print("  id - ", id)
+            print("  interval - ", interval)
+
+            self.model.addFilter(id, interval)
+
+        except Exception as e:
+            # TODO: Add popup window for error
+            print("Error with the fields")
+
+        self.id_entry.setText("")
+        self.interval_entry.setText("")
+
+    def delete(self):
+        indexes = self.filter_view.selectedIndexes()
+        if indexes:
+            index = indexes[0]
+            self.model.deleteFilter(index)
+            self.filter_view.clearSelection()
+
+
+
+class SendFilters(QWidget):
+    def __init__(self, model):
+        super(SendFilters, self).__init__()
+
+        # Define basic widgets
+        self.header = QLabel("Send Filters")
+        self.id_entry = QLineEdit()
+        self.interval_entry = QLineEdit()
+        self.data_entry = QLineEdit()
+        self.repeat_send_entry = QCheckBox()
+
+        self.filter_view = QListView()
+        self.model = model
+        self.filter_view.setModel(self.model)
+
+        self.add_button = QPushButton("Add")
+        self.del_button = QPushButton("Delete")
+        self.add_button.pressed.connect(self.add)
+        self.del_button.pressed.connect(self.delete)
+
+
+        # Style basic widgets
+        self.header.setStyleSheet("font-size: 30px; font-weight: bold")
+        self.header.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.add_button.setStyleSheet("color: white; background-color: #0693E3")
+        self.del_button.setStyleSheet("color: white; background-color: #FF5656")
+        
+        inputs_layout = QGridLayout()
+        inputs_layout.addWidget(QLabel("ID:"), 0, 0)
+        inputs_layout.addWidget(self.id_entry, 0, 1)
+        inputs_layout.addWidget(QLabel("Interval (ms):"), 0, 2)
+        inputs_layout.addWidget(self.interval_entry, 0, 3)
+        inputs_layout.addWidget(QLabel("Data:"), 1, 0)
+        inputs_layout.addWidget(self.data_entry, 1, 1)
+        inputs_layout.addWidget(QLabel("Send Once:"), 1, 2)
+        inputs_layout.addWidget(self.repeat_send_entry, 1, 3)
+
+        buttons_layout = QVBoxLayout()
+        buttons_layout.addWidget(self.add_button)
+        buttons_layout.addWidget(self.del_button)
+
+        display_layout = QHBoxLayout()
+        display_layout.addWidget(self.filter_view)
+        display_layout.addLayout(buttons_layout)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.header)
+        layout.addLayout(inputs_layout)
+        layout.addLayout(display_layout)
+        self.setLayout(layout)
+
+    def add(self):
+        try:
+            id = int(self.id_entry.text())
+            interval = 0
+            data = self.data_entry.text()
+            data = [int(s) for s in data.split(" ")]
+
+            if not self.repeat_send_entry.isChecked():  
+                interval = int(self.interval_entry.text())
+
+            print("Adding Filter:")
+            print("  id - ", id)
+            print("  interval - ", interval)
+            print("  data - ", data)
+
+            self.model.addFilter(id, interval, data)
+
+        except Exception as e:
+            # TODO: Add popup window for error
+            print("Error with the fields")
+
+        self.id_entry.setText("")
+        self.interval_entry.setText("")
+        self.data_entry.setText("")
+        self.repeat_send_entry.setChecked(False)
+
+    def delete(self):
+        indexes = self.filter_view.selectedIndexes()
+        if indexes:
+            index = indexes[0]
+            self.model.deleteFilter(index)
+            self.filter_view.clearSelection()
+
+
+
+class MessageFeed(QWidget):
+    def __init__(self, model):
+        super(MessageFeed, self).__init__()
+
+        self.feed_started = False
+
+        self.view = QListView()
+        self.model = model
+        self.view.setModel(self.model)
+
+        self.play_button = QPushButton("Start")
+        self.play_button.pressed.connect(self.play)
+        self.play_button.setStyleSheet("color: white; background-color: #07D807")
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.view)
+        layout.addWidget(self.play_button)
 
         self.setLayout(layout)
+
+    def play(self):
+        self.feed_started = not self.feed_started
+
+        if self.feed_started:
+            self.play_button.setText("Stop")
+            self.play_button.setStyleSheet("color: white; background-color: #FF5656")
+            # TODO: Start printing messages
+        else:
+            self.play_button.setText("Start")
+            self.play_button.setStyleSheet("color: white; background-color: #07D807")
+            # TODO: Stop printing Messages
+
 
 
 class CanView(QWidget):
-    def __init__(self):
+    def __init__(self, message_model, receive_filter_model, send_filter_model):
         super(CanView, self).__init__()
-        
-        receive_layout = QHBoxLayout()
-        receive_layout.addWidget(Message())
-        receive_layout.addWidget(ReceiveFilters())
 
-        layout = QVBoxLayout()
-        layout.addLayout(receive_layout)
-        layout.addWidget(Feed())
+        filter_layout = QVBoxLayout()
+        filter_layout.addWidget(ReceiveFilters(receive_filter_model))
+        filter_layout.addWidget(SendFilters(send_filter_model))
+        
+        layout = QHBoxLayout()
+        layout.addWidget(MessageFeed(message_model))
+        layout.addLayout(filter_layout)
 
         self.setLayout(layout)

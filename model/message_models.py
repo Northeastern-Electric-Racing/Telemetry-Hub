@@ -168,5 +168,6 @@ class MessageModel(QAbstractListModel):
         """
         del self._messages[index.row()]
         self.layoutChanged.emit()
+
         
 

@@ -76,7 +76,7 @@ void sendMessage2() {
       dbuf[count].data[i] = i;
     }
 
-    print(dbuf[count])
+    //Serial.print(dbuf[count]);
     printData(count);
     last = millis();
     count++;
@@ -84,18 +84,20 @@ void sendMessage2() {
 }
 
 void loop() {
-  static bool didPrint = false;
+//  static bool didPrint = false;
+//
+//  if (!didPrint) {
+//    Serial.print("Size of Data: ");
+//    Serial.println(sizeof(data_t));
+//    Serial.print("Size of Control: ");
+//    Serial.println(sizeof(control_t));
+//    Serial.print("Size of Dbuf:");
+//    Serial.println(sizeof(dbuf));
+//    didPrint = true;
+//  }
+//
+//  sendMessage2();
 
-  if (!didPrint) {
-    Serial.print("Size of Data: ");
-    Serial.println(sizeof(data_t));
-    Serial.print("Size of Control: ");
-    Serial.println(sizeof(control_t));
-    Serial.print("Size of Dbuf:");
-    Serial.println(sizeof(dbuf));
-    didPrint = true;
-  }
-
-  sendMessage2();
+  sendMessage();
   
 }
