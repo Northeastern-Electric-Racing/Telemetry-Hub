@@ -14,25 +14,28 @@ from view.vehicle.test_view import TestView
 from utils.xbee import XBee, XBeeException
 
 from model.message_models import MessageModel
+from model.filter_models import ReceiveFilterModel, SendFilterModel
 
 
 class VehicleWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.model = MessageModel()
-        self.connection = XBee(self.model)
+        self.message_model = MessageModel()
+        self.receive_filter_model = ReceiveFilterModel()
+        self.send_filter_model = SendFilterModel()
+        self.connection = XBee(self.message_model)
         self.port_name = None
 
         self.views = {
-            0: ("CAN", CanView()), 
+            0: ("CAN", CanView(self.message_model, self.receive_filter_model, self.send_filter_model)), 
             1: ("Data", DataView()), 
-            2: ("Test", TestView(self.model))
+            2: ("Test", TestView(self.message_model))
         }
 
         # Window config
         self.setWindowTitle("Telemetry Hub")
-        self.setFixedSize(QSize(900, 500))
+        self.setMinimumSize(QSize(800, 480))
 
         # Multi-view config
         self.main_layout = QStackedLayout()

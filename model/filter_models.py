@@ -1,6 +1,5 @@
 from PyQt6.QtCore import QAbstractListModel, Qt
 
-from message_models import Message
 
 class ReceiveFilterModel(QAbstractListModel):
     """A class to represent the desired messages to receive from the car.
@@ -25,7 +24,7 @@ class ReceiveFilterModel(QAbstractListModel):
     def data(self, index, role):
         if role == Qt.ItemDataRole.DisplayRole:
             id, interval = self._filters[index.row()]
-            return f"id: {id} - {interval}ms"
+            return f"ID - {id}, Int - {interval} ms"
     
     def rowCount(self, index):
         return len(self._filters)
@@ -45,12 +44,12 @@ class SendFilterModel(QAbstractListModel):
 
     Attributes
     ----------
-    filters : list[(Message, int)]
-        list of tuples representing a (message, time interval) filter pair
+    filters : list[(int, int, list[int])]
+        list of tuples representing a message to send
 
     Methods
     -------
-    addFilter(id, length, data, interval)
+    addFilter(id, interval, data)
         Adds a filter to the model
     deleteFilter(index)
         Removes a filter from the model
@@ -62,14 +61,14 @@ class SendFilterModel(QAbstractListModel):
 
     def data(self, index, role):
         if role == Qt.ItemDataRole.DisplayRole:
-            message, interval = self._filters[index.row()]
-            return f"id: {message.id} - {interval}ms"
+            id, interval, data = self._filters[index.row()]
+            return f"ID - {id}, Int - {interval} ms, Data - {data}"
     
     def rowCount(self, index):
         return len(self._filters)
 
-    def addFilter(self, id, length, data, interval):
-        self._filters.append((Message(0, id, length, data), interval))
+    def addFilter(self, id, interval, data):
+        self._filters.append((id, interval, data))
         self.layoutChanged.emit()
 
     def deleteFilter(self, index):
