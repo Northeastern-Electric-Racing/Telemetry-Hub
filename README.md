@@ -20,10 +20,11 @@ Python resources:
 
 
 ## Setup and Installation
-The pipenv library is used to extablish a virtual project environment. The only prerequisite is that you have python installed ([here](https://www.python.org/downloads/))
+The pipenv library is used to extablish a virtual project environment. The only prerequisite is that you have python version 3.10 installed ([here](https://www.python.org/downloads/)).
 
 Follow the steps below to run the project:
 1. Clone the repo 
 2. Install pipenv globally (`pip install --user pipenv`)
 3. Navigate to the main directory (/Telemetry-Hub) and run `pipenv install` to install all project dependencies
-4. tbd...
+4. Run `pipenv shell` to activate the virtual environment
+5. Run `python app.py` in the /src/telhub package 
