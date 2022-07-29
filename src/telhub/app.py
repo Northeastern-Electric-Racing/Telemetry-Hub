@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout, QWidget, QPushButton
 )
 from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtGui import QIcon, QPixmap
 
 from view.database.window import DatabaseWindow
 from view.network.window import NetworkWindow
@@ -20,7 +21,8 @@ class MainWindow(QMainWindow):
         self.database_window = None
 
         self.setWindowTitle("Telemetry Hub")
-        self.setFixedSize(QSize(300, 220))
+        self.setFixedSize(QSize(400, 400))
+        self.setWindowIcon(QIcon("./resources/ner_logo.png"))
 
         layout = QVBoxLayout()
 
@@ -31,6 +33,11 @@ class MainWindow(QMainWindow):
         title_font.setPointSize(20)
         title.setFont(title_font)
         layout.addWidget(title)
+
+        lbl = QLabel()
+        lbl.setPixmap(QPixmap("./resources/ner_logo.png"))
+        lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+        layout.addWidget(lbl)
 
         layout.addWidget(QLabel("Select an option below to connect to:"))
         vehicle_button = QPushButton("Vehicle")
