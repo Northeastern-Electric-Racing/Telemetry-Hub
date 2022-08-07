@@ -7,19 +7,23 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import QSize, Qt
 
 from model.file_models import FileModel
+from model.data_models import DataModel
 
 
 class FileSelection(QWidget):
-    def __init__(self, model: FileModel):
+    def __init__(self, file_model: FileModel, data_model: DataModel):
         super(FileSelection, self).__init__()
+
+        self.file_model = file_model
+        self.data_model = data_model
+
 
         header = QLabel("Selected Files")
         header.setStyleSheet("font-size: 18px; font-weight: 400")
         header.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         self.view = QListView()
-        self.model = model
-        self.view.setModel(self.model)
+        self.view.setModel(self.file_model)
 
         self.add_button = QPushButton("Add Files")
         self.remove_button = QPushButton("Remove Files")
@@ -46,13 +50,13 @@ class FileSelection(QWidget):
             filepaths = file_chooser.selectedFiles()
 
         for fp in filepaths:
-            self.model.addFile(fp)
+            self.file_model.addFile(fp)
 
     def remove_files(self):
         indexes = self.view.selectedIndexes()
         if indexes:
             index = indexes[0]
-            self.model.deleteFile(index)
+            self.file_model.deleteFile(index)
             self.view.clearSelection()
         
 
@@ -74,10 +78,12 @@ class ProcessingProgressBar(QWidget):
 
 
 class ProcessView(QWidget):
-    def __init__(self):
+    def __init__(self, file_model: FileModel, data_model: DataModel):
         super(ProcessView, self).__init__()
 
         self.process_started = False
+        self.file_model = file_model
+        self.data_model = data_model
 
         header = QLabel("Status Logs")
         header.setStyleSheet("font-size: 18px; font-weight: 400")
@@ -106,12 +112,18 @@ class ProcessView(QWidget):
             self.start_button.setText("Stop")
             self.start_button.setStyleSheet("color: white; background-color: #FF5656")
             self.progress_bar.setVisible(True)
-            # TODO: End processing
+
+            # TODO: Start a new thread to do the processing
+            try:
+                self.file_model.processData(self.data_model)
+            except:
+                print("Error running processing scripts")
         else:
             self.start_button.setText("Start")
             self.start_button.setStyleSheet("color: white; background-color: #07D807")
             self.progress_bar.setVisible(False)
-            # TODO: Start processing
+
+            # TODO: End processing
 
 
 
@@ -144,11 +156,12 @@ class SdCardWindow(QMainWindow):
         self.setWindowTitle("Telemetry Hub")
         self.setMinimumSize(QSize(800, 480))
 
-        model = FileModel()
+        file_model = FileModel()
+        data_model = DataModel()
 
         hlayout = QHBoxLayout()
-        hlayout.addWidget(FileSelection(model))
-        hlayout.addWidget(ProcessView())
+        hlayout.addWidget(FileSelection(file_model, data_model))
+        hlayout.addWidget(ProcessView(file_model, data_model))
 
         vlayout = QVBoxLayout()
         vlayout.addLayout(hlayout)

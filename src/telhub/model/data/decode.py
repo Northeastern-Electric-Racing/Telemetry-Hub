@@ -1,306 +1,169 @@
-from format_data import FormatData
-
-
-class DecodeSignedInt:
-    def __init__(self, byte_vals, length=8):
-        # splits the given bytes into pairs of 2 for each value encoded
-        self.byte_vals = [byte_vals[i : i + 2] for i in range(0, length, 2)]
-
-    @staticmethod
-    def twos_comp(val, bits):
-        # compute the 2's complement of int value val
-        if (val & (1 << (bits - 1))) != 0:
-            val = val - (1 << bits)
-        return val
-
-    @staticmethod
-    def find_byte(data):
-        # finds the full byte value by combining both byte values in
-        # the pair, using little endian format
-        first_byte = data[1] << 8
-        full_byte = first_byte | data[0]
-
-        return full_byte
-
-    def decode(self):
-        # finds the decoded 2's complement value for all of the byte values
-        parsed_vals = [self.find_byte(byte_val) for byte_val in self.byte_vals]
-
-        int_vals = [self.twos_comp(val, 16) for val in parsed_vals]
-
-        return int_vals
-
-
-class Decode1():
-    def __init__(self, byte_vals):
-        # inits the byte vals
-        self.byte_vals = byte_vals
-
-    def values(self):
-        return {
-            "Pack Inst Voltage": self.byte_vals[0] << 8 | self.byte_vals[1],
-            "Pack Current": self.byte_vals[2] << 8 | self.byte_vals[3],
-            "Pack Amphours": self.byte_vals[4] << 8 | self.byte_vals[5],
-            "Pack SOC": self.byte_vals[6],
-            "Pack Health": self.byte_vals[7],
-        }
-
-
-class Decode2():
-    def __init__(self, byte_vals):
-        # inits the byte vals
-        self.byte_vals = byte_vals
-
-    def values(self):
-        return {
-            "Failsafe Statuses": "{:08b}".format(self.byte_vals[0]),
-            "DTC Status 1": "{:08b}".format(self.byte_vals[1]),
-            "DTC Status 2": "{:016b}".format(self.byte_vals[2] << 8 | self.byte_vals[3]),
-            "Current Limits Status": "{:016b}".format(self.byte_vals[4] << 8 | self.byte_vals[5]),
-            "Average Temp": DecodeSignedInt.twos_comp(self.byte_vals[6], 8),
-            "Internal Temp": DecodeSignedInt.twos_comp(self.byte_vals[7], 8),
-        }
-
-
-class Decode3():
-    def __init__(self, byte_vals):
-        # inits the byte vals
-        self.byte_vals = byte_vals
-
-    def values(self):
-        return {
-            "MPE State": self.byte_vals[0]
-        }
-
-
-class Decode4():
-    def __init__(self, byte_vals):
-        # inits the byte vals
-        self.byte_vals = byte_vals
-
-    def values(self):
-        return {
-            "High Cell Voltage": self.byte_vals[0] << 8 | self.byte_vals[1],
-            "High Cell Voltage ID": self.byte_vals[2],
-            "Low Cell Voltage": self.byte_vals[3] << 8 | self.byte_vals[4],
-            "Low Cell Voltage ID": self.byte_vals[5],
-            "Average Cell Voltage": self.byte_vals[6] << 8 | self.byte_vals[7],
-        }
-
-
-class Decode5(DecodeSignedInt):  # Temps (IGBT modules, Gate Driver Board)
-    def __init__(self, byte_vals):
-        super().__init__(byte_vals)
-
-    def values(self):
-        module_a, module_b, module_c, gate_driver_board = [
-            FormatData.temperature(val) for val in self.decode()
-        ]
-
-        return {
-            "Module A Temperature": module_a,
-            "Module B Temperature": module_b,
-            "Module C Temperature": module_c,
-            "Gate Driver Board Temperature": gate_driver_board,
-        }
-
-
-class Decode6(DecodeSignedInt):  # Temps (Control Board, RTD #1-3)
-    def __init__(self, byte_vals):
-        super().__init__(byte_vals)
-
-    def values(self):
-        vals = self.decode()
-
-        control_board, rtd_1, rtd_2, rtd_3 = [
-            FormatData.temperature(val) for val in vals
-        ]
-
-        return {
-            "Control Board Temperature": control_board,
-            "RTD #1 Temperature": rtd_1,
-            "RTD #2 Temperature": rtd_2,
-            "RTD #3 Temperature": rtd_3,
-        }
-
-
-class Decode7(DecodeSignedInt):  # Temps (RTD #4-5, Motor), Torque Shudder
-    def __init__(self, byte_vals):
-        super().__init__(byte_vals)
-
-    def values(self):
-        vals = self.decode()
-
-        rtd_4, rtd_5, motor = [FormatData.temperature(val) for val in vals[:3]]
-        torque_shudder = FormatData.torque(vals[3])
-
-        return {
-            "RTD #4 Temperature": rtd_4,
-            "RTD #5 Temperature": rtd_5,
-            "Motor Temperature": motor,
-            "Torque Shudder": torque_shudder,
-        }
-
-
-class Decode8(DecodeSignedInt):  # Motor angle, speed, frequency
-    def __init__(self, byte_vals):
-        super().__init__(byte_vals)
-
-    def values(self):
-        vals = self.decode()
-
-        motor_angle = FormatData.angle(vals[0])
-        motor_speed = FormatData.angular_velocity(vals[1])
-        elec_output_freq = FormatData.frequency(vals[2])
-        del_res_filt = FormatData.angle(vals[3])
-
-        return {
-            "Motor Angle (Electrical)": motor_angle,
-            "Motor Speed": motor_speed,
-            "Electrical Output Frequency": elec_output_freq,
-            "Delta Resolver Filtered": del_res_filt,
-        }
-
-
-class Decode9(DecodeSignedInt):  # Currents (3 Phases, DC Bus)
-    def __init__(self, byte_vals):
-        super().__init__(byte_vals)
-
-    def values(self):
-        vals = self.decode()
-
-        phase_a, phase_b, phase_c, dc_bus = [FormatData.current(val) for val in vals]
-
-        return {
-            "Phase A Current": phase_a,
-            "Phase B Current": phase_b,
-            "Phase C Current": phase_c,
-            "DC Bus Current": dc_bus,
-        }
-
-
-class Decode10(DecodeSignedInt):  # Voltages (DC Bus, Output)
-    def __init__(self, byte_vals):
-        super().__init__(byte_vals)
-
-    def values(self):
-        vals = self.decode()
-
-        dc_bus, output, vab_vd, vbc_vq = [FormatData.high_voltage(val) for val in vals]
-
-        return {
-            "DC Bus Voltage": dc_bus,
-            "Output Voltage": output,
-            "VAB_Vd Voltage": vab_vd,
-            "VBC_Vq Voltage": vbc_vq,
-        }
-
-
-class Decode11:  # Internal States
-    def __init__(self, byte_vals):
-        # converts all bytes into the equivalent 8 bit binary values
-        self.byte_vals = ["{:08b}".format(i) for i in byte_vals]
-
-    def values(self):
-        # The byte values can be manually reviewed with the documentation
-        # in case any information is needed, so no decoding is needed
-        return {
-            "VSM State": int(self.byte_vals[1]) << 8 | int(self.byte_vals[0]),
-            "Inverter State": self.byte_vals[2],
-            "Relay State": self.byte_vals[3],
-            "Inverter Run Mode": self.byte_vals[4][0],
-            "Inverter Active Discharge State": self.byte_vals[4][5:],
-            "Inverter Command Mode": self.byte_vals[5],
-            "Inverter Enable State": self.byte_vals[6][0],
-            "Inverter Enable Lockout": self.byte_vals[6][7],
-            "Direction Command": self.byte_vals[7][0],
-            "BMS Active": self.byte_vals[7][1],
-            "BMS Limiting Torque": self.byte_vals[7][2],
-        }
-
-
-class Decode12:  # Fault Codes
-    def __init__(self, byte_vals):
-        # converts all bytes into the equivalent 16 bit binary values
-        self.byte_vals = [
-            "{:016b}".format(byte_vals[i+1] << 8 | byte_vals[i])
-            for i in range(0, 8, 2)
-        ]
-
-    def values(self):
-        # The byte values can be manually reviewed with the documentation
-        # in case any information is needed, so no decoding is needed
-        return {
-            "POST Fault Lo": self.byte_vals[0],
-            "POST Fault Hi": self.byte_vals[1],
-            "Run Fault Lo": self.byte_vals[2],
-            "Run Fault Hi": self.byte_vals[3],
-        }
-
-
-class Decode13(DecodeSignedInt):  # Torque and Timer
-    def __init__(self, byte_vals):
-        self.byte_vals = [byte_vals[i : i + 2] for i in range(0, 4, 2)]
-        self.timer_bytes = byte_vals[4:]
-
-    def find_timer_byte(self):
-        first_byte = self.timer_bytes[3] << 24
-        second_byte = self.timer_bytes[2] << 16
-        third_byte = self.timer_bytes[1] << 8
-        full_byte = first_byte | second_byte | third_byte | self.timer_bytes[0]
-
-        return full_byte
-
-    def values(self):
-        vals = self.decode()
-        timer_val = self.find_timer_byte()
-
-        commanded_torque, torque_feedback = [FormatData.torque(val) for val in vals]
-        timer_sec = FormatData.timer(timer_val)
-
-        return {
-            "Commanded Torque": commanded_torque,
-            "Torque Feedback": torque_feedback,
-            "Power on Timer": timer_sec,
-        }
-
-class Decode14(): # Current limits
-    def __init__(self, byte_vals):
-        self.byte_vals = byte_vals
-
-    def values(self):
-        return {
-            "Pack DCL": self.byte_vals[0] << 8 | self.byte_vals[1],
-            "Pack CCL": self.byte_vals[3] << 8 | self.byte_vals[2],
-        }
-
-class Decode15(DecodeSignedInt): # nerduino accelerometer
-    def __init__(self, byte_vals):
-        super().__init__(byte_vals, 6)
-
-    def values(self):
-        vals = self.decode()
-
-        return {
-            "X-Axis": vals[0],
-            "Y-Axis": vals[1],
-            "Z-Axis": vals[2],
-        }
-
-class Decode16(): # nerduino humidity
-    def __init__(self, byte_vals):
-        self.byte_vals = byte_vals
-
-    def values(self):
-        temp = self.byte_vals[1] << 8 | self.byte_vals[0]
-        humid = self.byte_vals[3] << 8 | self.byte_vals[2]
-
-        tempF = -49 + (315 * temp / 65535.0)
-        tempC = -45 + (175 * temp / 65535.0)
-        relHumid = 100 * humid / 65535.0
-
-        return {
-            "Temp C": tempC,
-            "Temp F": tempF,
-            "Relative Humidity": relHumid,
-        }
+from model.data.data import ProcessData as pd, FormatData as fd
+from typing import Any, Dict, List
+
+
+def decode1(data: List[int]) -> Dict[int, Any]:
+    return {
+        1: pd.big_endian(data[0:2]),
+        2: pd.big_endian(data[2:4]),
+        3: pd.big_endian(data[4:6]),
+        4: data[6],
+        5: data[7]
+    }
+
+def decode2(data: List[int]) -> Dict[int, Any]:
+    return {
+        6: "{:08b}".format(data[0]),
+        7: "{:08b}".format(data[1]),
+        8: "{:016b}".format(pd.big_endian(data[2:4])),
+        9: "{:016b}".format(pd.big_endian(data[4:6])),
+        10: pd.twos_comp(data[6], 8),
+        11: pd.twos_comp(data[7], 8)
+    }
+
+def decode3(data: List[int]) -> Dict[int, Any]:
+    return {
+        12: data[0]
+    }
+
+def decode4(data: List[int]) -> Dict[int, Any]:
+    return {
+        13: pd.big_endian(data[0:2]),
+        14: data[2],
+        15: pd.big_endian(data[3:5]),
+        16: data[5],
+        17: pd.big_endian(data[6:8])
+    }
+
+def decode5(data: List[int]) -> Dict[int, Any]:
+    decoded_data = pd.default_decode(data)
+    final_data = [fd.temperature(d) for d in decoded_data]
+    return {
+        18: final_data[0],
+        19: final_data[1],
+        20: final_data[2],
+        21: final_data[3]
+    }
+
+def decode6(data: List[int]) -> Dict[int, Any]:
+    decoded_data = pd.default_decode(data)
+    final_data = [fd.temperature(d) for d in decoded_data]
+    return {
+        22: final_data[0],
+        23: final_data[1],
+        24: final_data[2],
+        25: final_data[3]
+    }
+
+def decode7(data: List[int]) -> Dict[int, Any]:
+    decoded_data = pd.default_decode(data)
+    final_data = [fd.temperature(d) for d in decoded_data[:3]]
+    return {
+        26: final_data[0],
+        27: final_data[1],
+        28: final_data[2],
+        29: fd.torque(decoded_data[3])
+    }
+
+def decode8(data: List[int]) -> Dict[int, Any]:
+    decoded_data = pd.default_decode(data)
+    return {
+        30: fd.angle(decoded_data[0]),
+        31: fd.angular_velocity(decoded_data[1]),
+        32: fd.frequency(decoded_data[2]),
+        33: fd.angle(decoded_data[3])
+    }
+
+def decode9(data: List[int]) -> Dict[int, Any]:
+    decoded_data = pd.default_decode(data)
+    final_data = [fd.current(d) for d in decoded_data]
+    return {
+        34: final_data[0],
+        35: final_data[1],
+        36: final_data[2],
+        37: final_data[3]
+    }
+
+def decode10(data: List[int]) -> Dict[int, Any]:
+    decoded_data = pd.default_decode(data)
+    final_data = [fd.high_voltage(d) for d in decoded_data]
+    return {
+        38: final_data[0],
+        39: final_data[1],
+        40: final_data[2],
+        41: final_data[3]
+    }
+
+def decode11(data: List[int]) -> Dict[int, Any]:
+    decoded_data = ["{:08b}".format(d) for d in data]
+    return {
+        42: decoded_data[0] + decoded_data[1],
+        43: decoded_data[2],
+        44: decoded_data[3],
+        45: decoded_data[4][0],
+        46: decoded_data[4][5:],
+        47: decoded_data[5],
+        48: decoded_data[6][0],
+        49: decoded_data[6][7],
+        50: decoded_data[7][0],
+        51: decoded_data[7][1],
+        52: decoded_data[7][2]
+    }
+
+def decode12(data: List[int]) -> Dict[int, Any]:
+    grouped_data = pd.big_endian(pd.group_bytes(data))
+    decoded_data = ["{:016b}".format(d) for d in grouped_data]
+    return {
+        53: decoded_data[0],
+        54: decoded_data[1],
+        55: decoded_data[2],
+        56: decoded_data[3]
+    }
+
+def decode13(data: List[int]) -> Dict[int, Any]:
+    decoded_data = pd.default_decode(data[:4])
+    timer_data = pd.little_endian(data[4:])
+    return {
+        57: fd.torque(decoded_data[0]),
+        58: fd.torque(decoded_data[1]),
+        59: fd.timer(timer_data)
+    }
+
+def decode14(data: List[int]) -> Dict[int, Any]:
+    return {
+        60: pd.little_endian(data[0:2]),
+        61: pd.little_endian(data[2:4])
+    }
+
+def decode15(data: List[int]) -> Dict[int, Any]:
+    decoded_data = pd.default_decode(data)
+    return {
+        62: decoded_data[0],
+        63: decoded_data[1],
+        64: decoded_data[2]
+    }
+
+def decode16(data: List[int]) -> Dict[int, Any]:
+    temp = pd.little_endian(data[0:2])
+    humid = pd.little_endian(data[2:4])
+    tempF = -49 + (315 * temp / 65535.0)
+    tempC = -45 + (175 * temp / 65535.0)
+    relHumid = 100 * humid / 65535.0 
+    return {
+        65: tempC,
+        66: tempF,
+        67: relHumid
+    }
+
+def decode17(data: List[int]) -> Dict[int, Any]:
+    decoded_data = pd.default_decode(data)
+
+    return {
+        68: fd.torque(decoded_data[0]),
+        69: fd.angular_velocity(decoded_data[1]),
+        70: data[4],
+        71: data[5] & 1,
+        72: (data[5] >> 1) & 1,
+        73: (data[5] >> 2) & 1,
+        74: fd.torque(decoded_data[3])
+    }
