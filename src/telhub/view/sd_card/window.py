@@ -2,7 +2,8 @@ from PyQt6.QtWidgets import (
     QMainWindow, QLabel, QHBoxLayout, 
     QVBoxLayout, QWidget, QFileDialog,
     QListView, QPushButton, QTextEdit,
-    QGridLayout, QProgressBar
+    QGridLayout, QProgressBar, QDialog,
+    QDialogButtonBox, QLineEdit
 )
 from PyQt6.QtCore import QSize, Qt
 
@@ -42,13 +43,7 @@ class FileSelection(QWidget):
 
     
     def add_files(self):
-        file_chooser = QFileDialog()
-        file_chooser.setFileMode(QFileDialog.FileMode.ExistingFiles)
-        filepaths = []
-
-        if file_chooser.exec():
-            filepaths = file_chooser.selectedFiles()
-
+        filepaths = QFileDialog().getOpenFileNames()[0]
         for fp in filepaths:
             self.file_model.addFile(fp)
 
@@ -116,8 +111,9 @@ class ProcessView(QWidget):
             # TODO: Start a new thread to do the processing
             try:
                 self.file_model.processData(self.data_model)
-            except:
+            except Exception as e: 
                 print("Error running processing scripts")
+                print(e)
         else:
             self.start_button.setText("Start")
             self.start_button.setStyleSheet("color: white; background-color: #07D807")
@@ -127,23 +123,99 @@ class ProcessView(QWidget):
 
 
 
+
+class ExportDialog(QDialog):
+    def __init__(self, data_model: DataModel):
+        super().__init__()
+
+        self.setWindowTitle("Export CSV")
+        self.data_model = data_model
+
+        self.filename_input = QLineEdit()
+        self.directory_input = QLineEdit()
+        self.directory_input.setReadOnly(True)
+        self.directory_button = QPushButton("Choose Directory")
+        self.directory_button.pressed.connect(self.choose_directory)
+        self.reset_button = QPushButton("Reset Fields")
+        self.reset_button.pressed.connect(self.reset_fields)
+
+        self.layout = QGridLayout()
+        self.layout.addWidget(QLabel("File name: "), 0, 0)
+        self.layout.addWidget(self.filename_input, 0, 1)
+        self.layout.addWidget(QLabel("Directory name: "), 1, 0)
+        self.layout.addWidget(self.directory_input, 1, 1)
+        self.layout.addWidget(self.directory_button, 2, 0)
+        self.layout.addWidget(self.reset_button, 2, 1)
+        
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        self.buttonBox.accepted.connect(self.on_accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
+
+    def choose_directory(self):
+        dir = QFileDialog().getExistingDirectory(self)
+        self.directory_input.setText(dir)
+
+    def reset_fields(self):
+        self.filename_input.setText("")
+        self.directory_input.setText("")
+    
+    def on_accept(self):
+        filename = self.filename_input.text()
+        directory = self.directory_input.text()
+        full_path = directory + "/" + filename
+        print(full_path)
+
+        try:
+            self.data_model.exportCSV(full_path)
+            self.accept()
+        except Exception as E:
+            print("Error exporting CSV.")
+            print(E.with_traceback)
+            self.reject()
+
+
+
+
 class OptionsMenu(QWidget):
-    def __init__(self):
+    def __init__(self, data_model: DataModel):
         super(OptionsMenu, self).__init__()
+
+        self.data_model = data_model
 
         header = QLabel("Options")
         header.setStyleSheet("font-size: 26px; font-weight: 600")
         header.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
+        self.csv_button = QPushButton("Generate CSV")
+        self.graph_button = QPushButton("Graph Data")
+        self.database_button = QPushButton("Database Export")
+        self.csv_button.pressed.connect(self.generate_csv)
+        self.graph_button.pressed.connect(self.graph_data)
+        self.database_button.pressed.connect(self.database_export)
+
         menu_layout = QGridLayout()
-        menu_layout.addWidget(QPushButton("Generate CSV"), 0, 0)
-        menu_layout.addWidget(QPushButton("Graph Results"), 0, 1)
-        menu_layout.addWidget(QPushButton("Database Export"), 0, 2)
+        menu_layout.addWidget(self.csv_button, 0, 0)
+        menu_layout.addWidget(self.graph_button, 0, 1)
+        menu_layout.addWidget(self.database_button, 0, 2)
 
         layout = QVBoxLayout()
         layout.addWidget(header)
         layout.addLayout(menu_layout)
         self.setLayout(layout)
+    
+    def generate_csv(self):
+        dlg = ExportDialog(self.data_model)
+        dlg.exec()
+
+    def graph_data(self):
+        pass
+
+    def database_export(self):
+        pass
+
 
 
 
@@ -165,7 +237,7 @@ class SdCardWindow(QMainWindow):
 
         vlayout = QVBoxLayout()
         vlayout.addLayout(hlayout)
-        vlayout.addWidget(OptionsMenu())
+        vlayout.addWidget(OptionsMenu(data_model))
 
         # Setup menu bar
         menu = self.menuBar()

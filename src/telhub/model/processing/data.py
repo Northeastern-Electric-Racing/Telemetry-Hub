@@ -1,10 +1,15 @@
-from typing import List
+from datetime import datetime
+from typing import List, Any
 
 class Data:
-    def __init__(self, timestamp, id, value):
+    def __init__(self, timestamp: datetime, id: int, value: Any):
         self.timestamp = timestamp
         self.id = id
         self.value = value
+
+    def __str__(self):
+        """Overrides the string representation of the class."""
+        return f"ID {self.id} - {self.timestamp} - {self.value}"
 
 
 class ProcessData:
@@ -13,7 +18,6 @@ class ProcessData:
     @staticmethod
     def group_bytes(data_bytes: List[int], group_length: int = 2) -> List[List[int]]:
         """Splits the given data bytes into lists of specified length."""
-
         return [data_bytes[i : i + group_length] for i in range(0, len(data_bytes), group_length)]
 
     @staticmethod

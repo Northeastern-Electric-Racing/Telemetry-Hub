@@ -1,11 +1,15 @@
-from model.data.data import ProcessData as pd, FormatData as fd
+"""
+This file specifies methods to decode messages into the many pieces of data they contain.
+"""
+
+from model.processing.data import ProcessData as pd, FormatData as fd
 from typing import Any, Dict, List
 
 
 def decode1(data: List[int]) -> Dict[int, Any]:
     return {
         1: pd.big_endian(data[0:2]),
-        2: pd.big_endian(data[2:4]),
+        2: pd.twos_comp(pd.big_endian(data[2:4])),
         3: pd.big_endian(data[4:6]),
         4: data[6],
         5: data[7]
@@ -95,29 +99,28 @@ def decode10(data: List[int]) -> Dict[int, Any]:
     }
 
 def decode11(data: List[int]) -> Dict[int, Any]:
-    decoded_data = ["{:08b}".format(d) for d in data]
+    decoded_data = ["{:08b}".format(d) for d in data[3:]]
     return {
-        42: decoded_data[0] + decoded_data[1],
-        43: decoded_data[2],
-        44: decoded_data[3],
-        45: decoded_data[4][0],
-        46: decoded_data[4][5:],
-        47: decoded_data[5],
-        48: decoded_data[6][0],
-        49: decoded_data[6][7],
-        50: decoded_data[7][0],
-        51: decoded_data[7][1],
-        52: decoded_data[7][2]
+        42: pd.little_endian(data[0:2]),
+        43: data[2],
+        44: decoded_data[0],
+        45: decoded_data[1][0],
+        46: decoded_data[1][5:],
+        47: decoded_data[2],
+        48: decoded_data[3][0],
+        49: decoded_data[3][7],
+        50: decoded_data[4][0],
+        51: decoded_data[4][1],
+        52: decoded_data[4][2]
     }
 
 def decode12(data: List[int]) -> Dict[int, Any]:
-    grouped_data = pd.big_endian(pd.group_bytes(data))
-    decoded_data = ["{:016b}".format(d) for d in grouped_data]
+    grouped_data = [pd.little_endian(d) for d in pd.group_bytes(data)]
     return {
-        53: decoded_data[0],
-        54: decoded_data[1],
-        55: decoded_data[2],
-        56: decoded_data[3]
+        53: grouped_data[0],
+        54: grouped_data[1],
+        55: grouped_data[2],
+        56: grouped_data[3]
     }
 
 def decode13(data: List[int]) -> Dict[int, Any]:
