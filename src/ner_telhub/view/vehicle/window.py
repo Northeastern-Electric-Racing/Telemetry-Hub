@@ -89,29 +89,21 @@ class VehicleWindow(QMainWindow):
 
         # If a proper port was selected
         if port_status == 1:
-            msg = QMessageBox(self)
-            msg.setWindowTitle("Connection Status")
-
             try:
                 self.connection.start(self.port_name)
-                msg.setText(f"Successfully connected to {self.port_name}")
+                msg = "Successfully connected to " + self.port_name
             except XBeeException as xe:
-                msg.setText(xe.message)
-
-            msg.exec()
+                msg = xe.message
+            QMessageBox.information(self, "Connection Status", msg)
 
     def disconnect(self):
-        msg = QMessageBox(self)
-        msg.setWindowTitle("Disconnection Status")
-
         try:
             self.connection.stop()
-            msg.setText("Successfully disconnected from the serial port")
+            msg = "Successfully disconnected from the serial port"
             self.port_name = None
         except XBeeException as xe:
-                msg.setText(xe.message)
-
-        msg.exec()
+            msg = xe.message
+        QMessageBox.information(self, "Disconnection Status", msg)
 
 
 

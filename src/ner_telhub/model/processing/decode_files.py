@@ -8,7 +8,7 @@ from enum import Enum
 from typing import Tuple, List
 
 class LogFormat(Enum):
-    TEXTUAL1 = 1,
+    TEXTUAL1 = 1
     TEXTUAL2 = 2
     BINARY = 3
 

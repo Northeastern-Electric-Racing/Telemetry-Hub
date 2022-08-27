@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import List, Any
 
+
 class Data:
     def __init__(self, timestamp: datetime, id: int, value: Any):
         self.timestamp = timestamp
@@ -10,6 +11,8 @@ class Data:
     def __str__(self):
         """Overrides the string representation of the class."""
         return f"ID {self.id} - {self.timestamp} - {self.value}"
+
+    
 
 
 class ProcessData:
