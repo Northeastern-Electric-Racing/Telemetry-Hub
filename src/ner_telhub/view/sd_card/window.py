@@ -10,11 +10,11 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QSize, Qt
 
-from model.file_models import FileModel
-from model.data_models import DataModel
-from model.processing.decode_files import LogFormat
-from widgets.data_info import MessageIds
-from widgets.data_info import DataIds
+from ner_telhub.model.file_models import FileModel
+from ner_telhub.model.data_models import DataModel
+from ner_telhub.model.processing.decode_files import LogFormat
+from ner_telhub.widgets.data_info import MessageIds
+from ner_telhub.widgets.data_info import DataIds
 
 
 

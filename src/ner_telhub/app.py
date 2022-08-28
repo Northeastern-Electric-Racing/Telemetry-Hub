@@ -20,9 +20,11 @@ class MainWindow(QMainWindow):
         self.sd_card_window = None
         self.database_window = None
 
+        logo_path = "./ner_telhub/resources/ner_logo.png"
+
         self.setWindowTitle("Telemetry Hub")
         self.setFixedSize(QSize(400, 400))
-        self.setWindowIcon(QIcon("./resources/ner_logo.png"))
+        self.setWindowIcon(QIcon(logo_path))
 
         layout = QVBoxLayout()
 
@@ -35,7 +37,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(title)
 
         lbl = QLabel()
-        lbl.setPixmap(QPixmap("./resources/ner_logo.png"))
+        lbl.setPixmap(QPixmap(logo_path))
         lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
         layout.addWidget(lbl)
 

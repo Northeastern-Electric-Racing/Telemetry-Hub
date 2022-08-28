@@ -9,7 +9,7 @@ from PyQt6.QtCharts import QLineSeries, QChart, QChartView, QVXYModelMapper
 from PyQt6.QtGui import QPainter, QTransform
 from PyQt6.QtCore import QRectF, QSize, Qt
 
-from model.data_models import DataModel
+from ner_telhub.model.data_models import DataModel
 
 
 class EditDialog(QDialog):

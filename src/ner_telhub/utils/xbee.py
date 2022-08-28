@@ -2,7 +2,7 @@ from PyQt6.QtSerialPort import QSerialPort, QSerialPortInfo
 
 from PyQt6.QtCore import QIODeviceBase
 
-from model.message_models import Message, MessageFormatException
+from ner_telhub.model.message_models import Message, MessageFormatException
 
 
 class XBeeException(Exception):

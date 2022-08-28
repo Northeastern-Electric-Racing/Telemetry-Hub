@@ -1,12 +1,10 @@
-from os import times
-from time import time
 from PyQt6.QtWidgets import (
     QLabel, QLineEdit, QGridLayout, 
     QVBoxLayout, QWidget, QPushButton, 
     QListView
 )
 
-from model.message_models import Message
+from ner_telhub.model.message_models import Message
 
 
 class MessageFeed(QWidget):

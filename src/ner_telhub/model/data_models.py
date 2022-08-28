@@ -9,9 +9,9 @@ from PyQt6.QtCore import (
     pyqtSignal, pyqtBoundSignal
 )
 
-from model.processing.master_mapping import MESSAGE_IDS, DECODE_DATA, DATA_IDS
-from model.processing.data import Data
-from utils.threads import Worker
+from ner_telhub.model.processing.master_mapping import MESSAGE_IDS, DECODE_DATA, DATA_IDS
+from ner_telhub.model.processing.data import Data
+from ner_telhub.utils.threads import Worker
 
 
 class DataFormatException(Exception):

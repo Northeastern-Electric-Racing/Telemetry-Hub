@@ -7,14 +7,14 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QSize
 
-from view.vehicle.can_view import CanView
-from view.vehicle.data_view import DataView
-from view.vehicle.test_view import TestView
+from ner_telhub.view.vehicle.can_view import CanView
+from ner_telhub.view.vehicle.data_view import DataView
+from ner_telhub.view.vehicle.test_view import TestView
 
-from utils.xbee import XBee, XBeeException
+from ner_telhub.utils.xbee import XBee, XBeeException
 
-from model.message_models import MessageModel
-from model.filter_models import ReceiveFilterModel, SendFilterModel
+from ner_telhub.model.message_models import MessageModel
+from ner_telhub.model.filter_models import ReceiveFilterModel, SendFilterModel
 
 
 class VehicleWindow(QMainWindow):
