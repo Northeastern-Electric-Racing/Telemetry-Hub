@@ -5,7 +5,7 @@ This file specifes the CAN and data ID mappings. There are three levels of IDs s
     - Data ID (id for individual data values contained in the messages)
 """
 
-from ner_telhub.model.processing.decode_data import *
+from ner_processing.decode_data import *
 
 # Mapping from external to internal message IDs
 MESSAGE_IDS = {

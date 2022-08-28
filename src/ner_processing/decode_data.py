@@ -2,7 +2,7 @@
 This file specifies methods to decode messages into the many pieces of data they contain.
 """
 
-from ner_telhub.model.processing.data import ProcessData as pd, FormatData as fd
+from ner_processing.data import ProcessData as pd, FormatData as fd
 from typing import Any, Dict, List
 
 

@@ -12,7 +12,7 @@ from PyQt6.QtCore import QSize, Qt
 
 from ner_telhub.model.file_models import FileModel
 from ner_telhub.model.data_models import DataModel
-from ner_telhub.model.processing.decode_files import LogFormat
+from ner_processing.decode_files import LogFormat
 from ner_telhub.widgets.data_info import MessageIds
 from ner_telhub.widgets.data_info import DataIds
 

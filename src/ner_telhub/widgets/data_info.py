@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 
-from ner_telhub.model.processing.master_mapping import *
+from ner_processing.master_mapping import *
 
 
 

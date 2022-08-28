@@ -3,7 +3,7 @@ from typing import List, Tuple
 from PyQt6.QtCore import QAbstractListModel, Qt, pyqtBoundSignal
 
 from ner_telhub.model.data_models import DataModel
-from ner_telhub.model.processing.decode_files import LogFormat, process_line
+from ner_processing.decode_files import LogFormat, process_line
 from ner_telhub.utils.threads import Worker
 
 
