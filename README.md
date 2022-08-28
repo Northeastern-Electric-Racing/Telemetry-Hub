@@ -28,3 +28,8 @@ Follow the steps below to run the project:
 3. Navigate to the main directory (/Telemetry-Hub) and run `pipenv install` to install all project dependencies
 4. Run `pipenv shell` to activate the virtual environment
 5. Run `python app.py` in the /src/telhub package 
+
+## Running the App
+There are two ways to run the app:
+1. Navigate to the `src` directory and run the command `python -m ner_telhub`
+2. Run the python script `run.py` located in the `src` directory. This file exists as an entry point for pyinstaller to package an executable, but still can be used to run the app.

@@ -5,10 +5,10 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QIcon, QPixmap
 
-from view.database.window import DatabaseWindow
-from view.network.window import NetworkWindow
-from view.sd_card.window import SdCardWindow
-from view.vehicle.window import VehicleWindow
+from ner_telhub.view.database.window import DatabaseWindow
+from ner_telhub.view.network.window import NetworkWindow
+from ner_telhub.view.sd_card.window import SdCardWindow
+from ner_telhub.view.vehicle.window import VehicleWindow
 
 
 class MainWindow(QMainWindow):
@@ -93,7 +93,10 @@ class MainWindow(QMainWindow):
             self.database_window = None
     
 
-if __name__ == "__main__":
+def run():
+    """
+    Runs the app by creating and executing the main window. 
+    """
     app = QApplication([])
     window = MainWindow()
     window.show()
