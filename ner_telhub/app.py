@@ -1,3 +1,5 @@
+import sys, os
+
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QLabel, 
     QVBoxLayout, QWidget, QPushButton
@@ -10,6 +12,15 @@ from ner_telhub.view.network.window import NetworkWindow
 from ner_telhub.view.sd_card.window import SdCardWindow
 from ner_telhub.view.vehicle.window import VehicleWindow
 
+resources = os.path.dirname(__file__) + "/../resources"
+
+try:
+    from ctypes import windll  # Only exists on Windows.
+    myappid = 'ner.telhub'
+    windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+except ImportError:
+    pass
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -20,11 +31,9 @@ class MainWindow(QMainWindow):
         self.sd_card_window = None
         self.database_window = None
 
-        logo_path = "./ner_telhub/resources/ner_logo.png"
-
         self.setWindowTitle("Telemetry Hub")
         self.setFixedSize(QSize(400, 400))
-        self.setWindowIcon(QIcon(logo_path))
+        self.setWindowIcon(QIcon(os.path.join(resources, "ner_logo.ico")))
 
         layout = QVBoxLayout()
 
@@ -37,7 +46,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(title)
 
         lbl = QLabel()
-        lbl.setPixmap(QPixmap(logo_path))
+        lbl.setPixmap(QPixmap(os.path.join(resources, "ner_logo.png")))
         lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
         layout.addWidget(lbl)
 
