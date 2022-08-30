@@ -13,9 +13,19 @@ from PyQt6.QtCore import QSize, Qt
 from ner_telhub.model.file_models import FileModel
 from ner_telhub.model.data_models import DataModel
 from ner_processing.decode_files import LogFormat
-from ner_telhub.widgets.data_info import MessageIds
-from ner_telhub.widgets.data_info import DataIds
+from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
+from ner_telhub.widgets.graphing_widgets import GraphDashboardWidget
 
+
+class GraphDialog(QDialog):
+    """Shows a dashboard for data in the system."""
+
+    def __init__(self, parent: QWidget, model: DataModel):
+        super().__init__(parent)
+        self.setWindowTitle("Graph View")
+        layout = QVBoxLayout()
+        layout.addWidget(GraphDashboardWidget(model))
+        self.setLayout(layout)
 
 
 class ExportDialog(QDialog):
@@ -267,12 +277,16 @@ class OptionsView(QWidget):
         layout2.addWidget(self.filter_button)
 
         # Populate layout 3
+        self.graph_button = QPushButton("Graph")
+        self.graph_button.pressed.connect(lambda: GraphDialog(self, self.data_model).exec())
+        self.graph_button.setStyleSheet("color: white; background-color: #0693E3")
         self.csv_button = QPushButton("CSV")
-        self.database_button = QPushButton("Database")
         self.csv_button.pressed.connect(lambda: ExportDialog(self, self.data_model).exec())
         self.csv_button.setStyleSheet("color: white; background-color: #0693E3")
+        self.database_button = QPushButton("Database")
         self.database_button.pressed.connect(self.databaseExport)
         self.database_button.setDisabled(True)
+        layout3.addWidget(self.graph_button)
         layout3.addWidget(self.csv_button)
         layout3.addWidget(self.database_button)
 

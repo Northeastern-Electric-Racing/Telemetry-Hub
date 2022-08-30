@@ -29,7 +29,7 @@ class VehicleWindow(QMainWindow):
 
         self.views = {
             0: ("CAN", CanView(self.message_model, self.receive_filter_model, self.send_filter_model)), 
-            1: ("Data", DataView()), 
+            1: ("Data", DataView(self.message_model)), 
             2: ("Test", TestView(self.message_model))
         }
 
