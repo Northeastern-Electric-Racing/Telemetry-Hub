@@ -1,22 +1,35 @@
 from enum import Enum
+from typing import Callable
+
 from PyQt6.QtWidgets import (
     QLabel, QVBoxLayout, 
     QWidget, QPushButton, 
     QComboBox, QToolBar, QDialog,
-    QGridLayout, QDialogButtonBox, QSplitter
+    QGridLayout, QDialogButtonBox,
+    QSplitter
 )
-from PyQt6.QtCharts import QLineSeries, QChart, QChartView, QVXYModelMapper
+from PyQt6.QtCharts import (
+    QLineSeries, QChart, QChartView, 
+    QVXYModelMapper
+)
 from PyQt6.QtGui import QPainter
 from PyQt6.QtCore import QSize, Qt
 
 from ner_telhub.model.data_models import DataModel
+from ner_processing.master_mapping import DATA_IDS
+
+
+class Format(Enum):
+    LINE = 1
+    VALUE = 2
 
 
 class EditDialog(QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent: QWidget, callback: Callable):
         super().__init__(parent)
-        self._data_list = ["None", "data 1", "data 2", "data 3"]
-        self._format_list = ["Line Graph"]
+        self._data_list = ["None", *[DATA_IDS[d] for d in DATA_IDS]]
+        self._format_list = [f.name for f in Format]
+        self.callback = callback
 
         self.setWindowTitle("Edit Graph")
 
@@ -52,21 +65,13 @@ class EditDialog(QDialog):
         data1 = self.data_entry_1.currentText()
         data2 = self.data_entry_2.currentText()
         data3 = self.data_entry_3.currentText()
-        format = self.format_entry.currentText()
-        print("Editing graph: ")
-        print("  data 1 -> ", data1)
-        print("  data 2 -> ", data2)
-        print("  data 3 -> ", data3)
-        print("  format -> ", format)
+        format = Format[self.format_entry.currentText()]
+        self.callback((data1, data2, data3, format))
         self.accept()
 
 
-class Formats(Enum):
-    LINE = 1
-
-
 class GraphWidget(QWidget):
-    def __init__(self, index, model: DataModel, format=Formats.LINE):
+    def __init__(self, index, model: DataModel, format=Format.LINE):
         super(GraphWidget, self).__init__()
         self.index = index
         self.model = model
@@ -76,16 +81,8 @@ class GraphWidget(QWidget):
         toolbar = QToolBar()
         config_button = QPushButton("Edit")
         config_button.setStyleSheet("color: white; background-color: #FF5656")
-        config_button.pressed.connect(self.edit)
-        start_button = QPushButton("Start")
-        start_button.pressed.connect(self.start)
-        start_button.setStyleSheet("color: white; background-color: #07D807")
-        record_button = QPushButton("Record")
-        record_button.pressed.connect(self.record)
-        record_button.setStyleSheet("color: white; background-color: #0977E6")
+        config_button.pressed.connect(lambda: EditDialog(self, self.edit_callback).exec())
         toolbar.addWidget(config_button)
-        toolbar.addWidget(start_button)
-        toolbar.addWidget(record_button)
 
         # Chart Config
         self.chart = QChart()
@@ -101,34 +98,33 @@ class GraphWidget(QWidget):
         chart_view.setStyleSheet("background-color: #f0f0f0")
 
         # Model Config
-        self.add_series("Accel X", "Line 1")
-        
+        self.add_series("Accel X")
+
         # Layout Config
         layout = QVBoxLayout()
         layout.addWidget(toolbar)
         layout.addWidget(chart_view)
         self.setLayout(layout)
 
-    def edit(self):
-        dlg = EditDialog(self)
-        dlg.exec()
-        print("Edited graph")
+    def edit_callback(self, graph_descriptor):
+        try:
+            data1 = graph_descriptor[0]
+            data2 = graph_descriptor[1]
+            data3 = graph_descriptor[2]
+            format = graph_descriptor[3]
+        except:
+            print("error with args in add_series")
+            return
+        print("Received edit callback")
 
-    def start(self):
-        pass
-
-    def record(self):
-        pass
-
-    def add_series(self, data_type, series_name):
-        model = DataModel() # TODO: select based on data type
+    def add_series(self, name):
         series = QLineSeries()
-        series.setName(series_name)
+        series.setName(name)
         mapper = QVXYModelMapper(self)
         mapper.setXColumn(0)
         mapper.setYColumn(1)
         mapper.setSeries(series)
-        mapper.setModel(model)
+        mapper.setModel(DataModel()) # TODO: Change to be actual model
         self.chart.addSeries(series)
         self.chart.createDefaultAxes()
 
