@@ -5,13 +5,13 @@ from PyQt6.QtWidgets import (
     QListView, QPushButton, QTextEdit,
     QGridLayout, QProgressBar, QDialog,
     QDialogButtonBox, QLineEdit, QMessageBox,
-    QCheckBox, QMenu
+    QCheckBox, QMenu, QToolBar
 )
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QSize, Qt
 
 from ner_telhub.model.file_models import FileModel
-from ner_telhub.model.data_models import DataModel
+from ner_telhub.model.data_models import DataModelManager
 from ner_processing.decode_files import LogFormat
 from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
 from ner_telhub.widgets.graphing_widgets import GraphDashboardWidget
@@ -20,22 +20,42 @@ from ner_telhub.widgets.graphing_widgets import GraphDashboardWidget
 class GraphDialog(QDialog):
     """Shows a dashboard for data in the system."""
 
-    def __init__(self, parent: QWidget, model: DataModel):
+    def __init__(self, parent: QWidget, model: DataModelManager):
         super().__init__(parent)
         self.setWindowTitle("Graph View")
+
+        toolbar = QToolBar()
+        toolbar.setStyleSheet("background-color: white; padding: 5%")
+        self.screen_button = QPushButton("Full Screen")
+        self.screen_button.setStyleSheet("color: white; background-color: #999999; padding: 3% 8%; margin-right: 5%")
+        self.screen_button.pressed.connect(self.changeScreen)
+        toolbar.addWidget(self.screen_button)
+
         layout = QVBoxLayout()
+        layout.addWidget(toolbar)
         layout.addWidget(GraphDashboardWidget(model))
         self.setLayout(layout)
+
+    def changeScreen(self):
+        if self.screen_button.text() == "Full Screen":
+            self.showFullScreen()
+            self.screen_button.setText("Minimize")
+        else:
+            self.showNormal()
+            self.screen_button.setText("Full Screen")
+
+    
+
 
 
 class ExportDialog(QDialog):
     """Dialog to export data to a CSV file."""
 
-    def __init__(self, parent: QWidget, data_model: DataModel):
+    def __init__(self, parent: QWidget, model: DataModelManager):
         super().__init__(parent)
 
         self.setWindowTitle("Export CSV")
-        self.data_model = data_model
+        self.model = model
 
         self.filename_input = QLineEdit()
         self.directory_input = QLineEdit()
@@ -70,7 +90,7 @@ class ExportDialog(QDialog):
         directory = self.directory_input.text()
         full_path = directory + "/" + filename
 
-        worker = self.data_model.getCSVWorker(full_path)
+        worker = self.model.getCSVWorker(full_path)
         worker.signals.error.connect(lambda error : QMessageBox.critical(self, "Export Error", error[1].__str__()))
         worker.signals.message.connect(lambda msg : QMessageBox.about(self, "Export Status", msg))
         try:
@@ -91,15 +111,13 @@ class ExportDialog(QDialog):
             raise ValueError("Invalid file name format")
 
 
-
 class FileView(QWidget):
     """View section with file information and control."""
 
-    def __init__(self, file_model: FileModel, data_model: DataModel):
+    def __init__(self, file_model: FileModel):
         super(FileView, self).__init__()
 
         self.file_model = file_model
-        self.data_model = data_model
 
         header = QLabel("Selected Files")
         header.setStyleSheet("font-size: 16px; font-weight: 400")
@@ -142,7 +160,7 @@ class FileView(QWidget):
 class ProcessView(QWidget):
     """View section with processing information an control."""
 
-    def __init__(self, file_model: FileModel, data_model: DataModel):
+    def __init__(self, file_model: FileModel, data_model: DataModelManager):
         super(ProcessView, self).__init__()
 
         self.process_started = False
@@ -178,6 +196,7 @@ class ProcessView(QWidget):
 
     def start_process(self):
         if self.can_start():
+            self.data_model.deleteAllData()
             self.process_started = True
             self.start_button.setText("Stop")
             self.start_button.setStyleSheet("color: white; background-color: #FF5656")
@@ -213,8 +232,8 @@ class ProcessView(QWidget):
     def can_start(self) -> bool:
         if self.process_started:
             return False
-        elif self.data_model.rowCount(0) != 0:
-            button = QMessageBox.question(self, "Warning", "Model already contains data, this will add onto the end. \n" \
+        elif not self.data_model.isEmpty():
+            button = QMessageBox.question(self, "Warning", "Current model data will be lost. \n" \
                 "Would you like to continue?")
             return button == QMessageBox.StandardButton.Yes
         else:
@@ -235,7 +254,7 @@ class ProcessView(QWidget):
 class OptionsView(QWidget):
     """Menu for actions on the data processed from the SD log files."""
 
-    def __init__(self, data_model: DataModel):
+    def __init__(self, data_model: DataModelManager):
         super(OptionsView, self).__init__()
 
         self.data_model = data_model
@@ -305,7 +324,7 @@ class OptionsView(QWidget):
         self.setLayout(main_layout)
 
     def modelUpdated(self):
-        self.model_info.setText(f"{self.data_model.rowCount(0)} data points")
+        self.model_info.setText(f"{self.data_model.getDataCount()} data points")
 
     def generateLayout(self, label: str):
         layout = QVBoxLayout()
@@ -316,7 +335,7 @@ class OptionsView(QWidget):
         return layout
 
     def clearModel(self):
-        self.data_model.deleteAll()
+        self.data_model.deleteAllData()
         self.modelUpdated()
 
     def setFilterMethod(self, checked):
@@ -383,7 +402,7 @@ class SdCardWindow(QMainWindow):
         self.setMinimumSize(QSize(800, 480))
 
         file_model = FileModel()
-        data_model = DataModel()
+        data_model = DataModelManager()
 
         # Setup menu bar
         menu = self.menuBar()
@@ -404,7 +423,7 @@ class SdCardWindow(QMainWindow):
 
         # Setup window
         hlayout = QHBoxLayout()
-        hlayout.addWidget(FileView(file_model, data_model))
+        hlayout.addWidget(FileView(file_model))
         hlayout.addWidget(ProcessView(file_model, data_model))
 
         vlayout = QVBoxLayout()

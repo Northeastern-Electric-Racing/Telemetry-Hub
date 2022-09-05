@@ -13,6 +13,7 @@ from ner_telhub.view.vehicle.test_view import TestView
 
 from ner_telhub.utils.xbee import XBee, XBeeException
 
+from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.model.message_models import MessageModel
 from ner_telhub.model.filter_models import ReceiveFilterModel, SendFilterModel
 
@@ -21,6 +22,7 @@ class VehicleWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        self.data_model = DataModelManager()
         self.message_model = MessageModel()
         self.receive_filter_model = ReceiveFilterModel()
         self.send_filter_model = SendFilterModel()
@@ -29,7 +31,7 @@ class VehicleWindow(QMainWindow):
 
         self.views = {
             0: ("CAN", CanView(self.message_model, self.receive_filter_model, self.send_filter_model)), 
-            1: ("Data", DataView(self.message_model)), 
+            1: ("Data", DataView(self.data_model)), 
             2: ("Test", TestView(self.message_model))
         }
 

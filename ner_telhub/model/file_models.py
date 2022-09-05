@@ -1,63 +1,99 @@
 import os
-from typing import List, Tuple
-from PyQt6.QtCore import QAbstractListModel, Qt, pyqtBoundSignal
+from typing import List
+from PyQt6.QtCore import (
+    QAbstractListModel, Qt, 
+    pyqtBoundSignal, QModelIndex
+)
 
-from ner_telhub.model.data_models import DataModel
-from ner_processing.decode_files import LogFormat, process_line
+from ner_processing.decode_files import LogFormat, processLine
+from ner_processing.message import Message
+from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.utils.threads import Worker
 
 
 class FileModel(QAbstractListModel):
-    """A model class to represent the log files in the system."""
+    """
+    A model class to represent the log files in the system.
+    """
 
-    def __init__(self, *args, **kwargs):
-        super(FileModel, self).__init__(*args, **kwargs)
-        self.__filepaths = []
-        self.file_format = LogFormat.TEXTUAL1 # Default format
+    def __init__(self, format=LogFormat.TEXTUAL1) -> None:
+        """
+        Initializes the model with a certain format.
+        """
+        super(FileModel, self).__init__()
+        self._filepaths = []
+        self.file_format = format
 
-    def data(self, index, role):
+    def data(self, index: QModelIndex, role: int) -> str:
+        """
+        Gets the data at the specified index in the specified form.
+        """
         if role == Qt.ItemDataRole.DisplayRole:
-            filepath = self.__filepaths[index.row()]
+            filepath = self._filepaths[index.row()]
             return filepath
 
-    def rowCount(self, index):
-        return len(self.__filepaths)
+    def rowCount(self, index=None) -> int:
+        """
+        Gets the number of elements in the model.
+        """
+        return len(self._filepaths)
 
-    def addFile(self, filepath: str):
-        self.__filepaths.append(filepath)
+    def addFile(self, filepath: str) -> None:
+        """
+        Adds a filepath to the model.
+        """
+        self._filepaths.append(filepath)
         self.layoutChanged.emit()
 
-    def deleteFile(self, index):
-        del self.__filepaths[index.row()]
+    def deleteFile(self, index: QModelIndex) -> None:
+        """
+        Removes the filepath at the specified index.
+        """
+        self._filepaths.pop(index.row())
         self.layoutChanged.emit()
 
-    def deleteAll(self):
-        self.__filepaths.clear()
+    def deleteAll(self) -> None:
+        """
+        Removes all files in the model.
+        """
+        self._filepaths.clear()
         self.layoutChanged.emit()
 
     def getFormat(self) -> LogFormat:
+        """
+        Gets the format of the model.
+        """
         return self.file_format
 
     def setFormat(self, format: LogFormat) -> None:
+        """
+        Sets the format of the model.
+        """
         self.file_format = format
 
-
-    def getProcessWorker(self, model: DataModel) -> Worker:
-        """Returns a worker to process this model's log file paths, storing results 
+    def getProcessWorker(self, manager: DataModelManager) -> Worker:
+        """
+        Returns a worker to process this file model's log file paths, storing results 
         in the given data model.
         """
-
-        return Worker(self.processFileData, *self.__filepaths, format=self.file_format, data_model=model)
-
+        return Worker(self._processFileData, *self._filepaths, format=self.file_format, manager=manager)
 
     @staticmethod
-    def processFileData(*args, **kwargs) -> None:
-        """Processes a file from inside a Worker thread."""
-
+    def _processFileData(*args, **kwargs) -> None:
+        """
+        Processes a file from inside a Worker thread.
+        
+        CAUTION
+        -------
+        This is a worker function meant to be called from a thread (see Worker).
+        Is expecting the following external arguments:
+            - kwargs["format"] : LogFormat
+            - kwargs["manager"] : DataModelManager
+        """
         try:
             filepaths = args
             format: LogFormat = kwargs["format"]
-            model: DataModel = kwargs["data_model"]
+            manager: DataModelManager = kwargs["manager"]
             progress_signal: pyqtBoundSignal = kwargs["progress"]
             message_signal: pyqtBoundSignal = kwargs["message"]
         except:
@@ -79,8 +115,8 @@ class FileModel(QAbstractListModel):
                     file_line_count += 1
                     lines_processed += 1
                     try:
-                        timestamp, id, length, data = process_line(line, format)
-                        processed_data.extend(model.processData(id, timestamp, length, data))
+                        message: Message = processLine(line, format)
+                        processed_data.extend(message.decode())
                     except:
                         error_count += 1
                         message_signal.emit(f" Error processing line {file_line_count}")
@@ -92,19 +128,18 @@ class FileModel(QAbstractListModel):
                         progress_signal.emit(progress_pct)
                 message_signal.emit(f"Done with file {fp}")
 
-        model.addDataList(processed_data)
+        manager.addDataList(processed_data)
         message_signal.emit(f"Total message count: {lines_processed}")
-
 
     @staticmethod
     def getLineCount(filepaths: List[str]) -> int:
-        """Gets the total line count of all the files in the list.
+        """
+        Gets the total line count of all the files in the list.
         
         There is no native way to get line counts of files without looping, so 
         this function gets the total size and estimates the line count based
         on a subset of N lines.
         """
-
         if len(filepaths) == 0:
             return 0
 

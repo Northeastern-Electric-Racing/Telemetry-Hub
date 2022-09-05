@@ -3,20 +3,21 @@ from PyQt6.QtWidgets import (
     QPushButton
 )
 
-from ner_telhub.model.data_models import DataModel
+from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.widgets.graphing_widgets import GraphDashboardWidget
 
 
 class DataView(QWidget):
-    def __init__(self, model: DataModel):
+    def __init__(self, model: DataModelManager):
         super(DataView, self).__init__()
 
         toolbar = QToolBar()
+        toolbar.setStyleSheet("background-color: white; padding: 5%")
         start_button = QPushButton("Start")
-        start_button.setStyleSheet("color: white; background-color: #07D807")
+        start_button.setStyleSheet("color: white; background-color: #07D807; padding: 3% 8%; margin-right: 5%")
         start_button.pressed.connect(self.start)
         record_button = QPushButton("Record")
-        record_button.setStyleSheet("color: white; background-color: #0977E6")
+        record_button.setStyleSheet("color: white; background-color: #0977E6; padding: 3% 8%; margin-right: 5%")
         record_button.pressed.connect(self.record)
         toolbar.addWidget(start_button)
         toolbar.addWidget(record_button)
