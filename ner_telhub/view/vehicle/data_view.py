@@ -8,6 +8,10 @@ from ner_telhub.widgets.graphing_widgets import GraphDashboardWidget
 
 
 class DataView(QWidget):
+    """
+    View for graphing data.
+    """
+    
     def __init__(self, model: DataModelManager):
         super(DataView, self).__init__()
 

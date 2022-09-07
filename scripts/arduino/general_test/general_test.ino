@@ -17,34 +17,18 @@ typedef struct control {
   uint8_t data[8];    // 8 bytes of data
 } control_t;
 
-
-
 data_t dbuf[10];
-
 
 char buf[MAX_MESSAGE_SIZE + 1]; // +1 for termination
 int index = 0;
 int started = false;
 
-
+long startTime = 1654705626.000;
 
 void setup() {
   Serial.begin(9600);
 }
 
-
-void sendMessage() {
-  static unsigned long last = millis();
-  if (millis() - last > 1000) {
-    Serial.print(START_TOKEN);
-    Serial.print("1654705626.274 1 1 1");
-    Serial.print(START_TOKEN);
-    Serial.print("1654705626.274 2 4 1 2 3 4");
-    Serial.print(START_TOKEN);
-    Serial.print("1654705626.274 3 6 1 2 3 4 5 6");
-    last = millis();
-  }
-}
 
 
 void printData(int index) {
@@ -100,4 +84,17 @@ void loop() {
 
   sendMessage();
   
+}
+
+void sendMessage() {
+  static unsigned long last = millis();
+  if (millis() - last > 200) {
+    startTime++;
+    Serial.print(START_TOKEN);
+    Serial.print(startTime);
+    Serial.print(".");
+    Serial.print("000");
+    Serial.print(" 514 8 100 0 24 0 0 0 0 0");
+    last = millis();
+  }
 }

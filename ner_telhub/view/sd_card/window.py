@@ -47,7 +47,6 @@ class GraphDialog(QDialog):
     
 
 
-
 class ExportDialog(QDialog):
     """Dialog to export data to a CSV file."""
 

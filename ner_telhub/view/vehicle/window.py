@@ -11,19 +11,63 @@ from ner_telhub.view.vehicle.can_view import CanView
 from ner_telhub.view.vehicle.data_view import DataView
 from ner_telhub.view.vehicle.test_view import TestView
 
-from ner_telhub.utils.xbee import XBee, XBeeException
-
+from ner_processing.live.xbee import XBee, XBeeException
 from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.model.message_models import MessageModel
 from ner_telhub.model.filter_models import ReceiveFilterModel, SendFilterModel
 
 
+
+class ConnectionDialog(QDialog):
+    """
+    Connection dialog showing serial port connection information.
+    """
+    
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.setWindowTitle("Wireless Connection")
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(QLabel("Choose from the available ports:"))
+
+        self.ports = XBee.port_info()
+
+        if len(self.ports) == 0:
+            self.layout.addWidget(QLabel("No connections found"))
+
+        self.com_options = []
+        for i in range(len(self.ports)):
+            self.com_options.append(QRadioButton(f"{self.ports[i][0]} - {self.ports[i][1]}"))
+            self.layout.addWidget(self.com_options[i])
+
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        self.buttonBox.accepted.connect(self.onAccept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
+    
+    def onAccept(self):
+        for i in range(len(self.com_options)):
+            if self.com_options[i].isChecked():
+                print("Connecting to port: ", self.com_options[i].text())
+                self.parentWidget().port_name = self.ports[i][0]
+                self.accept()
+                return
+            self.reject()
+
+
 class VehicleWindow(QMainWindow):
+    """
+    Main vehicle window containing various views.
+    """
+
     def __init__(self):
         super().__init__()
 
         self.data_model = DataModelManager()
-        self.message_model = MessageModel()
+        self.message_model = MessageModel(self.data_model)
         self.receive_filter_model = ReceiveFilterModel()
         self.send_filter_model = SendFilterModel()
         self.connection = XBee(self.message_model)
@@ -31,8 +75,7 @@ class VehicleWindow(QMainWindow):
 
         self.views = {
             0: ("CAN", CanView(self.message_model, self.receive_filter_model, self.send_filter_model)), 
-            1: ("Data", DataView(self.data_model)), 
-            2: ("Test", TestView(self.message_model))
+            1: ("Data", DataView(self.data_model))
         }
 
         # Window config
@@ -64,26 +107,21 @@ class VehicleWindow(QMainWindow):
 
         views_select_can = QAction(self.views.get(0)[0], self)
         views_select_data = QAction(self.views.get(1)[0], self)
-        views_select_test = QAction(self.views.get(2)[0], self)
-        views_select_can.triggered.connect(self.select_can_view)
-        views_select_data.triggered.connect(self.select_data_view)
-        views_select_test.triggered.connect(self.select_test_view)
+        views_select_can.triggered.connect(self.selectCanView)
+        views_select_data.triggered.connect(self.selectDataView)
         views_menu.addAction(views_select_can)
         views_menu.addAction(views_select_data)
-        views_menu.addAction(views_select_test)
 
         self.current_view_menu = menu.addMenu(self.views.get(self.main_layout.currentIndex())[0])
         self.current_view_menu.setDisabled(True)
     
-    def select_can_view(self):
+    def selectCanView(self):
         self.main_layout.setCurrentIndex(0)
         self.current_view_menu.setTitle(self.views.get(0)[0])
-    def select_data_view(self):
+
+    def selectDataView(self):
         self.main_layout.setCurrentIndex(1)
         self.current_view_menu.setTitle(self.views.get(1)[0])
-    def select_test_view(self):
-        self.main_layout.setCurrentIndex(2)
-        self.current_view_menu.setTitle(self.views.get(2)[0])
 
     def connect(self):
         dlg = ConnectionDialog(self)
@@ -108,39 +146,4 @@ class VehicleWindow(QMainWindow):
         QMessageBox.information(self, "Disconnection Status", msg)
 
 
-
-class ConnectionDialog(QDialog):
-    def __init__(self, parent):
-        super().__init__(parent)
-
-        self.setWindowTitle("Wireless Connection")
-
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(QLabel("Choose from the available ports:"))
-
-        self.ports = XBee.port_info()
-
-        if len(self.ports) == 0:
-            self.layout.addWidget(QLabel("No connections found"))
-
-        self.com_options = []
-        for i in range(len(self.ports)):
-            self.com_options.append(QRadioButton(f"{self.ports[i][0]} - {self.ports[i][1]}"))
-            self.layout.addWidget(self.com_options[i])
-
-        self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        self.buttonBox.accepted.connect(self.on_accept)
-        self.buttonBox.rejected.connect(self.reject)
-
-        self.layout.addWidget(self.buttonBox)
-        self.setLayout(self.layout)
-    
-    def on_accept(self):
-        for i in range(len(self.com_options)):
-            if self.com_options[i].isChecked():
-                print("Connecting to port: ", self.com_options[i].text())
-                self.parentWidget().port_name = self.ports[i][0]
-                self.accept()
-                return
-            self.reject()
             

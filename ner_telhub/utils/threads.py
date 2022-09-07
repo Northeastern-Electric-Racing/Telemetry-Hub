@@ -94,23 +94,6 @@ class Worker(QRunnable):
         self.signals.finished.emit()
 
 
-"""
-TODO:
-- testing and cleanup   
-    - cleanup error messages and popup windows
-    - connect stopping to the correct SD window slots (for proper notifications)
-
-Future
-- Data model speed refactor
-    - use dask/vaex/modin.pandas in data model instead of list
-    - change to tuple instead of Data class (analyze RAM differences)
-- look into more thread safety/error handling
-- add some visualization for exporting a csv progress (default thread progress visualization?)
-
-"""
-
-        
-
 
 
 

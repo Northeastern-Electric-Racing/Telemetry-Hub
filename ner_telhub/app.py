@@ -23,6 +23,10 @@ except ImportError:
 
 
 class MainWindow(QMainWindow):
+    """
+    Main window which opens first when running the app.
+    """
+
     def __init__(self):
         super().__init__()
 
@@ -55,10 +59,11 @@ class MainWindow(QMainWindow):
         network_button = QPushButton("Network")
         sd_card_button = QPushButton("SD Card")
         database_button = QPushButton("Database")
-        vehicle_button.clicked.connect(self.open_vehicle_window)
-        network_button.clicked.connect(self.open_network_window)
-        sd_card_button.clicked.connect(self.open_sd_card_window)
-        database_button.clicked.connect(self.open_database_window)
+        vehicle_button.clicked.connect(self.openVehicleWindow)
+        network_button.clicked.connect(self.openNetworkWindow)
+        sd_card_button.clicked.connect(self.openSdCardWindow)
+        database_button.clicked.connect(self.openDatabaseWindow)
+        vehicle_button.setStyleSheet("color: white; background-color: #FF5656")
         sd_card_button.setStyleSheet("color: white; background-color: #FF5656")
         network_button.setDisabled(True)
         database_button.setDisabled(True)
@@ -71,7 +76,7 @@ class MainWindow(QMainWindow):
         widget.setLayout(layout)
         self.setCentralWidget(widget)
 
-    def open_vehicle_window(self):
+    def openVehicleWindow(self):
         if self.vehicle_window is None:
             self.vehicle_window = VehicleWindow()
             self.vehicle_window.show()
@@ -79,7 +84,7 @@ class MainWindow(QMainWindow):
             self.vehicle_window.close()
             self.vehicle_window = None
 
-    def open_network_window(self):
+    def openNetworkWindow(self):
         if self.network_window is None:
             self.network_window = NetworkWindow()
             self.network_window.show()
@@ -87,7 +92,7 @@ class MainWindow(QMainWindow):
             self.network_window.close()
             self.network_window = None
 
-    def open_sd_card_window(self):
+    def openSdCardWindow(self):
         if self.sd_card_window is None:
             self.sd_card_window = SdCardWindow()
             self.sd_card_window.show()
@@ -95,7 +100,7 @@ class MainWindow(QMainWindow):
             self.sd_card_window.close()
             self.sd_card_window = None
 
-    def open_database_window(self):
+    def openDatabaseWindow(self):
         if self.database_window is None:
             self.database_window = DatabaseWindow()
             self.database_window.show()

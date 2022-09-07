@@ -10,6 +10,10 @@ from PyQt6.QtCore import QSize, Qt
 
 
 class ReceiveFilters(QWidget):
+    """
+    Section to define inputs for adding receive filters.
+    """
+    
     def __init__(self, model):
         super(ReceiveFilters, self).__init__()
 
@@ -81,6 +85,10 @@ class ReceiveFilters(QWidget):
 
 
 class SendFilters(QWidget):
+    """
+    Section to define inputs for adding send filters.
+    """
+
     def __init__(self, model):
         super(SendFilters, self).__init__()
 
@@ -99,7 +107,6 @@ class SendFilters(QWidget):
         self.del_button = QPushButton("Delete")
         self.add_button.pressed.connect(self.add)
         self.del_button.pressed.connect(self.delete)
-
 
         # Style basic widgets
         self.header.setStyleSheet("font-size: 30px; font-weight: bold")
@@ -167,6 +174,10 @@ class SendFilters(QWidget):
 
 
 class MessageFeed(QWidget):
+    """
+    Section showing the current message feed.
+    """
+    
     def __init__(self, model):
         super(MessageFeed, self).__init__()
 
@@ -201,6 +212,10 @@ class MessageFeed(QWidget):
 
 
 class CanView(QWidget):
+    """
+    Main CAN view class.
+    """
+    
     def __init__(self, message_model, receive_filter_model, send_filter_model):
         super(CanView, self).__init__()
 

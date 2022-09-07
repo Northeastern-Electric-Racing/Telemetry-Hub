@@ -3,11 +3,16 @@ from PyQt6.QtWidgets import (
     QVBoxLayout, QWidget, QPushButton, 
     QListView
 )
+from PyQt6.QtCore import QDateTime
 
 from ner_telhub.model.message_models import Message
 
 
 class MessageFeed(QWidget):
+    """
+    Text box used for reading in the current message feed.
+    """
+
     def __init__(self, model):
         super(MessageFeed, self).__init__()
 
@@ -17,7 +22,6 @@ class MessageFeed(QWidget):
 
         self.timestamp_entry = QLineEdit()
         self.id_entry = QLineEdit()
-        self.length_entry = QLineEdit()
         self.data_entry = QLineEdit()
 
         layout_entry = QGridLayout()
@@ -25,10 +29,8 @@ class MessageFeed(QWidget):
         layout_entry.addWidget(self.timestamp_entry, 0, 1)
         layout_entry.addWidget(QLabel("Id:"), 1, 0)
         layout_entry.addWidget(self.id_entry, 1, 1)
-        layout_entry.addWidget(QLabel("Length:"), 2, 0)
-        layout_entry.addWidget(self.length_entry, 2, 1)
-        layout_entry.addWidget(QLabel("Data:"), 3, 0)
-        layout_entry.addWidget(self.data_entry, 3, 1)
+        layout_entry.addWidget(QLabel("Data:"), 2, 0)
+        layout_entry.addWidget(self.data_entry, 2, 1)
 
         self.add_button = QPushButton("Add")
         self.delete_button = QPushButton("Delete")
@@ -45,13 +47,12 @@ class MessageFeed(QWidget):
 
     def add(self):
         try:
-            timestamp = float(self.timestamp_entry.text())
+            timestamp = QDateTime.fromMSecsSinceEpoch(int(float(self.timestamp_entry.text())*1000))
             id = int(self.id_entry.text())
-            length = int(self.length_entry.text())
             data = self.data_entry.text()
             data = [int(s) for s in data.split(" ")]
 
-            msg = Message(timestamp, id, length, data)
+            msg = Message(timestamp, id, data)
             self.model.addMessage(msg)
         except Exception as e:
             # TODO: Add popup window for error
@@ -59,7 +60,6 @@ class MessageFeed(QWidget):
 
         self.timestamp_entry.setText("")
         self.id_entry.setText("")
-        self.length_entry.setText("")
         self.data_entry.setText("")
 
     def delete(self):
@@ -72,8 +72,11 @@ class MessageFeed(QWidget):
             self.view.clearSelection()
 
 
-
 class TestView(QWidget):
+    """
+    Window to use for testing access to the message models.
+    """
+    
     def __init__(self, model):
         super(TestView, self).__init__()
         
