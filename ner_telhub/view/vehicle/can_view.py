@@ -1,13 +1,13 @@
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QLabel, QLineEdit, 
-    QHBoxLayout, QVBoxLayout, QWidget,
-    QSlider, QMenu, QSpinBox, QListView, QGridLayout,
-    QCheckBox
+    QLabel, QLineEdit, QHBoxLayout, 
+    QVBoxLayout, QWidget, QListView,
+    QGridLayout, QCheckBox
 )
-from PyQt6.QtGui import QAction, QPalette, QColor
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import Qt
 
 from ner_telhub.widgets.styled_widgets import NERButton
+from ner_telhub.model.filter_models import SendFilterModel, ReceiveFilterModel
+from ner_telhub.model.message_models import MessageModel
 
 
 class ReceiveFilters(QWidget):
@@ -15,8 +15,8 @@ class ReceiveFilters(QWidget):
     Section to define inputs for adding receive filters.
     """
     
-    def __init__(self, model):
-        super(ReceiveFilters, self).__init__()
+    def __init__(self, parent: QWidget, model: ReceiveFilterModel):
+        super(ReceiveFilters, self).__init__(parent)
 
         # Define basic widgets
         self.header = QLabel("Receive Filters")
@@ -88,8 +88,8 @@ class SendFilters(QWidget):
     Section to define inputs for adding send filters.
     """
 
-    def __init__(self, model):
-        super(SendFilters, self).__init__()
+    def __init__(self, parent: QWidget, model: SendFilterModel):
+        super(SendFilters, self).__init__(parent)
 
         # Define basic widgets
         self.header = QLabel("Send Filters")
@@ -175,36 +175,24 @@ class MessageFeed(QWidget):
     Section showing the current message feed.
     """
     
-    def __init__(self, model):
-        super(MessageFeed, self).__init__()
-
-        self.feed_started = False
+    def __init__(self, parent: QWidget, model: MessageModel):
+        super(MessageFeed, self).__init__(parent)
 
         self.view = QListView()
         self.model = model
         self.view.setModel(self.model)
 
-        self.play_button = NERButton("Start", NERButton.Styles.GREEN)
-        self.play_button.pressed.connect(self.play)
+        self.store_messages = False
+        self.store_message_checkbox = QCheckBox("record messages")
+        self.store_message_checkbox.setChecked(self.store_messages)
+        self.model.setRecordState(self.store_messages)
+        self.store_message_checkbox.stateChanged.connect(lambda state : self.model.setRecordState(state))
 
         layout = QVBoxLayout()
         layout.addWidget(self.view)
-        layout.addWidget(self.play_button)
+        layout.addWidget(self.store_message_checkbox)
 
         self.setLayout(layout)
-
-    def play(self):
-        self.feed_started = not self.feed_started
-
-        if self.feed_started:
-            self.play_button.setText("Stop")
-            self.play_button.changeStyle(NERButton.Styles.RED)
-            # TODO: Start printing messages
-        else:
-            self.play_button.setText("Start")
-            self.play_button.changeStyle(NERButton.Styles.GREEN)
-            # TODO: Stop printing Messages
-
 
 
 class CanView(QWidget):
@@ -212,15 +200,18 @@ class CanView(QWidget):
     Main CAN view class.
     """
     
-    def __init__(self, message_model, receive_filter_model, send_filter_model):
-        super(CanView, self).__init__()
+    def __init__(self, parent: QWidget,
+            message_model: MessageModel, 
+            receive_filter_model: ReceiveFilterModel, 
+            send_filter_model: SendFilterModel):
+        super(CanView, self).__init__(parent)
 
         filter_layout = QVBoxLayout()
-        filter_layout.addWidget(ReceiveFilters(receive_filter_model))
-        filter_layout.addWidget(SendFilters(send_filter_model))
+        filter_layout.addWidget(ReceiveFilters(self, receive_filter_model))
+        filter_layout.addWidget(SendFilters(self, send_filter_model))
         
         layout = QHBoxLayout()
-        layout.addWidget(MessageFeed(message_model))
+        layout.addWidget(MessageFeed(self, message_model))
         layout.addLayout(filter_layout)
 
         self.setLayout(layout)

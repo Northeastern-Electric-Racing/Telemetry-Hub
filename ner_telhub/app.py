@@ -30,13 +30,13 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.vehicle_window = None
-        self.sd_card_window = None
-        self.database_window = None
-
         self.setWindowTitle("Telemetry Hub")
         self.setFixedSize(QSize(400, 400))
         self.setWindowIcon(QIcon(os.path.join(resources, "ner_logo.ico")))
+
+        self.vehicle_window = None
+        self.sd_card_window = None
+        self.database_window = None
 
         layout = QVBoxLayout()
 
@@ -54,44 +54,41 @@ class MainWindow(QMainWindow):
         layout.addWidget(lbl)
 
         layout.addWidget(QLabel("Select an option below to connect to:"))
-        vehicle_button = NERButton("Vehicle", NERButton.Styles.RED)
-        sd_card_button = NERButton("SD Card", NERButton.Styles.RED)
-        database_button = NERButton("Database")
-        vehicle_button.clicked.connect(self.openVehicleWindow)
-        sd_card_button.clicked.connect(self.openSdCardWindow)
-        database_button.clicked.connect(self.openDatabaseWindow)
-        database_button.setDisabled(True)
-        layout.addWidget(vehicle_button)
-        layout.addWidget(sd_card_button)
-        layout.addWidget(database_button)
+        self.vehicle_button = NERButton("Vehicle", NERButton.Styles.RED)
+        self.sd_card_button = NERButton("SD Card", NERButton.Styles.RED)
+        self.database_button = NERButton("Database")
+        self.vehicle_button.clicked.connect(self.openVehicleWindow)
+        self.sd_card_button.clicked.connect(self.openSdCardWindow)
+        self.database_button.clicked.connect(self.openDatabaseWindow)
+        self.database_button.setDisabled(True)
+        layout.addWidget(self.vehicle_button)
+        layout.addWidget(self.sd_card_button)
+        layout.addWidget(self.database_button)
 
         widget = QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
 
     def openVehicleWindow(self):
-        if self.vehicle_window is None:
-            self.vehicle_window = VehicleWindow()
-            self.vehicle_window.show()
-        else:
-            self.vehicle_window.close()
-            self.vehicle_window = None
+        self.vehicle_button.setDisabled(True)
+        self.vehicle_window = VehicleWindow(self)
+        self.vehicle_window.destroyed.connect(lambda: self.vehicle_button.setDisabled(False))
+        self.vehicle_window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self.vehicle_window.show()
 
     def openSdCardWindow(self):
-        if self.sd_card_window is None:
-            self.sd_card_window = SdCardWindow()
-            self.sd_card_window.show()
-        else:
-            self.sd_card_window.close()
-            self.sd_card_window = None
+        self.sd_card_button.setDisabled(True)
+        self.sd_card_window = SdCardWindow(self)
+        self.sd_card_window.destroyed.connect(lambda: self.sd_card_button.setDisabled(False))
+        self.sd_card_window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self.sd_card_window.show()
 
     def openDatabaseWindow(self):
-        if self.database_window is None:
-            self.database_window = DatabaseWindow()
-            self.database_window.show()
-        else:
-            self.database_window.close()
-            self.database_window = None
+        self.database_button.setDisabled(True)
+        self.database_window = DatabaseWindow(self)
+        self.database_window.destroyed.connect(lambda: self.database_button.setDisabled(False))
+        self.database_window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self.database_window.show()
     
 
 def run():

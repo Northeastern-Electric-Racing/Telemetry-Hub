@@ -1,5 +1,7 @@
 import os
 from typing import List
+
+from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import (
     QAbstractListModel, Qt, 
     pyqtBoundSignal, QModelIndex
@@ -16,7 +18,7 @@ class FileModel(QAbstractListModel):
     A model class to represent the log files in the system.
     """
 
-    def __init__(self, format=LogFormat.TEXTUAL1) -> None:
+    def __init__(self, parent: QWidget, format=LogFormat.TEXTUAL1) -> None:
         """
         Initializes the model with a certain format.
         """

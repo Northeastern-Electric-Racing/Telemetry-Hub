@@ -1,34 +1,29 @@
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QStackedLayout, 
-    QMessageBox, QDialog, QDialogButtonBox, QHBoxLayout,
-    QVBoxLayout, QLabel, QGridLayout, 
-    QRadioButton, QButtonGroup
+    QMessageBox, QDialog, QDialogButtonBox,
+    QVBoxLayout, QLabel, QRadioButton,
+    QToolBar
 )
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QSize
 
-from ner_telhub.view.vehicle.can_view import CanView
-from ner_telhub.view.vehicle.data_view import DataView
-from ner_telhub.view.vehicle.test_view import TestView
+from ner_processing.live.xbee import XBee
+from ner_processing.live.live_input import LiveInput, LiveInputException
 
-from ner_telhub.view.sd_card.window import FileView
-from ner_telhub.view.sd_card.window import ProcessView
-from ner_telhub.model.file_models import FileModel
-from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
-
-from ner_processing.live.xbee import XBee, XBeeException
 from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.model.message_models import MessageModel
 from ner_telhub.model.filter_models import ReceiveFilterModel, SendFilterModel
-
-
+from ner_telhub.view.vehicle.can_view import CanView
+from ner_telhub.view.vehicle.data_view import DataView
+from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
+from ner_telhub.widgets.styled_widgets import NERButton
 
 class ConnectionDialog(QDialog):
     """
     Connection dialog showing serial port connection information.
     """
     
-    def __init__(self, parent):
+    def __init__(self, parent: QWidget):
         super().__init__(parent)
 
         self.setWindowTitle("Wireless Connection")
@@ -36,7 +31,7 @@ class ConnectionDialog(QDialog):
         self.layout = QVBoxLayout()
         self.layout.addWidget(QLabel("Choose from the available ports:"))
 
-        self.ports = XBee.port_info()
+        self.ports = XBee.serialPorts()
 
         if len(self.ports) == 0:
             self.layout.addWidget(QLabel("No connections found"))
@@ -56,11 +51,61 @@ class ConnectionDialog(QDialog):
     def onAccept(self):
         for i in range(len(self.com_options)):
             if self.com_options[i].isChecked():
-                print("Connecting to port: ", self.com_options[i].text())
                 self.parentWidget().port_name = self.ports[i][0]
                 self.accept()
                 return
             self.reject()
+
+
+class LiveToolbar(QToolBar):
+    def __init__(self, parent: QWidget, message_model: MessageModel, data_model: DataModelManager, input: LiveInput):
+        super(LiveToolbar, self).__init__(parent)
+
+        self.message_model = message_model
+        self.model = data_model
+        self.input = input
+        self.feed_started = False
+
+        self.setStyleSheet("background-color: white; padding: 5%")
+        self.start_button = NERButton("Start", NERButton.Styles.GREEN)
+        self.start_button.addStyle("margin-right: 5%")
+        self.start_button.pressed.connect(self.start)
+        clear_button = NERButton("Clear", NERButton.Styles.RED)
+        clear_button.addStyle("margin-right: 5%")
+        clear_button.pressed.connect(self.clear)
+        record_button = NERButton("Record", NERButton.Styles.BLUE)
+        record_button.addStyle("margin-right: 5%")
+        record_button.pressed.connect(self.record)
+        self.addWidget(self.start_button)
+        self.addWidget(clear_button)
+        self.addWidget(record_button)
+    
+    def start(self):
+        if not self.feed_started:
+            try:
+                self.input.start()
+                self.start_button.setText("Stop")
+                self.start_button.changeStyle(NERButton.Styles.RED)
+                self.start_button.addStyle("margin-right: 5%")
+                self.feed_started = not self.feed_started
+            except LiveInputException as e:
+                QMessageBox.information(self, "Couldn't start input: ", e.message)
+        else:
+            try:
+                self.input.stop()
+                self.start_button.setText("Start")
+                self.start_button.changeStyle(NERButton.Styles.GREEN)
+                self.start_button.addStyle("margin-right: 5%")
+                self.feed_started = not self.feed_started
+            except LiveInputException as e:
+                QMessageBox.information(self, "Couldn't stop input:", e.message)
+
+    def clear(self):
+        self.model.deleteAllData()
+        self.message_model.deleteAllMessages()
+
+    def record(self):
+        pass
 
 
 class VehicleWindow(QMainWindow):
@@ -68,31 +113,35 @@ class VehicleWindow(QMainWindow):
     Main vehicle window containing various views.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent: QWidget):
+        super().__init__(parent)
 
-        self.data_model = DataModelManager()
-        self.message_model = MessageModel(self.data_model)
-        self.receive_filter_model = ReceiveFilterModel()
-        self.send_filter_model = SendFilterModel()
+        self.data_model = DataModelManager(self)
+        self.message_model = MessageModel(self, self.data_model)
+        self.receive_filter_model = ReceiveFilterModel(self)
+        self.send_filter_model = SendFilterModel(self)
         self.connection = XBee(self.message_model)
+        self.connection.addCallback("vehicle", self.message_model.addMessage)
         self.port_name = None
 
         self.views = {
-            0: ("CAN", CanView(self.message_model, self.receive_filter_model, self.send_filter_model)), 
-            1: ("Data", DataView(self.data_model))
+            0: ("CAN", CanView(self, self.message_model, self.receive_filter_model, self.send_filter_model)), 
+            1: ("Data", DataView(self, self.data_model))
         }
 
         # Window config
         self.setWindowTitle("Telemetry Hub")
         self.setMinimumSize(QSize(800, 480))
 
-        # Multi-view config
-        self.main_layout = QStackedLayout()
+        # Multi-view layout config
+        self.stacked_layout = QStackedLayout()
         for view in self.views.values():
-            self.main_layout.addWidget(view[1])
+            self.stacked_layout.addWidget(view[1])
+        self.main_layout = QVBoxLayout()
+        self.main_layout.addWidget(LiveToolbar(self, self.message_model, self.data_model, self.connection))
+        self.main_layout.addLayout(self.stacked_layout)
 
-        widget = QWidget()
+        widget = QWidget(self)
         widget.setLayout(self.main_layout)
         self.setCentralWidget(widget)
 
@@ -110,17 +159,10 @@ class VehicleWindow(QMainWindow):
         file_menu.addAction(file_action_1)
         file_menu.addAction(file_action_2)
 
-        file_model = FileModel()
-
         help_action_1 = help_menu.addAction("Message Info")
         help_action_2 = help_menu.addAction("Data Info")
         help_action_1.triggered.connect(lambda : MessageIds(self).show())
         help_action_2.triggered.connect(lambda : DataIds(self).show())
-
-        # Setup window
-        hlayout = QHBoxLayout()
-        hlayout.addWidget(FileView(file_model))
-        hlayout.addWidget(ProcessView(file_model, self.data_model))
 
         views_select_can = QAction(self.views.get(0)[0], self)
         views_select_data = QAction(self.views.get(1)[0], self)
@@ -129,15 +171,15 @@ class VehicleWindow(QMainWindow):
         views_menu.addAction(views_select_can)
         views_menu.addAction(views_select_data)
 
-        self.current_view_menu = menu.addMenu(self.views.get(self.main_layout.currentIndex())[0])
+        self.current_view_menu = menu.addMenu(self.views.get(self.stacked_layout.currentIndex())[0])
         self.current_view_menu.setDisabled(True)
     
     def selectCanView(self):
-        self.main_layout.setCurrentIndex(0)
+        self.stacked_layout.setCurrentIndex(0)
         self.current_view_menu.setTitle(self.views.get(0)[0])
 
     def selectDataView(self):
-        self.main_layout.setCurrentIndex(1)
+        self.stacked_layout.setCurrentIndex(1)
         self.current_view_menu.setTitle(self.views.get(1)[0])
 
     def connect(self):
@@ -147,20 +189,20 @@ class VehicleWindow(QMainWindow):
         # If a proper port was selected
         if port_status == 1:
             try:
-                self.connection.start(self.port_name)
+                self.connection.connect(self.port_name)
                 msg = "Successfully connected to " + self.port_name
-            except XBeeException as xe:
-                msg = xe.message
+            except LiveInputException as e:
+                msg = e.message
+            except TypeError as e:
+                msg = "Internal Error"
             QMessageBox.information(self, "Connection Status", msg)
 
     def disconnect(self):
         try:
-            self.connection.stop()
+            self.connection.disconnect()
             msg = "Successfully disconnected from the serial port"
             self.port_name = None
-        except XBeeException as xe:
-            msg = xe.message
+        except LiveInputException as e:
+            msg = e.message
         QMessageBox.information(self, "Disconnection Status", msg)
 
-
-            

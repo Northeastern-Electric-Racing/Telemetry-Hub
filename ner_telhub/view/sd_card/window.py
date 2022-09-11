@@ -34,7 +34,7 @@ class GraphDialog(QDialog):
 
         layout = QVBoxLayout()
         layout.addWidget(toolbar)
-        layout.addWidget(GraphDashboardWidget(model))
+        layout.addWidget(GraphDashboardWidget(parent, model, False))
         self.setLayout(layout)
 
     def changeScreen(self):
@@ -114,8 +114,8 @@ class ExportDialog(QDialog):
 class FileView(QWidget):
     """View section with file information and control."""
 
-    def __init__(self, file_model: FileModel):
-        super(FileView, self).__init__()
+    def __init__(self, parent: QWidget, file_model: FileModel):
+        super(FileView, self).__init__(parent)
 
         self.file_model = file_model
 
@@ -158,8 +158,8 @@ class FileView(QWidget):
 class ProcessView(QWidget):
     """View section with processing information an control."""
 
-    def __init__(self, file_model: FileModel, data_model: DataModelManager):
-        super(ProcessView, self).__init__()
+    def __init__(self, parent: QWidget, file_model: FileModel, data_model: DataModelManager):
+        super(ProcessView, self).__init__(parent)
 
         self.process_started = False
         self.worker = None
@@ -247,12 +247,11 @@ class ProcessView(QWidget):
 
 
 
-
 class OptionsView(QWidget):
     """Menu for actions on the data processed from the SD log files."""
 
-    def __init__(self, data_model: DataModelManager):
-        super(OptionsView, self).__init__()
+    def __init__(self, parent: QWidget, data_model: DataModelManager):
+        super(OptionsView, self).__init__(parent)
 
         self.data_model = data_model
         self.data_model.layoutChanged.connect(self.modelUpdated)
@@ -355,8 +354,8 @@ class OptionsView(QWidget):
 class FormatGroup(QWidget):
     """Defines format selection menu inputs for a file model."""
 
-    def __init__(self, file_model: FileModel):
-        super().__init__()
+    def __init__(self, parent: QWidget, file_model: FileModel):
+        super().__init__(parent)
 
         self.file_model = file_model
         self.options: Dict[int, QAction] = {}
@@ -388,14 +387,14 @@ class FormatGroup(QWidget):
 class SdCardWindow(QMainWindow):
     """Main window in for the SD Card connection."""
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent: QWidget):
+        super().__init__(parent)
 
         self.setWindowTitle("Telemetry Hub")
         self.setMinimumSize(QSize(800, 480))
 
-        file_model = FileModel()
-        data_model = DataModelManager()
+        file_model = FileModel(self)
+        data_model = DataModelManager(self)
 
         # Setup menu bar
         menu = self.menuBar()
@@ -406,7 +405,7 @@ class SdCardWindow(QMainWindow):
         edit_action_export = edit_menu.addAction("Export")
         edit_action_reset = edit_menu.addAction("Reset")
         format_menu = edit_menu.addMenu("Format")
-        formats = FormatGroup(file_model)
+        formats = FormatGroup(self, file_model)
         formats.addToMenu(format_menu)
         
         help_action_1 = help_menu.addAction("Message Info")
@@ -416,12 +415,12 @@ class SdCardWindow(QMainWindow):
 
         # Setup window
         hlayout = QHBoxLayout()
-        hlayout.addWidget(FileView(file_model))
-        hlayout.addWidget(ProcessView(file_model, data_model))
+        hlayout.addWidget(FileView(self, file_model))
+        hlayout.addWidget(ProcessView(self, file_model, data_model))
 
         vlayout = QVBoxLayout()
         vlayout.addLayout(hlayout)
-        vlayout.addWidget(OptionsView(data_model))
+        vlayout.addWidget(OptionsView(self, data_model))
 
         widget = QWidget()
         widget.setLayout(vlayout)
