@@ -6,8 +6,11 @@ name = "pypi"
 [packages]
 pyqt6 = "*"
 pyqt6-charts = "*"
+numpy = "*"
 
 [dev-packages]
+black = "*"
+pyinstaller = "*"
 
 [requires]
 python_version = "3.10"

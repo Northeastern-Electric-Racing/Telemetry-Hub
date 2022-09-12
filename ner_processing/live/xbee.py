@@ -1,8 +1,9 @@
 from PyQt6.QtSerialPort import QSerialPort, QSerialPortInfo
 
-from PyQt6.QtCore import QIODeviceBase
+from PyQt6.QtCore import QIODeviceBase, QDateTime
 
-from model.message_models import Message, MessageFormatException
+from ner_processing.message import Message, MessageFormatException
+from ner_processing.live.live_input import LiveInput
 
 
 class XBeeException(Exception):
@@ -10,8 +11,12 @@ class XBeeException(Exception):
         self.message = message
 
 
-class XBee:
-    """ A class to represent an XBee wireless module. """
+class XBee(LiveInput):
+    """
+    A class to represent an XBee wireless module.
+    """
+
+    start_token = "s"
 
     def __init__(self, model):
         self.port = QSerialPort()
@@ -22,7 +27,9 @@ class XBee:
         self.current_message = ""
 
     def start(self, port_name):
-        """ Starts a connection to the given serial port."""
+        """
+        Starts a connection to the given serial port.
+        """
         if self.connected:
             raise XBeeException("XBee is already connected")
         
@@ -43,23 +50,70 @@ class XBee:
         raise XBeeException("Invalid port name")
 
     def stop(self):
+        """
+        Stops the current connection.
+        """
         if not self.connected:
             raise XBeeException("XBee is not connected")
         
         self.port.close()
         self.connected = False
 
+    @staticmethod
+    def parse_message(msg):
+        """Parses a string message into its fields.
+
+        Parameters
+        ----------
+        msg : str
+            Message to parse, in the form: "timestamp id length data1 data2 ..."
+
+        Returns
+        -------
+        Message
+            Message object formed from the parsed fields
+
+        Raises
+        ------
+        MessageFormatException
+            If the string cannot be parsed correctly
+        """
+
+        fields = msg.strip().split(" ")
+        if len(fields) < 3:
+            raise MessageFormatException("Not enough fields in the message", 0)
+        
+        try:
+            timestamp = QDateTime.fromMSecsSinceEpoch(int(float(fields[0])*1000))
+            id = int(fields[1])
+            length = int(fields[2])  # get the data length to use for processing data array
+            data = []
+
+            if len(fields) < (3 + length):
+                raise MessageFormatException("Too few data bytes", 0)
+            elif len(fields) > (3 + length):
+                raise MessageFormatException("Too many data bytes", 2)
+
+            for i in range(length):
+                data.append(int(fields[i + 3]))
+
+            return Message(timestamp, id, data)
+        except ValueError:
+            raise MessageFormatException("Message has malformed fields", 1)
 
     @staticmethod
     def port_info():
         return [(p.portName(), p.description()) for p in QSerialPortInfo.availablePorts()]
 
     def _handle_read(self):
-        buf = self.port.readAll()
-        msgs = buf.data().decode()
+        try:
+            buf = self.port.readAll()
+            msgs = buf.data().decode()
+        except:
+            return
         print("-----------")
         print(msgs)
-        msgs = msgs.split(Message.start_token) # split messages received in same bunch
+        msgs = msgs.split(self.start_token) # split messages received in same bunch
 
         # Discard a message if we haven't received the start token
         if not self.message_started and len(msgs[0]) > 0 and msgs[0][0] != "s":
@@ -77,7 +131,7 @@ class XBee:
             # Try to parse the current message and add to model
             try:
                 print(self.current_message)
-                msg = Message.parse_message(self.current_message)
+                msg = self.parse_message(self.current_message)
                 self.model.addMessage(msg)
                 self.message_started = False
             except MessageFormatException as mfe:
@@ -85,8 +139,6 @@ class XBee:
                 if mfe.status != 0:
                     print(mfe.message)
                     self.message_started = False
-                
-
 
     def send_data(self, data):
         # if self._ser.is_open == False:
