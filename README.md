@@ -29,6 +29,13 @@ Follow the steps below to run the project:
 4. Run `pipenv shell` to activate the virtual environment
 5. Start the app with the command `python start.py`
 
+## Running Processing Library
+To avoid the overhead of the GUI on large files, the ner_processing library can be run seperately. Follow the below steps:
+1. Follow the `Setup and Installation` steps up until step 5
+2. Create a directory called `logs` in the project root (same level as `ner_processing`), and place the log files to process
+3. Start using the command `python -m ner_processing`. The output file will be written to `output.csv` in the project root
+
+
 ## Deployment
 In order to generate an executable, follow the below steps:
 - Windows:
