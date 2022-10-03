@@ -191,9 +191,14 @@ class MessageFeed(QWidget):
         self.play_button.pressed.connect(self.play)
         self.play_button.setStyleSheet("color: white; background-color: #07D807")
 
+        self.store_data_checkbox = QCheckBox("show messages")
+        self.store_data_checkbox.toggle()
+        self.store_data_checkbox.stateChanged.connect(self.show_messages)
+
         layout = QVBoxLayout()
         layout.addWidget(self.view)
         layout.addWidget(self.play_button)
+        layout.addWidget(self.store_data_checkbox)
 
         self.setLayout(layout)
 
@@ -208,6 +213,14 @@ class MessageFeed(QWidget):
             self.play_button.setText("Start")
             self.play_button.setStyleSheet("color: white; background-color: #07D807")
             # TODO: Stop printing Messages
+    
+    def show_messages(self, state):
+        do_something = ""
+        if state:
+            do_something = "is checked"
+        else:
+            do_something = "is not checked"
+        print(do_something)
 
 
 
