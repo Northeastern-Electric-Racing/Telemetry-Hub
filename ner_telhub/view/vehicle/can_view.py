@@ -220,7 +220,6 @@ class MessageFeed(QWidget):
             do_something = "is checked"
         else:
             do_something = "is not checked"
-        print(do_something)
 
 
 
