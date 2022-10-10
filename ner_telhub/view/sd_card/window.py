@@ -195,7 +195,7 @@ class ProcessView(QWidget):
             self.data_model.deleteAllData()
             self.process_started = True
             self.start_button.setText("Stop")
-            self.start_button.changeColor("RED")
+            self.start_button.changeStyle("RED")
             self.progress_bar.setVisible(True)
             self.clear_view()
 
@@ -221,7 +221,7 @@ class ProcessView(QWidget):
         self.process_started = False
         self.worker = None
         self.start_button.setText("Start")
-        self.start_button.changeColor("GREEN")
+        self.start_button.changeStyle("GREEN")
         self.progress_bar.setVisible(False)
         self.progress_bar.setValue(0)
 

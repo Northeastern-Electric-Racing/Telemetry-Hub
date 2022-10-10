@@ -198,11 +198,11 @@ class MessageFeed(QWidget):
 
         if self.feed_started:
             self.play_button.setText("Stop")
-            self.play_button.changeColor("RED")
+            self.play_button.changeStyle("RED")
             # TODO: Start printing messages
         else:
             self.play_button.setText("Start")
-            self.play_button.changeColor("GREEN")
+            self.play_button.changeStyle("GREEN")
             # TODO: Stop printing Messages
 
 
