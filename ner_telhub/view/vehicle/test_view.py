@@ -1,11 +1,11 @@
 from PyQt6.QtWidgets import (
     QLabel, QLineEdit, QGridLayout, 
-    QVBoxLayout, QWidget, QPushButton, 
-    QListView
+    QVBoxLayout, QWidget, QListView
 )
 from PyQt6.QtCore import QDateTime
 
 from ner_telhub.model.message_models import Message
+from ner_telhub.widgets.menu_widgets import NERButton
 
 
 class MessageFeed(QWidget):
@@ -32,8 +32,8 @@ class MessageFeed(QWidget):
         layout_entry.addWidget(QLabel("Data:"), 2, 0)
         layout_entry.addWidget(self.data_entry, 2, 1)
 
-        self.add_button = QPushButton("Add")
-        self.delete_button = QPushButton("Delete")
+        self.add_button = NERButton("Add")
+        self.delete_button = NERButton("Delete")
         self.add_button.pressed.connect(self.add)
         self.delete_button.pressed.connect(self.delete)
 

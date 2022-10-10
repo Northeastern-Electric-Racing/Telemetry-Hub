@@ -1,6 +1,8 @@
+from enum import Enum
+
 from PyQt6.QtWidgets import (
     QVBoxLayout, QWidget, QDialog,
-    QTableWidget, QTableWidgetItem
+    QTableWidget, QTableWidgetItem, QPushButton
 )
 from PyQt6.QtCore import Qt
 
@@ -76,5 +78,34 @@ class DataIds(QDialog):
         layout = QVBoxLayout()
         layout.addWidget(table)
         self.setLayout(layout)
-        
+
+
+# Styles of buttons. When hovering over them, they turn two shades brighter.
+# Lighter shades found with https://www.w3schools.com/colors/colors_picker.asp
+class ButtonStyles(Enum):
+    DEFAULT = ""
+    RED = """QPushButton {color: white; background-color: #FF5656; border-radius: 4px; padding: 3% 8%;}
+        QPushButton:hover {background-color: #ff8080; color: white;}"""
+    GREEN = """QPushButton {color: white; background-color: #1a8f35; border-radius: 4px; padding: 3% 8%;}
+        QPushButton:hover {background-color: #20ac40; color: white;}"""
+    BLUE = """QPushButton {color: white; background-color: #0693E3; border-radius: 4px; padding: 3% 8%;}
+        QPushButton:hover {background-color: #1fa9f9; color: white;}"""
+    GRAY = """QPushButton {color: white; background-color: #999999; border-radius: 4px; padding: 3% 8%;}
+        QPushButton:hover {background-color: #b3b3b3; color: white;}"""
+
+
+
+class NERButton(QPushButton):
+    def __init__(self, title: str, style="DEFAULT"):
+        super().__init__(title)
+        self.style = style
+        self.setStyleSheet(ButtonStyles[style].value)
+
+    def addStyle(self, params: str):
+        self.setStyleSheet(ButtonStyles[self.style].value + "; " + params)
+
+    def changeStyle(self, style: str):
+        self.style = style
+        self.setStyleSheet(ButtonStyles[style].value)
+
 

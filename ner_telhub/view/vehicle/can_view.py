@@ -1,12 +1,13 @@
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QLabel, QLineEdit, 
-    QHBoxLayout, QVBoxLayout, QWidget, QPushButton, 
+    QHBoxLayout, QVBoxLayout, QWidget,
     QSlider, QMenu, QSpinBox, QListView, QGridLayout,
     QCheckBox
 )
 from PyQt6.QtGui import QAction, QPalette, QColor
 from PyQt6.QtCore import QSize, Qt
 
+from ner_telhub.widgets.menu_widgets import NERButton
 
 
 class ReceiveFilters(QWidget):
@@ -26,16 +27,14 @@ class ReceiveFilters(QWidget):
         self.model = model
         self.filter_view.setModel(self.model)
 
-        self.add_button = QPushButton("Add")
-        self.del_button = QPushButton("Delete")
+        self.add_button = NERButton("Add", "BLUE")
+        self.del_button = NERButton("Delete", "RED")
         self.add_button.pressed.connect(self.add)
         self.del_button.pressed.connect(self.delete)
 
         # Style basic widgets
         self.header.setStyleSheet("font-size: 30px; font-weight: bold")
         self.header.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        self.add_button.setStyleSheet("color: white; background-color: #0693E3")
-        self.del_button.setStyleSheet("color: white; background-color: #FF5656")
         
         inputs_layout = QGridLayout()
         inputs_layout.addWidget(QLabel("ID:"), 0, 0)
@@ -103,16 +102,14 @@ class SendFilters(QWidget):
         self.model = model
         self.filter_view.setModel(self.model)
 
-        self.add_button = QPushButton("Add")
-        self.del_button = QPushButton("Delete")
+        self.add_button = NERButton("Add", "BLUE")
+        self.del_button = NERButton("Delete", "RED")
         self.add_button.pressed.connect(self.add)
         self.del_button.pressed.connect(self.delete)
 
         # Style basic widgets
         self.header.setStyleSheet("font-size: 30px; font-weight: bold")
         self.header.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        self.add_button.setStyleSheet("color: white; background-color: #0693E3")
-        self.del_button.setStyleSheet("color: white; background-color: #FF5656")
         
         inputs_layout = QGridLayout()
         inputs_layout.addWidget(QLabel("ID:"), 0, 0)
@@ -187,9 +184,8 @@ class MessageFeed(QWidget):
         self.model = model
         self.view.setModel(self.model)
 
-        self.play_button = QPushButton("Start")
+        self.play_button = NERButton("Start", "GREEN")
         self.play_button.pressed.connect(self.play)
-        self.play_button.setStyleSheet("color: white; background-color: #07D807")
 
         layout = QVBoxLayout()
         layout.addWidget(self.view)
@@ -202,11 +198,11 @@ class MessageFeed(QWidget):
 
         if self.feed_started:
             self.play_button.setText("Stop")
-            self.play_button.setStyleSheet("color: white; background-color: #FF5656")
+            self.play_button.changeColor("RED")
             # TODO: Start printing messages
         else:
             self.play_button.setText("Start")
-            self.play_button.setStyleSheet("color: white; background-color: #07D807")
+            self.play_button.changeColor("GREEN")
             # TODO: Stop printing Messages
 
 

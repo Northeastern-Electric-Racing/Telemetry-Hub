@@ -1,10 +1,10 @@
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QToolBar,
-    QPushButton
+    QWidget, QVBoxLayout, QToolBar
 )
 
 from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.widgets.graphing_widgets import GraphDashboardWidget
+from ner_telhub.widgets.menu_widgets import NERButton
 
 
 class DataView(QWidget):
@@ -17,11 +17,11 @@ class DataView(QWidget):
 
         toolbar = QToolBar()
         toolbar.setStyleSheet("background-color: white; padding: 5%")
-        start_button = QPushButton("Start")
-        start_button.setStyleSheet("color: white; background-color: #07D807; padding: 3% 8%; margin-right: 5%")
+        start_button = NERButton("Start", "GREEN")
+        start_button.addStyle("margin-right: 5%")
         start_button.pressed.connect(self.start)
-        record_button = QPushButton("Record")
-        record_button.setStyleSheet("color: white; background-color: #0977E6; padding: 3% 8%; margin-right: 5%")
+        record_button = NERButton("Record", "BLUE")
+        record_button.addStyle("margin-right: 5%")
         record_button.pressed.connect(self.record)
         toolbar.addWidget(start_button)
         toolbar.addWidget(record_button)
