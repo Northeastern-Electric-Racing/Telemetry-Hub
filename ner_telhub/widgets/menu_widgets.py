@@ -80,9 +80,10 @@ class DataIds(QDialog):
         self.setLayout(layout)
 
 
-# Styles of buttons. When hovering over them, they turn two shades brighter.
-# Lighter shades found with https://www.w3schools.com/colors/colors_picker.asp
 class ButtonStyles(Enum):
+    """Defines the styles of buttons. When hovering over them, they turn two shades brighter"""
+    # Lighter shades found with https://www.w3schools.com/colors/colors_picker.asp
+
     DEFAULT = ""
     RED = """QPushButton {color: white; background-color: #FF5656; border-radius: 4px; padding: 3% 8%;}
         QPushButton:hover {background-color: #ff8080; color: white;}"""
@@ -96,14 +97,18 @@ class ButtonStyles(Enum):
 
 
 class NERButton(QPushButton):
+    """Creates a button using a provided preset button style"""
+
     def __init__(self, title: str, style="DEFAULT"):
         super().__init__(title)
         self.style = style
         self.setStyleSheet(ButtonStyles[style].value)
 
+    # Adds style parameters only to the button's preset style
     def addStyle(self, params: str):
         self.setStyleSheet(ButtonStyles[self.style].value + "; " + params)
 
+    # Replaces button's style with the provided preset style
     def changeStyle(self, style: str):
         self.style = style
         self.setStyleSheet(ButtonStyles[style].value)
