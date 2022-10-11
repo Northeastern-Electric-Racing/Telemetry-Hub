@@ -11,7 +11,7 @@ from ner_telhub.view.database.window import DatabaseWindow
 from ner_telhub.view.network.window import NetworkWindow
 from ner_telhub.view.sd_card.window import SdCardWindow
 from ner_telhub.view.vehicle.window import VehicleWindow
-from ner_telhub.widgets.menu_widgets import NERButton
+from ner_telhub.widgets.styled_widgets import NERButton
 
 resources = os.path.dirname(__file__) + "/../resources"
 
@@ -56,9 +56,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(lbl)
 
         layout.addWidget(QLabel("Select an option below to connect to:"))
-        vehicle_button = NERButton("Vehicle", "RED")
+        vehicle_button = NERButton("Vehicle", NERButton.Styles.RED)
         network_button = NERButton("Network")
-        sd_card_button = NERButton("SD Card", "RED")
+        sd_card_button = NERButton("SD Card", NERButton.Styles.RED)
         database_button = NERButton("Database")
         vehicle_button.clicked.connect(self.openVehicleWindow)
         network_button.clicked.connect(self.openNetworkWindow)

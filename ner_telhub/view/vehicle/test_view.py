@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import QDateTime
 
 from ner_telhub.model.message_models import Message
-from ner_telhub.widgets.menu_widgets import NERButton
+from ner_telhub.widgets.styled_widgets import NERButton
 
 
 class MessageFeed(QWidget):

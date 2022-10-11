@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QAction, QPalette, QColor
 from PyQt6.QtCore import QSize, Qt
 
-from ner_telhub.widgets.menu_widgets import NERButton
+from ner_telhub.widgets.styled_widgets import NERButton
 
 
 class ReceiveFilters(QWidget):
@@ -27,8 +27,8 @@ class ReceiveFilters(QWidget):
         self.model = model
         self.filter_view.setModel(self.model)
 
-        self.add_button = NERButton("Add", "BLUE")
-        self.del_button = NERButton("Delete", "RED")
+        self.add_button = NERButton("Add", NERButton.Styles.BLUE)
+        self.del_button = NERButton("Delete", NERButton.Styles.RED)
         self.add_button.pressed.connect(self.add)
         self.del_button.pressed.connect(self.delete)
 
@@ -102,8 +102,8 @@ class SendFilters(QWidget):
         self.model = model
         self.filter_view.setModel(self.model)
 
-        self.add_button = NERButton("Add", "BLUE")
-        self.del_button = NERButton("Delete", "RED")
+        self.add_button = NERButton("Add", NERButton.Styles.BLUE)
+        self.del_button = NERButton("Delete", NERButton.Styles.RED)
         self.add_button.pressed.connect(self.add)
         self.del_button.pressed.connect(self.delete)
 
@@ -184,7 +184,7 @@ class MessageFeed(QWidget):
         self.model = model
         self.view.setModel(self.model)
 
-        self.play_button = NERButton("Start", "GREEN")
+        self.play_button = NERButton("Start", NERButton.Styles.GREEN)
         self.play_button.pressed.connect(self.play)
 
         layout = QVBoxLayout()
@@ -198,11 +198,11 @@ class MessageFeed(QWidget):
 
         if self.feed_started:
             self.play_button.setText("Stop")
-            self.play_button.changeStyle("RED")
+            self.play_button.changeStyle(NERButton.Styles.RED)
             # TODO: Start printing messages
         else:
             self.play_button.setText("Start")
-            self.play_button.changeStyle("GREEN")
+            self.play_button.changeStyle(NERButton.Styles.GREEN)
             # TODO: Stop printing Messages
 
 

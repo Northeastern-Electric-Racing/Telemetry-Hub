@@ -16,7 +16,7 @@ from PyQt6.QtGui import QPainter
 from PyQt6.QtCore import QSize, Qt
 
 from ner_telhub.model.data_models import DataModelManager, DataModel
-from ner_telhub.widgets.menu_widgets import NERButton
+from ner_telhub.widgets.styled_widgets import NERButton
 
 
 class Format(Enum):
@@ -153,11 +153,11 @@ class GraphWidget(QWidget):
         # Tool Bar Config
         self.setMinimumSize(QSize(300, 200))
         toolbar = QToolBar()
-        config_button = NERButton("Edit", "GREEN")
+        config_button = NERButton("Edit", NERButton.Styles.GREEN)
         config_button.pressed.connect(lambda: EditDialog(self, self.edit_callback, self.model, self.state).exec())
-        reset_button = NERButton("Reset", "RED")
+        reset_button = NERButton("Reset", NERButton.Styles.RED)
         reset_button.pressed.connect(self.reset)
-        show_button = NERButton("Data", "BLUE")
+        show_button = NERButton("Data", NERButton.Styles.BLUE)
         show_button.pressed.connect(self.showTables)
         toolbar.addWidget(config_button)
         toolbar.addWidget(reset_button)
