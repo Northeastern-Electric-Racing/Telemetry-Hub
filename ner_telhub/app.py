@@ -1,3 +1,4 @@
+from re import T
 import sys, os
 
 from PyQt6.QtWidgets import (
@@ -8,7 +9,6 @@ from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QIcon, QPixmap
 
 from ner_telhub.view.database.window import DatabaseWindow
-from ner_telhub.view.network.window import NetworkWindow
 from ner_telhub.view.sd_card.window import SdCardWindow
 from ner_telhub.view.vehicle.window import VehicleWindow
 
@@ -31,7 +31,6 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.vehicle_window = None
-        self.network_window = None
         self.sd_card_window = None
         self.database_window = None
 
@@ -56,19 +55,15 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(QLabel("Select an option below to connect to:"))
         vehicle_button = QPushButton("Vehicle")
-        network_button = QPushButton("Network")
         sd_card_button = QPushButton("SD Card")
         database_button = QPushButton("Database")
         vehicle_button.clicked.connect(self.openVehicleWindow)
-        network_button.clicked.connect(self.openNetworkWindow)
         sd_card_button.clicked.connect(self.openSdCardWindow)
         database_button.clicked.connect(self.openDatabaseWindow)
         vehicle_button.setStyleSheet("color: white; background-color: #FF5656")
         sd_card_button.setStyleSheet("color: white; background-color: #FF5656")
-        network_button.setDisabled(True)
         database_button.setDisabled(True)
         layout.addWidget(vehicle_button)
-        layout.addWidget(network_button)
         layout.addWidget(sd_card_button)
         layout.addWidget(database_button)
 
@@ -83,14 +78,6 @@ class MainWindow(QMainWindow):
         else:
             self.vehicle_window.close()
             self.vehicle_window = None
-
-    def openNetworkWindow(self):
-        if self.network_window is None:
-            self.network_window = NetworkWindow()
-            self.network_window.show()
-        else:
-            self.network_window.close()
-            self.network_window = None
 
     def openSdCardWindow(self):
         if self.sd_card_window is None:
