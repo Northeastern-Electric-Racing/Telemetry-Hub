@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (
     QVBoxLayout, QWidget, QDialog,
-    QTableWidget, QTableWidgetItem, QPushButton
+    QTableWidget, QTableWidgetItem
 )
 from PyQt6.QtCore import Qt
 
@@ -76,4 +76,3 @@ class DataIds(QDialog):
         layout = QVBoxLayout()
         layout.addWidget(table)
         self.setLayout(layout)
-
