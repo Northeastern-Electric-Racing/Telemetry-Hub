@@ -3,10 +3,10 @@ from typing import Callable
 
 from PyQt6.QtWidgets import (
     QLabel, QVBoxLayout, 
-    QWidget, QPushButton, 
-    QComboBox, QToolBar, QDialog,
-    QGridLayout, QDialogButtonBox,
-    QSplitter, QTableView
+    QWidget, QComboBox, QToolBar,
+    QDialog, QGridLayout,
+    QDialogButtonBox, QSplitter,
+    QTableView
 )
 from PyQt6.QtCharts import (
     QLineSeries, QChart, QChartView, 
@@ -16,6 +16,7 @@ from PyQt6.QtGui import QPainter
 from PyQt6.QtCore import QSize, Qt
 
 from ner_telhub.model.data_models import DataModelManager, DataModel
+from ner_telhub.widgets.styled_widgets import NERButton
 
 
 class Format(Enum):
@@ -152,14 +153,14 @@ class GraphWidget(QWidget):
         # Tool Bar Config
         self.setMinimumSize(QSize(300, 200))
         toolbar = QToolBar()
-        config_button = QPushButton("Edit")
-        config_button.setStyleSheet("color: white; background-color: #FF5656; padding: 3% 8%; margin-right: 5%")
+        config_button = NERButton("Edit", NERButton.Styles.GREEN)
+        config_button.addStyle("margin-right: 5%")
         config_button.pressed.connect(lambda: EditDialog(self, self.edit_callback, self.model, self.state).exec())
-        reset_button = QPushButton("Reset")
-        reset_button.setStyleSheet("color: white; background-color: #0693E3; padding: 3% 8%; margin-right: 5%")
+        reset_button = NERButton("Reset", NERButton.Styles.RED)
+        reset_button.addStyle("margin-right: 5%")
         reset_button.pressed.connect(self.reset)
-        show_button = QPushButton("Data")
-        show_button.setStyleSheet("color: white; background-color: #0693E3; padding: 3% 8%; margin-right: 5%")
+        show_button = NERButton("Data", NERButton.Styles.BLUE)
+        show_button.addStyle("margin-right: 5%")
         show_button.pressed.connect(self.showTables)
         toolbar.addWidget(config_button)
         toolbar.addWidget(reset_button)
