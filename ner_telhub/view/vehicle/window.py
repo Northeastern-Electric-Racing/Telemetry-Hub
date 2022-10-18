@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QStackedLayout, 
-    QMessageBox, QDialog, QDialogButtonBox,
+    QMessageBox, QDialog, QDialogButtonBox, QHBoxLayout,
     QVBoxLayout, QLabel, QGridLayout, 
     QRadioButton, QButtonGroup
 )
@@ -10,6 +10,11 @@ from PyQt6.QtCore import QSize
 from ner_telhub.view.vehicle.can_view import CanView
 from ner_telhub.view.vehicle.data_view import DataView
 from ner_telhub.view.vehicle.test_view import TestView
+
+from ner_telhub.view.sd_card.window import FileView
+from ner_telhub.view.sd_card.window import ProcessView
+from ner_telhub.model.file_models import FileModel
+from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
 
 from ner_processing.live.xbee import XBee, XBeeException
 from ner_telhub.model.data_models import DataModelManager
@@ -94,8 +99,8 @@ class VehicleWindow(QMainWindow):
         # Menu bar
         menu = self.menuBar()
         file_menu = menu.addMenu("File")
-        help_menu = menu.addMenu("Edit")
-        edit_menu = menu.addMenu("Help")
+        edit_menu = menu.addMenu("Edit")
+        help_menu = menu.addMenu("Help")
         views_menu = menu.addMenu("View")
 
         file_action_1 = QAction("connect", self)
@@ -104,6 +109,18 @@ class VehicleWindow(QMainWindow):
         file_action_2.triggered.connect(self.disconnect)
         file_menu.addAction(file_action_1)
         file_menu.addAction(file_action_2)
+
+        file_model = FileModel()
+
+        help_action_1 = help_menu.addAction("Message Info")
+        help_action_2 = help_menu.addAction("Data Info")
+        help_action_1.triggered.connect(lambda : MessageIds(self).show())
+        help_action_2.triggered.connect(lambda : DataIds(self).show())
+
+        # Setup window
+        hlayout = QHBoxLayout()
+        hlayout.addWidget(FileView(file_model))
+        hlayout.addWidget(ProcessView(file_model, self.data_model))
 
         views_select_can = QAction(self.views.get(0)[0], self)
         views_select_data = QAction(self.views.get(1)[0], self)

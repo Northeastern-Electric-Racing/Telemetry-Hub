@@ -2,7 +2,7 @@ from typing import Dict
 from PyQt6.QtWidgets import (
     QMainWindow, QLabel, QHBoxLayout, 
     QVBoxLayout, QWidget, QFileDialog,
-    QListView, QPushButton, QTextEdit,
+    QListView, QTextEdit,
     QGridLayout, QProgressBar, QDialog,
     QDialogButtonBox, QLineEdit, QMessageBox,
     QCheckBox, QMenu, QToolBar
@@ -15,6 +15,7 @@ from ner_telhub.model.data_models import DataModelManager
 from ner_processing.decode_files import LogFormat
 from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
 from ner_telhub.widgets.graphing_widgets import GraphDashboardWidget
+from ner_telhub.widgets.styled_widgets import NERButton
 
 
 class GraphDialog(QDialog):
@@ -26,8 +27,8 @@ class GraphDialog(QDialog):
 
         toolbar = QToolBar()
         toolbar.setStyleSheet("background-color: white; padding: 5%")
-        self.screen_button = QPushButton("Full Screen")
-        self.screen_button.setStyleSheet("color: white; background-color: #999999; padding: 3% 8%; margin-right: 5%")
+        self.screen_button = NERButton("Full Screen", NERButton.Styles.GRAY)
+        self.screen_button.addStyle("margin-right: 5%")
         self.screen_button.pressed.connect(self.changeScreen)
         toolbar.addWidget(self.screen_button)
 
@@ -58,7 +59,7 @@ class ExportDialog(QDialog):
 
         self.filename_input = QLineEdit()
         self.directory_input = QLineEdit()
-        self.directory_button = QPushButton("Choose Directory")
+        self.directory_button = NERButton("Choose Directory")
         self.directory_button.pressed.connect(self.choose_directory)
 
         self.layout = QGridLayout()
@@ -125,12 +126,10 @@ class FileView(QWidget):
         self.view = QListView()
         self.view.setModel(self.file_model)
 
-        self.add_button = QPushButton("Add Files")
-        self.remove_button = QPushButton("Remove Files")
+        self.add_button = NERButton("Add Files", NERButton.Styles.GREEN)
+        self.remove_button = NERButton("Remove Files", NERButton.Styles.RED)
         self.add_button.pressed.connect(self.add_files)
         self.remove_button.pressed.connect(self.remove_files)
-        self.add_button.setStyleSheet("color: white; background-color: #07D807")
-        self.remove_button.setStyleSheet("color: white; background-color: #FF5656")
 
         layout = QVBoxLayout()
         layout.addWidget(header)
@@ -175,9 +174,8 @@ class ProcessView(QWidget):
         self.view.setReadOnly(True)
         self.view_text = ""
 
-        self.start_button = QPushButton("Start")
+        self.start_button = NERButton("Start", NERButton.Styles.GREEN)
         self.start_button.pressed.connect(self.start_process)
-        self.start_button.setStyleSheet("color: white; background-color: #07D807")
 
         # Setup Progress Bar
         self.progress_bar = QProgressBar()
@@ -198,7 +196,7 @@ class ProcessView(QWidget):
             self.data_model.deleteAllData()
             self.process_started = True
             self.start_button.setText("Stop")
-            self.start_button.setStyleSheet("color: white; background-color: #FF5656")
+            self.start_button.changeStyle(NERButton.Styles.RED)
             self.progress_bar.setVisible(True)
             self.clear_view()
 
@@ -224,7 +222,7 @@ class ProcessView(QWidget):
         self.process_started = False
         self.worker = None
         self.start_button.setText("Start")
-        self.start_button.setStyleSheet("color: white; background-color: #07D807")
+        self.start_button.changeStyle(NERButton.Styles.GREEN)
         self.progress_bar.setVisible(False)
         self.progress_bar.setValue(0)
 
@@ -270,8 +268,7 @@ class OptionsView(QWidget):
 
         # Populate layout 1
         self.model_info = QLabel("0 data points")
-        self.clear_button = QPushButton("Clear")
-        self.clear_button.setStyleSheet("color: white; background-color: #FF5656")
+        self.clear_button = NERButton("Clear", NERButton.Styles.RED)
         self.clear_button.pressed.connect(self.clearModel)
         layout1.addWidget(self.model_info)
         layout1.addWidget(self.clear_button)
@@ -288,20 +285,17 @@ class OptionsView(QWidget):
         filter_layout.addWidget(self.id_input, 0, 1)
         filter_layout.addWidget(QLabel("Filter Method:"), 1, 0)
         filter_layout.addWidget(self.filter_method, 1, 1)
-        self.filter_button = QPushButton("Filter")
-        self.filter_button.setStyleSheet("color: white; background-color: #0693E3")
+        self.filter_button = NERButton("Filter", NERButton.Styles.BLUE)
         self.filter_button.pressed.connect(self.applyFilters)
         layout2.addLayout(filter_layout)
         layout2.addWidget(self.filter_button)
 
         # Populate layout 3
-        self.graph_button = QPushButton("Graph")
+        self.graph_button = NERButton("Graph", NERButton.Styles.BLUE)
         self.graph_button.pressed.connect(lambda: GraphDialog(self, self.data_model).exec())
-        self.graph_button.setStyleSheet("color: white; background-color: #0693E3")
-        self.csv_button = QPushButton("CSV")
+        self.csv_button = NERButton("CSV", NERButton.Styles.BLUE)
         self.csv_button.pressed.connect(lambda: ExportDialog(self, self.data_model).exec())
-        self.csv_button.setStyleSheet("color: white; background-color: #0693E3")
-        self.database_button = QPushButton("Database")
+        self.database_button = NERButton("Database")
         self.database_button.pressed.connect(self.databaseExport)
         self.database_button.setDisabled(True)
         layout3.addWidget(self.graph_button)

@@ -2,7 +2,7 @@ import sys, os
 
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QLabel, 
-    QVBoxLayout, QWidget, QPushButton
+    QVBoxLayout, QWidget
 )
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QIcon, QPixmap
@@ -10,6 +10,7 @@ from PyQt6.QtGui import QIcon, QPixmap
 from ner_telhub.view.database.window import DatabaseWindow
 from ner_telhub.view.sd_card.window import SdCardWindow
 from ner_telhub.view.vehicle.window import VehicleWindow
+from ner_telhub.widgets.styled_widgets import NERButton
 
 resources = os.path.dirname(__file__) + "/../resources"
 
@@ -53,14 +54,12 @@ class MainWindow(QMainWindow):
         layout.addWidget(lbl)
 
         layout.addWidget(QLabel("Select an option below to connect to:"))
-        vehicle_button = QPushButton("Vehicle")
-        sd_card_button = QPushButton("SD Card")
-        database_button = QPushButton("Database")
+        vehicle_button = NERButton("Vehicle", NERButton.Styles.RED)
+        sd_card_button = NERButton("SD Card", NERButton.Styles.RED)
+        database_button = NERButton("Database")
         vehicle_button.clicked.connect(self.openVehicleWindow)
         sd_card_button.clicked.connect(self.openSdCardWindow)
         database_button.clicked.connect(self.openDatabaseWindow)
-        vehicle_button.setStyleSheet("color: white; background-color: #FF5656")
-        sd_card_button.setStyleSheet("color: white; background-color: #FF5656")
         database_button.setDisabled(True)
         layout.addWidget(vehicle_button)
         layout.addWidget(sd_card_button)

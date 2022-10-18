@@ -76,5 +76,3 @@ class DataIds(QDialog):
         layout = QVBoxLayout()
         layout.addWidget(table)
         self.setLayout(layout)
-        
-
