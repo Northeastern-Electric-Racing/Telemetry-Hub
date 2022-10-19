@@ -36,7 +36,13 @@ MESSAGE_IDS = {
     194: 25,
     1744: 26,
     1745: 27,
-    175: 28
+    175: 28,
+    770: 29,
+    2015: 30,
+    2027: 31,
+    2019: 32,
+    5: 33,
+    771: 34
 }
 
 # Mapping from internal message IDs to information used to decode the message
@@ -152,6 +158,30 @@ DECODE_DATA = {
     28: {
         "description": "unknown 6",
         "decoder": decodeMock,
+    },
+    29: {
+        "description": "GLV current",
+        "decoder": decode29,
+    },
+    30: {
+        "description": "unknown 2015",
+        "decoder": decodeMock,
+    },
+    31: {
+        "description": "unknown 2027",
+        "decoder": decodeMock,
+    },
+    32: {
+        "description": "unknown 2019",
+        "decoder": decodeMock,
+    },
+    33: {
+        "description": "Is-Charging",
+        "decoder": decodeMock,
+    },
+    34: {
+        "description": "strain gauge",
+        "decoder": decode34,
     }
 }
 
@@ -254,6 +284,9 @@ DATA_IDS = {
     94: "TCU Temperature C",
     95: "TCU Temperature F",
     96: "Relative Humidity",
-    97: "Cell Voltage Info"
+    97: "Cell Voltage Info",
+    98: "GLV Current",
+    99: "Strain Gauge Voltage 1",
+    100: "Strain Gauge Voltage 2"
 }
 
