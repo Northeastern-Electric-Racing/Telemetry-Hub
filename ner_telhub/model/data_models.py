@@ -10,7 +10,7 @@ from PyQt6.QtCore import (
     QObject, QDateTime
 )
 
-from ner_processing.master_mapping import DATA_IDS
+from ner_processing.master_mapping import DATA_IDS   #Import data from here
 from ner_processing.data import Data
 from ner_telhub.utils.threads import Worker
 
@@ -121,6 +121,8 @@ class DataModelManager(QObject):
     If dealing with a single type of data, use DataModel.
     """
 
+    
+
     layoutChanged = pyqtSignal()
     
     def __init__(self) -> None:
@@ -140,7 +142,7 @@ class DataModelManager(QObject):
             self._datamap[id] = DataModel(id)
 
     @staticmethod
-    def getDataType(id: int) -> str:
+    def getDataType(id: int) -> str:   #This is where the num -> string conversion takes place
         """
         Gets the type of data of the given ID.
         """

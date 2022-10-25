@@ -10,12 +10,12 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCharts import (
     QLineSeries, QChart, QChartView, 
-    QVXYModelMapper
+    QVXYModelMapper, QValueAxis
 )
 from PyQt6.QtGui import QPainter
 from PyQt6.QtCore import QSize, Qt
-
-from ner_telhub.model.data_models import DataModelManager, DataModel
+from ner_telhub.model.data_models import DataModelManager, DataModel   #This is where we get data from
+from ner_processing.master_mapping import DATA_IDS   #Contains string form of data type
 from ner_telhub.widgets.styled_widgets import NERButton
 
 
@@ -35,6 +35,10 @@ class GraphState():
         self.data2 = data2
         self.data3 = data3
         self.format = format
+        GraphState.datatype1 = data1
+        GraphState.datatype2 = data2
+        GraphState.datatype3 = data3
+
 
 
 class DataTable(QDialog):
@@ -67,7 +71,7 @@ class EditDialog(QDialog):
         super(EditDialog, self).__init__(parent)
         self.callback = callback
         self.model = model
-        self._data_list = ["None", *[self.dataToText(d) for d in model.getAvailableIds()]]
+        self._data_list = ["None", *[self.dataToText(d) for d in model.getAvailableIds()]]   #This is where we get the data from
         self._format_list = [f.name for f in Format]
 
         self.setWindowTitle("Edit Graph")
@@ -171,6 +175,12 @@ class GraphWidget(QWidget):
         self.chart.setTitle(f"Graph {index}")
         self.chart.setTheme(QChart.ChartTheme.ChartThemeLight)
         self.chart.setAnimationOptions(QChart.AnimationOption.SeriesAnimations)
+        # x_axis = QValueAxis()
+        # x_axis.setTitleText("text1")
+        # y_axis = QValueAxis()
+        # y_axis.setTitleText("test2")
+        # self.chart.addAxis(x_axis, Qt.AlignmentFlag.AlignBottom)
+        # self.chart.addAxis(y_axis, Qt.AlignmentFlag.AlignLeft)
 
         # View Config
         chart_view = QChartView(self.chart)
@@ -183,6 +193,11 @@ class GraphWidget(QWidget):
         layout.addWidget(chart_view)
         self.setLayout(layout)
 
+    def getDataID(self, id):
+        if DATA_IDS.keys().__contains__(id):
+            dataID = id
+            return DATA_IDS[dataID]
+
     def edit_callback(self, state: GraphState):
         """
         Handles a changed state from the edit dialog box.
@@ -190,15 +205,27 @@ class GraphWidget(QWidget):
         if self.state.format != state.format:
             pass # In the future, change graph type
         if self.state.data1 != state.data1:
-            self.remove_series("data1")
-            self.add_series("data1", state.data1)
+            datatype1 = str(self.getDataID(GraphState.datatype1))
+            self.remove_series(datatype1)   #Currently at state where legend displays data number
+            self.add_series(datatype1, state.data1)   #This sets the legend, need to change this to check master_mapping.py
         if self.state.data2 != state.data2:
-            self.remove_series("data2")
-            self.add_series("data2", state.data2)
+            datatype2 = str(self.getDataID(GraphState.datatype2))
+            self.remove_series(datatype2)
+            self.add_series(datatype2, state.data2)
         if self.state.data3 != state.data3:
-            self.remove_series("data3")
-            self.add_series("data3", state.data3)
-        self.state = state
+            datatype3 = str(self.getDataID(GraphState.datatype3))
+            self.remove_series(datatype3)
+            self.add_series(datatype3, state.data3)
+        # if self.state.data1 != state.data1:
+        #     self.remove_series("data1")   #Currently at state where legend displays data number
+        #     self.add_series("data1", state.data1)   #This sets the legend, need to change this to check master_mapping.py
+        # if self.state.data2 != state.data2:
+        #     self.remove_series("data2")
+        #     self.add_series("data2", state.data2)
+        # if self.state.data3 != state.data3:
+        #     self.remove_series("data3")
+        #     self.add_series("data3", state.data3)
+        # self.state = state
 
     def showTables(self):
         """
