@@ -1,13 +1,18 @@
 from enum import Enum
+import os
 
-from PyQt6.QtWidgets import QPushButton
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import (
+    QHBoxLayout, QPushButton, QSizePolicy, 
+    QToolBar, QWidget
+)
 
+resources = os.path.dirname(__file__) + "/../../resources"
 
 class NERButton(QPushButton):
     """
     Creates a button using a provided preset button style
     """
-        
     class Styles(Enum):
         """
         Defines the styles of buttons. When hovering over them, they turn two shades brighter.
@@ -45,3 +50,57 @@ class NERButton(QPushButton):
         """
         self.style = style
         self.setStyleSheet(style.value)
+
+
+class NERImageButton(NERButton):
+    """
+    Creates a button using an icon.
+    """
+    class Icons(Enum):
+        """
+        Defines file names for available icons.
+        """
+        EDIT = "edit_icon.png"
+        EXPORT = "export_icon.png"
+        REFRESH = "refresh_icon.png"
+        RESET = "reset_icon.png"
+        START = "start_icon.png"
+        STOP = "stop_icon.png"
+        TRASH = "trash_icon.png"
+
+    def __init__(self, icon_file: Icons, style=NERButton.Styles.DEFAULT):
+        super().__init__("", style=style)
+        self.resetIcon(icon_file)
+    
+    def resetIcon(self, icon_file: Icons):
+        self.setIcon(QIcon(os.path.join(resources, icon_file.value)))
+
+class NERToolbar(QToolBar):
+    """
+    Creates a Toolbar that supports adding Widgets to either side.
+    """
+    def __init__(self, parent = None):
+        super(NERToolbar, self).__init__(parent)
+
+        # Setup left side of toolbar
+        left = QWidget()
+        self.left_buttons = QHBoxLayout()
+        left.setLayout(self.left_buttons)
+        self.addWidget(left)
+
+        # Setup middle spacer
+        self.spacer = QWidget()
+        self.spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed) 
+        self.addWidget(self.spacer)
+
+        # Setup right side of toolbar
+        right = QWidget()
+        self.right_buttons = QHBoxLayout()
+        right.setLayout(self.right_buttons)
+        self.addWidget(right)
+
+    def addLeft(self, widget: QWidget):
+        self.left_buttons.addWidget(widget)
+    
+    def addRight(self, widget: QWidget):
+        self.right_buttons.addWidget(widget)

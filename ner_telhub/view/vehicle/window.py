@@ -1,8 +1,7 @@
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QStackedLayout, 
     QMessageBox, QDialog, QDialogButtonBox,
-    QVBoxLayout, QLabel, QRadioButton,
-    QToolBar
+    QVBoxLayout, QLabel, QRadioButton
 )
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QSize
@@ -16,7 +15,7 @@ from ner_telhub.model.filter_models import ReceiveFilterModel, SendFilterModel
 from ner_telhub.view.vehicle.can_view import CanView
 from ner_telhub.view.vehicle.data_view import DataView
 from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
-from ner_telhub.widgets.styled_widgets import NERButton
+from ner_telhub.widgets.styled_widgets import NERButton, NERToolbar
 
 class ConnectionDialog(QDialog):
     """
@@ -57,7 +56,7 @@ class ConnectionDialog(QDialog):
             self.reject()
 
 
-class LiveToolbar(QToolBar):
+class LiveToolbar(NERToolbar):
     def __init__(self, parent: QWidget, message_model: MessageModel, data_model: DataModelManager, input: LiveInput):
         super(LiveToolbar, self).__init__(parent)
 
@@ -68,17 +67,14 @@ class LiveToolbar(QToolBar):
 
         self.setStyleSheet("background-color: white; padding: 5%")
         self.start_button = NERButton("Start", NERButton.Styles.GREEN)
-        self.start_button.addStyle("margin-right: 5%")
         self.start_button.pressed.connect(self.start)
         clear_button = NERButton("Clear", NERButton.Styles.RED)
-        clear_button.addStyle("margin-right: 5%")
         clear_button.pressed.connect(self.clear)
         record_button = NERButton("Record", NERButton.Styles.BLUE)
-        record_button.addStyle("margin-right: 5%")
         record_button.pressed.connect(self.record)
-        self.addWidget(self.start_button)
-        self.addWidget(clear_button)
-        self.addWidget(record_button)
+        self.addLeft(self.start_button)
+        self.addLeft(clear_button)
+        self.addLeft(record_button)
     
     def start(self):
         if not self.feed_started:
@@ -86,7 +82,6 @@ class LiveToolbar(QToolBar):
                 self.input.start()
                 self.start_button.setText("Stop")
                 self.start_button.changeStyle(NERButton.Styles.RED)
-                self.start_button.addStyle("margin-right: 5%")
                 self.feed_started = not self.feed_started
             except LiveInputException as e:
                 QMessageBox.information(self, "Couldn't start input: ", e.message)
@@ -95,7 +90,6 @@ class LiveToolbar(QToolBar):
                 self.input.stop()
                 self.start_button.setText("Start")
                 self.start_button.changeStyle(NERButton.Styles.GREEN)
-                self.start_button.addStyle("margin-right: 5%")
                 self.feed_started = not self.feed_started
             except LiveInputException as e:
                 QMessageBox.information(self, "Couldn't stop input:", e.message)
