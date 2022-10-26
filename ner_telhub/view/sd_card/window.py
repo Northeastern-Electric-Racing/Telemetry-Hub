@@ -190,7 +190,6 @@ class ProcessView(QWidget):
         layout.addWidget(self.progress_bar)
         self.setLayout(layout)
 
-
     def start_process(self):
         if self.can_start():
             self.data_model.deleteAllData()
