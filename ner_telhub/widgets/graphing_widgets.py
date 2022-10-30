@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
     QWidget, QComboBox, QToolBar,
     QDialog, QGridLayout,
     QDialogButtonBox, QSplitter,
-    QTableView
+    QTableView, QMessageBox
 )
 from PyQt6.QtCharts import (
     QLineSeries, QChart, QChartView, 
@@ -129,6 +129,14 @@ class EditDialog(QDialog):
         data1 = self.textToData(self.data_entry_1.currentText())
         data2 = self.textToData(self.data_entry_2.currentText())
         data3 = self.textToData(self.data_entry_3.currentText())
+
+        # Check to make sure we're not adding the same data series twice
+        if (data1 is not None and data1 == data2) or \
+                (data1 is not None and data1 == data3) or \
+                (data2 is not None and data2 == data3):
+            QMessageBox.critical(self, "Input Error", "Each data value should be unique")
+            return
+
         format = Format[self.format_entry.currentText()]
         state = GraphState(data1, data2, data3, format)
         self.callback(state)
@@ -183,22 +191,32 @@ class GraphWidget(QWidget):
         layout.addWidget(chart_view)
         self.setLayout(layout)
 
-    def edit_callback(self, state: GraphState):
+    def edit_callback(self, newState: GraphState):
         """
         Handles a changed state from the edit dialog box.
         """
-        if self.state.format != state.format:
+        if self.state.format != newState.format:
             pass # In the future, change graph type
-        if self.state.data1 != state.data1:
-            self.remove_series("data1")
-            self.add_series("data1", state.data1)
-        if self.state.data2 != state.data2:
-            self.remove_series("data2")
-            self.add_series("data2", state.data2)
-        if self.state.data3 != state.data3:
-            self.remove_series("data3")
-            self.add_series("data3", state.data3)
-        self.state = state
+
+        if self.state.data1 != newState.data1:
+            if self.state.data1 is not None:
+                self.remove_series(self.model.getDataType(self.state.data1))
+            if newState.data1 is not None:
+                self.add_series(self.model.getDataType(newState.data1), newState.data1)
+
+        if self.state.data2 != newState.data2:
+            if self.state.data2 is not None:
+                self.remove_series(self.model.getDataType(self.state.data2))
+            if newState.data2 is not None:
+                self.add_series(self.model.getDataType(newState.data2), newState.data2)
+
+        if self.state.data3 != newState.data3:
+            if self.state.data3 is not None:
+                self.remove_series(self.model.getDataType(self.state.data3))
+            if newState.data3 is not None:
+                self.add_series(self.model.getDataType(newState.data3), newState.data3)
+
+        self.state = newState
 
     def showTables(self):
         """
