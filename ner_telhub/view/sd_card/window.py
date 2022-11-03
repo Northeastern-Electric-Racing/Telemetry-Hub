@@ -46,8 +46,6 @@ class GraphDialog(QDialog):
             self.screen_button.setText("Full Screen")
 
     
-
-
 class ExportDialog(QDialog):
     """Dialog to export data to a CSV file."""
 
@@ -59,7 +57,9 @@ class ExportDialog(QDialog):
 
         self.filename_input = QLineEdit()
         self.directory_input = QLineEdit()
-        self.directory_button = NERButton("Choose Directory")
+        self.directory_button = NERButton("...")
+        self.directory_button.addStyle("font-size: 20px")
+        self.directory_button.setMaximumSize(45, 25)
         self.directory_button.pressed.connect(self.choose_directory)
 
         self.layout = QGridLayout()
@@ -67,7 +67,7 @@ class ExportDialog(QDialog):
         self.layout.addWidget(self.filename_input, 0, 1)
         self.layout.addWidget(QLabel("Directory name: "), 1, 0)
         self.layout.addWidget(self.directory_input, 1, 1)
-        self.layout.addWidget(self.directory_button, 2, 0)
+        self.layout.addWidget(self.directory_button, 1, 2)
         
         self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         self.buttonBox.accepted.connect(self.on_accept)
