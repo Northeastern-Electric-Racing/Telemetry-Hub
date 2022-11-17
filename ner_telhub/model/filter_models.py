@@ -1,5 +1,6 @@
 from typing import List, Any, Tuple
 
+from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import (
     QAbstractListModel, Qt,
     QModelIndex
@@ -11,11 +12,11 @@ class ReceiveFilterModel(QAbstractListModel):
     A model class to represent the desired messages to receive from the car.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, parent: QWidget) -> None:
         """
         Initializes the list of filters.
         """
-        super(ReceiveFilterModel, self).__init__()
+        super(ReceiveFilterModel, self).__init__(parent)
         self._filters: List[Tuple[int, int]] = []
 
     def data(self, index: QModelIndex, role: int) -> Any:
@@ -52,11 +53,11 @@ class SendFilterModel(QAbstractListModel):
     A model class to represent the desired messages to send to the car.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, parent: QWidget) -> None:
         """
         Initializes the list of filters.
         """
-        super(SendFilterModel, self).__init__()
+        super(SendFilterModel, self).__init__(parent)
         self._filters: List[Tuple[int, int, List[int]]] = []
 
     def data(self, index: QModelIndex, role: int) -> Any:

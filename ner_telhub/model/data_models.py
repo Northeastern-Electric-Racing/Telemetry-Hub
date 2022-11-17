@@ -1,6 +1,7 @@
 import csv
 import numpy as np
-from typing import Iterable, List, Any, Tuple
+import sys
+from typing import List, Any, Tuple
 
 from PyQt6.QtCore import (
     QAbstractTableModel, Qt, 
@@ -20,11 +21,11 @@ class DataModel(QAbstractTableModel):
     Represents a model for values of a single data type.
     """
 
-    def __init__(self, id: int) -> None:
+    def __init__(self, parent: QObject, id: int) -> None:
         """
         Initializes the data list and mutex for thread access control.
         """
-        super(DataModel, self).__init__()
+        super(DataModel, self).__init__(parent)
         if DATA_IDS.keys().__contains__(id):
             self._id = id
         else:
@@ -32,6 +33,8 @@ class DataModel(QAbstractTableModel):
 
         self._data: List[Tuple[QDateTime, Any]] = []
         self._lock = QReadWriteLock()
+        self.min_value = sys.maxsize
+        self.max_value = -sys.maxsize
 
     def data(self, index: QModelIndex, role: int) -> Any:
         """
@@ -85,6 +88,38 @@ class DataModel(QAbstractTableModel):
         QReadLocker(self._lock)
         return np.array(self._data, Tuple[QDateTime, Any])
 
+    def getMinTime(self) -> QDateTime:
+        """
+        Gets the time of the first data element (which is the min time for valid data sets).
+        """
+        QReadLocker(self._lock)
+        try:
+            return self._data[0][0]
+        except IndexError:
+            return QDateTime.fromMSecsSinceEpoch(9999999999999) # Give big min time when no data
+
+    def getMaxTime(self) -> QDateTime:
+        """
+        Gets the time of the last data element (which is the max time for valid data sets).
+        """
+        QReadLocker(self._lock)
+        try:
+            return self._data[len(self._data) - 1][0]
+        except IndexError:
+            return QDateTime.fromMSecsSinceEpoch(0) # Give small max time when no data
+
+    def getMinValue(self) -> QDateTime:
+        """
+        Gets the minimum value of the data in the model.
+        """
+        return self.min_value
+
+    def getMaxValue(self) -> QDateTime:
+        """
+        Gets the maximum value of the data in the model.
+        """
+        return self.max_value
+
     def addData(self, timestamp: QDateTime, value: Any) -> None:
         """
         Adds the given piece of data to the model.
@@ -93,15 +128,17 @@ class DataModel(QAbstractTableModel):
         For adding multiple elements at the same time, see addDataList().
         """
         QWriteLocker(self._lock)
+        # TODO: Add filtering like the lines below here 
+        # if self._id == 45 and abs(value) > 2000:
+        #     print(value)
+        #     return
+        
         self._data.append((timestamp, value))
-        self.layoutChanged.emit()
-
-    def addDataList(self, list: Iterable[Tuple[QDateTime, Any]]) -> None:
-        """
-        Adds a collection of data to this model.
-        """
-        QWriteLocker(self._lock)
-        self._data.extend(list)
+        if type(value) == int or type(value) == float:
+            if value < self.min_value:
+                self.min_value = value
+            if value > self.max_value:
+                self.max_value = value
         self.layoutChanged.emit()
 
     def deleteAllData(self) -> None:
@@ -123,11 +160,11 @@ class DataModelManager(QObject):
 
     layoutChanged = pyqtSignal()
     
-    def __init__(self) -> None:
+    def __init__(self, parent: QObject) -> None:
         """
         Initializes the model manager.
         """
-        super(DataModelManager, self).__init__()
+        super(DataModelManager, self).__init__(parent)
         self._datamap: dict[int, DataModel] = {}
 
     def _createModelIfNone(self, id: int) -> None:
@@ -137,7 +174,7 @@ class DataModelManager(QObject):
         try:
             self._datamap[id]
         except KeyError:
-            self._datamap[id] = DataModel(id)
+            self._datamap[id] = DataModel(self, id)
 
     @staticmethod
     def getDataType(id: int) -> str:
@@ -166,20 +203,6 @@ class DataModelManager(QObject):
         for data in data_list:
             self._createModelIfNone(data.id)
             self._datamap[data.id].addData(data.timestamp, data.value)
-        self.layoutChanged.emit()
-
-    def quickAdd(self, id: int, data_list: List[Data]) -> None:
-        """
-        Adds a list of the same type of data to the model. This provides a faster addition
-        operation than addDataList() for lists of a single type of data. 
-
-        WARNING 
-        ------- 
-        Data IDs are not checked, so a list with multiple types of data will lead to an invalid
-        internal model state.
-        """
-        self._createModelIfNone(id)
-        self._datamap[id].addDataList([(d.timestamp, d.id) for d in data_list])
         self.layoutChanged.emit()
 
     def filter(self, ids: List[int], keep_ids: bool = True) -> None:

@@ -41,4 +41,3 @@ class NERButton(QPushButton):
         """
         self.style = style
         self.setStyleSheet(style.value)
-

@@ -6,14 +6,16 @@ from PyQt6.QtWidgets import (
     QWidget, QComboBox, QToolBar,
     QDialog, QGridLayout,
     QDialogButtonBox, QSplitter,
-    QTableView, QMessageBox
+    QTableView, QMessageBox, 
+    QSizePolicy
 )
 from PyQt6.QtCharts import (
     QLineSeries, QChart, QChartView, 
-    QVXYModelMapper
+    QVXYModelMapper, QDateTimeAxis,
+    QValueAxis
 )
 from PyQt6.QtGui import QPainter
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QSize, Qt, QTimer, QDateTime
 
 from ner_telhub.model.data_models import DataModelManager, DataModel
 from ner_telhub.widgets.styled_widgets import NERButton
@@ -149,30 +151,55 @@ class GraphWidget(QWidget):
     Main graph widget for displaying data in charts.
     """
 
-    def __init__(self, index, model: DataModelManager, format=Format.LINE):
+    def __init__(self, parent: QWidget, index: int, model: DataModelManager, dynamic=False, format=Format.LINE):
         """
-        Initializes the chart and toolbar.
+        Initializes the chart and toolbar. To differentiate between live and static dashboards,
+        use the the dynamic variable.
         """
-        super(GraphWidget, self).__init__()
+        super(GraphWidget, self).__init__(parent)
         self.index = index
         self.model = model
         self.state = GraphState(format=format)
+        self.xRange = None
+        self.yRange = None
+        if dynamic:
+            self.timer = QTimer()
+            self.timer.timeout.connect(self.updateChart)
+
+        self.setMinimumSize(QSize(300, 200))
 
         # Tool Bar Config
-        self.setMinimumSize(QSize(300, 200))
         toolbar = QToolBar()
         config_button = NERButton("Edit", NERButton.Styles.GREEN)
         config_button.addStyle("margin-right: 5%")
-        config_button.pressed.connect(lambda: EditDialog(self, self.edit_callback, self.model, self.state).exec())
+        config_button.pressed.connect(lambda: EditDialog(self, self.editCallback, self.model, self.state).exec())
+        toolbar.addWidget(config_button)
         reset_button = NERButton("Reset", NERButton.Styles.RED)
         reset_button.addStyle("margin-right: 5%")
         reset_button.pressed.connect(self.reset)
+        toolbar.addWidget(reset_button)
         show_button = NERButton("Data", NERButton.Styles.BLUE)
         show_button.addStyle("margin-right: 5%")
         show_button.pressed.connect(self.showTables)
-        toolbar.addWidget(config_button)
-        toolbar.addWidget(reset_button)
         toolbar.addWidget(show_button)
+
+        if dynamic:
+            spacer = QWidget()
+            spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+            toolbar.addWidget(spacer)
+            refresh_button = NERButton("Refresh", NERButton.Styles.GREEN)
+            refresh_button.addStyle("margin-right: 5%")
+            refresh_button.pressed.connect(self.updateChart)
+            toolbar.addWidget(refresh_button)
+            clear_button = NERButton("Clear", NERButton.Styles.BLUE)
+            clear_button.addStyle("margin-right: 5%")
+            clear_button.pressed.connect(self.clearData)
+            toolbar.addWidget(clear_button)
+            self.live_data = False
+            self.live_button = NERButton("Start", NERButton.Styles.GREEN)
+            self.live_button.addStyle("margin-right: 5%")
+            self.live_button.pressed.connect(self.toggleLiveData)
+            toolbar.addWidget(self.live_button)
 
         # Chart Config
         self.chart = QChart()
@@ -180,18 +207,29 @@ class GraphWidget(QWidget):
         self.chart.setTheme(QChart.ChartTheme.ChartThemeLight)
         self.chart.setAnimationOptions(QChart.AnimationOption.SeriesAnimations)
 
+        # Axis Config
+        self.axisX = QDateTimeAxis()
+        self.axisX.setTickCount(5)
+        self.axisX.setFormat("hh:mm:ss.z")
+        self.axisX.setTitleText("Time")
+
+        self.axisY = QValueAxis()
+        self.axisY.setTickCount(5)
+        self.axisY.setLabelFormat("%i")
+        self.axisY.setTitleText("Data")
+
         # View Config
-        chart_view = QChartView(self.chart)
-        chart_view.setRenderHint(QPainter.RenderHint.Antialiasing)
-        chart_view.setStyleSheet("background-color: #f0f0f0")
+        self.chart_view = QChartView(self.chart)
+        self.chart_view.setRenderHint(QPainter.RenderHint.Antialiasing)
+        self.chart_view.setStyleSheet("background-color: #f0f0f0")
 
         # Layout Config
         layout = QVBoxLayout()
         layout.addWidget(toolbar)
-        layout.addWidget(chart_view)
+        layout.addWidget(self.chart_view)
         self.setLayout(layout)
 
-    def edit_callback(self, newState: GraphState):
+    def editCallback(self, newState: GraphState):
         """
         Handles a changed state from the edit dialog box.
         """
@@ -200,23 +238,32 @@ class GraphWidget(QWidget):
 
         if self.state.data1 != newState.data1:
             if self.state.data1 is not None:
-                self.remove_series(self.model.getDataType(self.state.data1))
+                self.removeSeries(self.model.getDataType(self.state.data1))
             if newState.data1 is not None:
-                self.add_series(self.model.getDataType(newState.data1), newState.data1)
+                self.addSeries(self.model.getDataType(newState.data1), newState.data1)
 
         if self.state.data2 != newState.data2:
             if self.state.data2 is not None:
-                self.remove_series(self.model.getDataType(self.state.data2))
+                self.removeSeries(self.model.getDataType(self.state.data2))
             if newState.data2 is not None:
-                self.add_series(self.model.getDataType(newState.data2), newState.data2)
+                self.addSeries(self.model.getDataType(newState.data2), newState.data2)
 
         if self.state.data3 != newState.data3:
             if self.state.data3 is not None:
-                self.remove_series(self.model.getDataType(self.state.data3))
+                self.removeSeries(self.model.getDataType(self.state.data3))
             if newState.data3 is not None:
-                self.add_series(self.model.getDataType(newState.data3), newState.data3)
+                self.addSeries(self.model.getDataType(newState.data3), newState.data3)
 
         self.state = newState
+
+    def reset(self):
+        """
+        Resets the graph.
+        """
+        for axis in self.chart.axes():
+            self.chart.removeAxis(axis)
+        self.chart.removeAllSeries()
+        self.state = GraphState()
 
     def showTables(self):
         """
@@ -229,14 +276,49 @@ class GraphWidget(QWidget):
         if self.state.data3 is not None:
             DataTable(self, self.model.getDataModel(self.state.data3)).show()
 
-    def reset(self):
+    def updateChart(self):
         """
-        Resets the graph.
+        Updates the axis of the chart by finding the max/min 
         """
-        self.chart.removeAllSeries()
-        self.state = GraphState()
+        if self.state.data1 is not None:
+            self.updateAxis(self.model.getDataModel(self.state.data1).getMinTime(), self.model.getDataModel(self.state.data1).getMaxTime(), \
+                            self.model.getDataModel(self.state.data1).getMinValue(), self.model.getDataModel(self.state.data1).getMaxValue())
+        if self.state.data2 is not None:
+            self.updateAxis(self.model.getDataModel(self.state.data2).getMinTime(), self.model.getDataModel(self.state.data2).getMaxTime(), \
+                            self.model.getDataModel(self.state.data2).getMinValue(), self.model.getDataModel(self.state.data2).getMaxValue())
+        if self.state.data3 is not None:
+            self.updateAxis(self.model.getDataModel(self.state.data3).getMinTime(), self.model.getDataModel(self.state.data3).getMaxTime(), \
+                            self.model.getDataModel(self.state.data3).getMinValue(), self.model.getDataModel(self.state.data3).getMaxValue())
+        self.chart_view.update()
+    
+    def clearData(self):
+        """
+        Clears the graph's data from the model.
+        """
+        if self.state.data1 is not None:
+            self.model.getDataModel(self.state.data1).deleteAllData()
+        if self.state.data2 is not None:
+            self.model.getDataModel(self.state.data2).deleteAllData()
+        if self.state.data3 is not None:
+            self.model.getDataModel(self.state.data3).deleteAllData()
+    
+    def toggleLiveData(self):
+        """
+        Alters the 
+        """
+        if self.live_data:
+            self.live_button.setText("Start")
+            self.live_button.changeStyle(NERButton.Styles.GREEN)
+            self.live_button.addStyle("margin-right: 5%")
+            self.timer.stop()
+        else:
+            self.live_button.setText("Stop")
+            self.live_button.changeStyle(NERButton.Styles.RED)
+            self.live_button.addStyle("margin-right: 5%")
+            self.timer.start(1000)
+        self.live_data = not self.live_data
 
-    def add_series(self, name: str, data_id: int):
+    def addSeries(self, name: str, data_id: int):
         """
         Adds a data series by the given name to the chart.
         """
@@ -250,9 +332,15 @@ class GraphWidget(QWidget):
         mapper.setSeries(series)
         mapper.setModel(self.model.getDataModel(data_id))
         self.chart.addSeries(series)
-        self.chart.createDefaultAxes()
+        # Configure axes
+        self.updateAxis(self.model.getDataModel(data_id).getMinTime(), self.model.getDataModel(data_id).getMaxTime(), \
+                        self.model.getDataModel(data_id).getMinValue(), self.model.getDataModel(data_id).getMaxValue())
+        self.chart.addAxis(self.axisX, Qt.AlignmentFlag.AlignBottom)
+        self.chart.addAxis(self.axisY, Qt.AlignmentFlag.AlignLeft)
+        series.attachAxis(self.axisX)
+        series.attachAxis(self.axisY)
 
-    def remove_series(self, name: str):
+    def removeSeries(self, name: str):
         """
         Removes the data series specified by the given name from the chart.
         """
@@ -263,6 +351,28 @@ class GraphWidget(QWidget):
         except:
             pass
 
+    def updateAxis(self, xmin: QDateTime, xmax: QDateTime, ymin: int, ymax: int):
+        """
+        Updates the axis to use the new data values if they expand the bounds of the graph.
+        """
+        if self.xRange is None:
+            self.xRange = [xmin, xmax]
+        else:
+            if xmin < self.xRange[0]:
+                self.xRange[0] = xmin
+            if xmax > self.xRange[1]:
+                self.xRange[1] = xmax
+                
+        if self.yRange is None:
+            self.yRange = [ymin, ymax]
+        else:
+            if ymin < self.yRange[0]:
+                self.yRange[0] = ymin
+            if ymax > self.yRange[1]:
+                self.yRange[1] = ymax
+
+        self.axisX.setRange(self.xRange[0], self.xRange[1])
+        self.axisY.setRange(self.yRange[0], self.yRange[1])
 
 
 
@@ -273,18 +383,23 @@ class GraphDashboardWidget(QWidget):
     This is the widget to embed in other views to get a dashboard.
     """
     
-    def __init__(self, model: DataModelManager):
-        super(GraphDashboardWidget, self).__init__()
-        self.setStyleSheet("QSplitter { background-color: #f0f0f0} QSplitterHandle { background-color: #999999 }")
+    def __init__(self, parent: QWidget, model: DataModelManager, dynamic=False):
+        """
+        Creates a graph dashboard with the given model. If dynamic is true, this dashboard will 
+        support real time plotting.
+        """
+        super(GraphDashboardWidget, self).__init__(parent)
+        self.setStyleSheet("""QSplitter { background-color: #f0f0f0} 
+            QSplitterHandle { background-color: #999999 }""")
 
-        g1 = GraphWidget(1, model)
-        g2 = GraphWidget(2, model)
+        g1 = GraphWidget(self, 1, model, dynamic)
+        g2 = GraphWidget(self, 2, model, dynamic)
         self.row1 = QSplitter()
         self.row1.addWidget(g1)
         self.row1.addWidget(g2)
 
-        g3 = GraphWidget(3, model)
-        g4 = GraphWidget(4, model)
+        g3 = GraphWidget(self, 3, model, dynamic)
+        g4 = GraphWidget(self, 4, model, dynamic)
         self.row2 = QSplitter()
         self.row2.addWidget(g3)
         self.row2.addWidget(g4)

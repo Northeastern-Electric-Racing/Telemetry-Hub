@@ -1,4 +1,6 @@
 from typing import Any, List
+
+from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import (
     QAbstractListModel, Qt,
     QModelIndex
@@ -14,13 +16,14 @@ class MessageModel(QAbstractListModel):
     A model class to represent the list of messages in the application.
     """
 
-    def __init__(self, data_model: DataModelManager = None) -> None:
+    def __init__(self, parent: QWidget, data_model: DataModelManager = None) -> None:
         """
         Initializes the list of messages and a potential data model to forward to.
         """
-        super(MessageModel, self).__init__()
+        super(MessageModel, self).__init__(parent)
         self._messages: List[Message] = []
         self._model = data_model
+        self._record = False
 
     def data(self, index: QModelIndex, role: int) -> Any:
         """
@@ -40,7 +43,8 @@ class MessageModel(QAbstractListModel):
         """
         Add a message to the model.
         """
-        self._messages.append(msg)
+        if self._record:
+            self._messages.append(msg)
         try:
             data_list: List[Data] = msg.decode()
             self._model.addDataList(data_list)
@@ -54,6 +58,26 @@ class MessageModel(QAbstractListModel):
         """
         self._messages.pop(index.row())
         self.layoutChanged.emit()
+
+    def deleteAllMessages(self) -> None:
+        """
+        Removes a message from the model.
+        """
+        self._messages.clear()
+        self.layoutChanged.emit()
+
+    def setRecordState(self, state: bool) -> None:
+        """
+        Sets whether or not messages will be stored in the model (or data will just 
+        be passed through to the data models).
+        """
+        self._record = state
+
+    def getRecordState(self) -> bool:
+        """
+        Gets whether or not messages are being stored in the model.
+        """
+        return self._record
 
         
 
