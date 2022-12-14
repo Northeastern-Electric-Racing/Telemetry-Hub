@@ -21,7 +21,7 @@ class DataModel(QAbstractTableModel):
     Represents a model for values of a single data type.
     """
 
-    def __init__(self, parent: QObject, id: int) -> None:
+    def __init__(self, id: int, parent: QObject = None) -> None:
         """
         Initializes the data list and mutex for thread access control.
         """
@@ -108,13 +108,13 @@ class DataModel(QAbstractTableModel):
         except IndexError:
             return QDateTime.fromMSecsSinceEpoch(0) # Give small max time when no data
 
-    def getMinValue(self) -> QDateTime:
+    def getMinValue(self) -> Any:
         """
         Gets the minimum value of the data in the model.
         """
         return self.min_value
 
-    def getMaxValue(self) -> QDateTime:
+    def getMaxValue(self) -> Any:
         """
         Gets the maximum value of the data in the model.
         """
@@ -171,19 +171,19 @@ class DataModelManager(QObject):
         """
         Creates a data model for the given ID if none exists already.
         """
-        try:
-            self._datamap[id]
-        except KeyError:
-            self._datamap[id] = DataModel(self, id)
+        if id not in self._datamap:
+            self._datamap[id] = DataModel(id)
+            self._datamap[id].moveToThread(self.thread())
+            self._datamap[id].setParent(self)
 
     @staticmethod
     def getDataType(id: int) -> str:
         """
         Gets the type of data of the given ID.
         """
-        try:
+        if id in DATA_IDS:
             return DATA_IDS[id]
-        except KeyError:
+        else:
             raise ValueError("Invalid data ID")
 
     def addData(self, data: Data) -> None:
@@ -228,12 +228,12 @@ class DataModelManager(QObject):
         """
         Removes all data from the model specified by the given ID.
         """
-        try:
+        if id in self._datamap:
             self._datamap[id].deleteAllData()
             self._datamap.pop(id)
-        except KeyError:
+            self.layoutChanged.emit()
+        else:
             raise ValueError("Invalid data ID")
-        self.layoutChanged.emit()
 
     def deleteAllData(self) -> None:
         """

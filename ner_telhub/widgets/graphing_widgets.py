@@ -157,14 +157,8 @@ class GraphWidget(QWidget):
         use the the dynamic variable.
         """
         super(GraphWidget, self).__init__(parent)
-        self.index = index
         self.model = model
-        self.state = GraphState(format=format)
-        self.xRange = None
-        self.yRange = None
-        if dynamic:
-            self.timer = QTimer()
-            self.timer.timeout.connect(self.updateChart)
+        self.format = format
 
         self.setMinimumSize(QSize(300, 200))
 
@@ -172,7 +166,7 @@ class GraphWidget(QWidget):
         toolbar = QToolBar()
         config_button = NERButton("Edit", NERButton.Styles.GREEN)
         config_button.addStyle("margin-right: 5%")
-        config_button.pressed.connect(lambda: EditDialog(self, self.editCallback, self.model, self.state).exec())
+        config_button.pressed.connect(lambda: EditDialog(self, self.reset, self.model, self.state).exec())
         toolbar.addWidget(config_button)
         reset_button = NERButton("Reset", NERButton.Styles.RED)
         reset_button.addStyle("margin-right: 5%")
@@ -183,6 +177,7 @@ class GraphWidget(QWidget):
         show_button.pressed.connect(self.showTables)
         toolbar.addWidget(show_button)
 
+        # Specific config for real time graphs
         if dynamic:
             spacer = QWidget()
             spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
@@ -201,27 +196,22 @@ class GraphWidget(QWidget):
             self.live_button.pressed.connect(self.toggleLiveData)
             toolbar.addWidget(self.live_button)
 
+            self.timer = QTimer()
+            self.timer.timeout.connect(self.updateChart)
+
         # Chart Config
         self.chart = QChart()
         self.chart.setTitle(f"Graph {index}")
         self.chart.setTheme(QChart.ChartTheme.ChartThemeLight)
         self.chart.setAnimationOptions(QChart.AnimationOption.SeriesAnimations)
 
-        # Axis Config
-        self.axisX = QDateTimeAxis()
-        self.axisX.setTickCount(5)
-        self.axisX.setFormat("hh:mm:ss.z")
-        self.axisX.setTitleText("Time")
-
-        self.axisY = QValueAxis()
-        self.axisY.setTickCount(5)
-        self.axisY.setLabelFormat("%i")
-        self.axisY.setTitleText("Data")
-
         # View Config
         self.chart_view = QChartView(self.chart)
         self.chart_view.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.chart_view.setStyleSheet("background-color: #f0f0f0")
+
+        # Reset graph state, axes, and series
+        self.reset()
 
         # Layout Config
         layout = QVBoxLayout()
@@ -229,41 +219,39 @@ class GraphWidget(QWidget):
         layout.addWidget(self.chart_view)
         self.setLayout(layout)
 
-    def editCallback(self, newState: GraphState):
-        """
-        Handles a changed state from the edit dialog box.
-        """
-        if self.state.format != newState.format:
-            pass # In the future, change graph type
-
-        if self.state.data1 != newState.data1:
-            if self.state.data1 is not None:
-                self.removeSeries(self.model.getDataType(self.state.data1))
-            if newState.data1 is not None:
-                self.addSeries(self.model.getDataType(newState.data1), newState.data1)
-
-        if self.state.data2 != newState.data2:
-            if self.state.data2 is not None:
-                self.removeSeries(self.model.getDataType(self.state.data2))
-            if newState.data2 is not None:
-                self.addSeries(self.model.getDataType(newState.data2), newState.data2)
-
-        if self.state.data3 != newState.data3:
-            if self.state.data3 is not None:
-                self.removeSeries(self.model.getDataType(self.state.data3))
-            if newState.data3 is not None:
-                self.addSeries(self.model.getDataType(newState.data3), newState.data3)
-
-        self.state = newState
-
-    def reset(self):
+    def reset(self, new_state: GraphState = None):
         """
         Resets the graph.
         """
+        if new_state is None:
+            self.state = GraphState(format=self.format)
+        else:
+            self.state = new_state
+        self.range_x = None
+        self.range_y = None
+
+        # Remove existing axes and data series
+        self.chart.removeAllSeries()
         for axis in self.chart.axes():
             self.chart.removeAxis(axis)
-        self.chart.removeAllSeries()
-        self.state = GraphState()
+
+        # Configure and add axes
+        self.axis_x = QDateTimeAxis()
+        self.axis_x.setTickCount(5)
+        self.axis_x.setFormat("hh:mm:ss.z")
+        self.axis_x.setTitleText("Time")
+        self.chart.addAxis(self.axis_x, Qt.AlignmentFlag.AlignBottom)
+        self.axis_y = QValueAxis()
+        self.axis_y.setTitleText("Data")
+        self.chart.addAxis(self.axis_y, Qt.AlignmentFlag.AlignLeft)
+
+        # Add data if provided
+        if self.state.data1 is not None: 
+            self.addSeries(self.model.getDataType(self.state.data1), self.state.data1)
+        if self.state.data2 is not None:
+            self.addSeries(self.model.getDataType(self.state.data2), self.state.data2)
+        if self.state.data3 is not None:
+            self.addSeries(self.model.getDataType(self.state.data3), self.state.data3)
 
     def showTables(self):
         """
@@ -335,44 +323,35 @@ class GraphWidget(QWidget):
         # Configure axes
         self.updateAxis(self.model.getDataModel(data_id).getMinTime(), self.model.getDataModel(data_id).getMaxTime(), \
                         self.model.getDataModel(data_id).getMinValue(), self.model.getDataModel(data_id).getMaxValue())
-        self.chart.addAxis(self.axisX, Qt.AlignmentFlag.AlignBottom)
-        self.chart.addAxis(self.axisY, Qt.AlignmentFlag.AlignLeft)
-        series.attachAxis(self.axisX)
-        series.attachAxis(self.axisY)
+        series.attachAxis(self.axis_x)
+        series.attachAxis(self.axis_y)
 
-    def removeSeries(self, name: str):
-        """
-        Removes the data series specified by the given name from the chart.
-        """
-        try:
-            for series in self.chart.series():
-                if series.name() == name:
-                    self.chart.removeSeries(series)
-        except:
-            pass
-
-    def updateAxis(self, xmin: QDateTime, xmax: QDateTime, ymin: int, ymax: int):
+    def updateAxis(self, xmin: QDateTime, xmax: QDateTime, ymin: float, ymax: float):
         """
         Updates the axis to use the new data values if they expand the bounds of the graph.
         """
-        if self.xRange is None:
-            self.xRange = [xmin, xmax]
-        else:
-            if xmin < self.xRange[0]:
-                self.xRange[0] = xmin
-            if xmax > self.xRange[1]:
-                self.xRange[1] = xmax
-                
-        if self.yRange is None:
-            self.yRange = [ymin, ymax]
-        else:
-            if ymin < self.yRange[0]:
-                self.yRange[0] = ymin
-            if ymax > self.yRange[1]:
-                self.yRange[1] = ymax
+        if ymin == ymax: # Add offset to equal min/max to prevent display bug
+            ymin = ymin - .001
+            ymax = ymax + .001
 
-        self.axisX.setRange(self.xRange[0], self.xRange[1])
-        self.axisY.setRange(self.yRange[0], self.yRange[1])
+        if self.range_x is None:
+            self.range_x = [xmin, xmax]
+        else:
+            if xmin < self.range_x[0]:
+                self.range_x[0] = xmin
+            if xmax > self.range_x[1]:
+                self.range_x[1] = xmax
+                
+        if self.range_y is None:
+            self.range_y = [ymin, ymax]
+        else:
+            if ymin < self.range_y[0]:
+                self.range_y[0] = ymin
+            if ymax > self.range_y[1]:
+                self.range_y[1] = ymax
+
+        self.axis_x.setRange(self.range_x[0], self.range_x[1])
+        self.axis_y.setRange(self.range_y[0], self.range_y[1])
 
 
 
