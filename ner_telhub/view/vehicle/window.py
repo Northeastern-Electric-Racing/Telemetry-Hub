@@ -148,7 +148,6 @@ class VehicleWindow(QMainWindow):
         # Menu bar
         menu = self.menuBar()
         file_menu = menu.addMenu("File")
-        edit_menu = menu.addMenu("Edit")
         help_menu = menu.addMenu("Help")
         views_menu = menu.addMenu("View")
 

@@ -350,40 +350,6 @@ class OptionsView(QWidget):
         pass
 
 
-
-class FormatGroup(QWidget):
-    """Defines format selection menu inputs for a file model."""
-
-    def __init__(self, parent: QWidget, file_model: FileModel):
-        super().__init__(parent)
-
-        self.file_model = file_model
-        self.options: Dict[int, QAction] = {}
-        self.enabled_id = self.file_model.getFormat().value
-
-        for format in LogFormat:
-            act = QAction(format.name)
-            act.setCheckable(True)
-            act.triggered.connect(lambda state, id=format.value : self.clicked(state, id))
-            self.options[format.value] = act
-
-        self.options.get(self.enabled_id).setChecked(True)
-
-    def clicked(self, state: bool, id: int):
-        if state == False:
-            self.options.get(id).setChecked(True)
-            pass
-        else:
-            self.options.get(self.enabled_id).setChecked(False)
-            self.enabled_id = id
-            self.file_model.setFormat(LogFormat(id))
-
-    def addToMenu(self, menu: QMenu) -> None:
-        for id in self.options:
-            menu.addAction(self.options[id])
-
-
-
 class SdCardWindow(QMainWindow):
     """Main window in for the SD Card connection."""
 
@@ -393,30 +359,13 @@ class SdCardWindow(QMainWindow):
         self.setWindowTitle("Telemetry Hub")
         self.setMinimumSize(QSize(800, 480))
 
-        file_model = FileModel(self)
+        self.file_model = FileModel(self)
         data_model = DataModelManager(self)
-
-        # Setup menu bar
-        menu = self.menuBar()
-        file_menu = menu.addMenu("File")
-        edit_menu = menu.addMenu("Edit")
-        help_menu = menu.addMenu("Help")
-
-        edit_action_export = edit_menu.addAction("Export")
-        edit_action_reset = edit_menu.addAction("Reset")
-        format_menu = edit_menu.addMenu("Format")
-        formats = FormatGroup(self, file_model)
-        formats.addToMenu(format_menu)
-        
-        help_action_1 = help_menu.addAction("Message Info")
-        help_action_2 = help_menu.addAction("Data Info")
-        help_action_1.triggered.connect(lambda : MessageIds(self).show())
-        help_action_2.triggered.connect(lambda : DataIds(self).show())
 
         # Setup window
         hlayout = QHBoxLayout()
-        hlayout.addWidget(FileView(self, file_model))
-        hlayout.addWidget(ProcessView(self, file_model, data_model))
+        hlayout.addWidget(FileView(self, self.file_model))
+        hlayout.addWidget(ProcessView(self, self.file_model, data_model))
 
         vlayout = QVBoxLayout()
         vlayout.addLayout(hlayout)
@@ -425,6 +374,43 @@ class SdCardWindow(QMainWindow):
         widget = QWidget()
         widget.setLayout(vlayout)
         self.setCentralWidget(widget)
+
+        # Setup menu bar
+        menu = self.menuBar()
+        edit_menu = menu.addMenu("Edit")
+        help_menu = menu.addMenu("Help")
+
+        format_submenu = QMenu("Format", self)
+        edit_menu.addMenu(format_submenu)
+
+        self.options: Dict[int, QAction] = {}
+        self.enabled_id = self.file_model.getFormat().value
+
+        for format in LogFormat:
+            act = QAction(format.name, self)
+            format_submenu.addAction(act)
+            act.setCheckable(True)
+            act.triggered.connect(lambda state, id=format.value : self.formatClicked(state, id))
+            self.options[format.value] = act
+
+        self.options.get(self.enabled_id).setChecked(True)
+        
+        help_action_1 = help_menu.addAction("Message Info")
+        help_action_2 = help_menu.addAction("Data Info")
+        help_action_1.triggered.connect(lambda : MessageIds(self).show())
+        help_action_2.triggered.connect(lambda : DataIds(self).show())
+    
+    def formatClicked(self, state: bool, id: int):
+        """
+        Callback for format menu options to verify one and always one format is selected at a time.
+            - state is whether the format given by id should be checked or not
+        """
+        if not state:
+            self.options.get(id).setChecked(True)
+        else:
+            self.options.get(self.enabled_id).setChecked(False)
+            self.enabled_id = id
+            self.file_model.setFormat(LogFormat(id))
 
 
 
