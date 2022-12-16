@@ -118,7 +118,7 @@ class VehicleWindow(QMainWindow):
 
         self.data_model = DataModelManager(self)
         self.message_model = MessageModel(self, self.data_model)
-        self.receive_filter_model = ReceiveFilterModel(self)
+        self.receive_filter_model = ReceiveFilterModel(self, self.message_model)
         self.send_filter_model = SendFilterModel(self)
         self.connection = XBee(self.message_model)
         self.connection.addCallback("vehicle", self.message_model.addMessage)

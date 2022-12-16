@@ -6,18 +6,21 @@ from PyQt6.QtCore import (
     QModelIndex
 )
 
+from ner_telhub.model.message_models import MessageModel
+
 
 class ReceiveFilterModel(QAbstractListModel):
     """
     A model class to represent the desired messages to receive from the car.
     """
 
-    def __init__(self, parent: QWidget) -> None:
+    def __init__(self, parent: QWidget, message_model: MessageModel) -> None:
         """
         Initializes the list of filters.
         """
         super(ReceiveFilterModel, self).__init__(parent)
         self._filters: List[Tuple[int, int]] = []
+        self.message_model = message_model
 
     def data(self, index: QModelIndex, role: int) -> Any:
         """
@@ -38,6 +41,7 @@ class ReceiveFilterModel(QAbstractListModel):
         Adds a filter to the model.
         """
         self._filters.append((id, interval))
+        self.message_model.addFilter(id, interval)
         self.layoutChanged.emit()
 
     def deleteFilter(self, index: QModelIndex) -> None:
@@ -45,6 +49,7 @@ class ReceiveFilterModel(QAbstractListModel):
         Removes a filter from the model.
         """
         self._filters.pop(index.row())
+        self.message_model.deleteFilter(index)
         self.layoutChanged.emit()
 
 
