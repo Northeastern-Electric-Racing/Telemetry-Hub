@@ -15,6 +15,7 @@ from ner_telhub.model.message_models import MessageModel
 from ner_telhub.model.filter_models import ReceiveFilterModel, SendFilterModel
 from ner_telhub.view.vehicle.can_view import CanView
 from ner_telhub.view.vehicle.data_view import DataView
+from ner_telhub.view.vehicle.fault_view import FaultView
 from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
 from ner_telhub.widgets.styled_widgets import NERButton
 
@@ -126,7 +127,8 @@ class VehicleWindow(QMainWindow):
 
         self.views = {
             0: ("CAN", CanView(self, self.message_model, self.receive_filter_model, self.send_filter_model)), 
-            1: ("Data", DataView(self, self.data_model))
+            1: ("Data", DataView(self, self.data_model)),
+            2: ("Faults", FaultView(self, self.message_model))
         }
 
         # Window config
@@ -166,10 +168,13 @@ class VehicleWindow(QMainWindow):
 
         views_select_can = QAction(self.views.get(0)[0], self)
         views_select_data = QAction(self.views.get(1)[0], self)
+        views_select_fault = QAction(self.views.get(2)[0], self)
         views_select_can.triggered.connect(self.selectCanView)
         views_select_data.triggered.connect(self.selectDataView)
+        views_select_fault.triggered.connect(self.selectFaultView)
         views_menu.addAction(views_select_can)
         views_menu.addAction(views_select_data)
+        views_menu.addAction(views_select_fault)
 
         self.current_view_menu = menu.addMenu(self.views.get(self.stacked_layout.currentIndex())[0])
         self.current_view_menu.setDisabled(True)
@@ -181,6 +186,10 @@ class VehicleWindow(QMainWindow):
     def selectDataView(self):
         self.stacked_layout.setCurrentIndex(1)
         self.current_view_menu.setTitle(self.views.get(1)[0])
+
+    def selectFaultView(self):
+        self.stacked_layout.setCurrentIndex(2)
+        self.current_view_menu.setTitle(self.views.get(2)[0])
 
     def connect(self):
         dlg = ConnectionDialog(self)
