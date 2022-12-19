@@ -190,6 +190,7 @@ class VehicleWindow(QMainWindow):
     def selectFaultView(self):
         self.stacked_layout.setCurrentIndex(2)
         self.current_view_menu.setTitle(self.views.get(2)[0])
+        self.
 
     def connect(self):
         dlg = ConnectionDialog(self)
