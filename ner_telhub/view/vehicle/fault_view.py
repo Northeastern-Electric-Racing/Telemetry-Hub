@@ -5,11 +5,21 @@ from PyQt6.QtWidgets import (
     QLabel
 )
 
-from ner_telhub.model.message_models import MessageModel
+from ner_telhub.model.filter_models import ReceiveFilterModel
 
 class FaultWidget(QWidget):
-    def __init__(self):
+    fault_ids : dict = None
+    model : ReceiveFilterModel = None
+    
+    def __init__(self, fault_ids: dict, model: ReceiveFilterModel):
         super().__init__()
+        self.fault_ids = fault_ids
+        self.model = model
+
+    def setFilters(self):
+        for id in self.fault_ids:
+            print(id)
+            self.model.addFilter(id)
 
 class FaultView(QWidget):
     """
@@ -17,39 +27,39 @@ class FaultView(QWidget):
     """
 
     BMS_FAULT_IDS = {
-
+        0: ""
     }
 
     MC_FAULT_IDS = {
-
+        0: ""
     }
 
-    CONTROL_FAULT_IDS = {
-
+    CONTROLS_FAULT_IDS = {
+        0: ""
     }
 
     TELEMETRY_FAULT_IDS = {
-
+        0: ""
     }
 
     DRIVERIO_FAULT_IDS = {
-
+        0: ""
     }
 
-    def __init__(self, parent: QWidget, model: MessageModel):
+    def __init__(self, parent: QWidget, model: ReceiveFilterModel):
         super(FaultView, self).__init__(parent)
         layout = QVBoxLayout()
 
-        mc_fault = FaultWidget()
-        bms_fault = FaultWidget()
+        mc_fault = FaultWidget(fault_ids=self.MC_FAULT_IDS, model=model)
+        bms_fault = FaultWidget(fault_ids=self.BMS_FAULT_IDS, model=model)
         tractive_fault_layout = QHBoxLayout()
         tractive_fault_layout.addWidget(QLabel("Tractive Faults:"))
         tractive_fault_layout.addWidget(mc_fault)
         tractive_fault_layout.addWidget(bms_fault)
 
-        controls_fault = FaultWidget()
-        telemetry_fault = FaultWidget()
-        driverio_fault = FaultWidget()
+        controls_fault = FaultWidget(fault_ids=self.CONTROLS_FAULT_IDS, model=model)
+        telemetry_fault = FaultWidget(fault_ids=self.TELEMETRY_FAULT_IDS, model=model)
+        driverio_fault = FaultWidget(fault_ids=self.DRIVERIO_FAULT_IDS, model=model)
         lv_fault_layout = QHBoxLayout()
         tractive_fault_layout.addWidget(QLabel("Low Voltage Faults:"))
         lv_fault_layout.addWidget(controls_fault)
