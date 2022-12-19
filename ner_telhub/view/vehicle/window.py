@@ -128,7 +128,7 @@ class VehicleWindow(QMainWindow):
         self.views = {
             0: ("CAN", CanView(self, self.message_model, self.receive_filter_model, self.send_filter_model)), 
             1: ("Data", DataView(self, self.data_model)),
-            2: ("Faults", FaultView(self, self.message_model))
+            2: ("Faults", FaultView(self, self.receive_filter_model))
         }
 
         # Window config
@@ -190,6 +190,7 @@ class VehicleWindow(QMainWindow):
     def selectFaultView(self):
         self.stacked_layout.setCurrentIndex(2)
         self.current_view_menu.setTitle(self.views.get(2)[0])
+        self.
 
     def connect(self):
         dlg = ConnectionDialog(self)
