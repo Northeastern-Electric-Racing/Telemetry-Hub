@@ -40,6 +40,9 @@ class ReceiveFilterModel(QAbstractListModel):
         """
         Adds a filter to the model.
         """
+        for filter in self._filters:
+            if filter[0] == id:
+                raise RuntimeError("Data ID is already in filter list.")
         self._filters.append((id, interval))
         self.message_model.addFilter(id, interval)
         self.layoutChanged.emit()
@@ -48,8 +51,8 @@ class ReceiveFilterModel(QAbstractListModel):
         """
         Removes a filter from the model.
         """
-        self._filters.pop(index.row())
-        self.message_model.deleteFilter(index)
+        id, _ = self._filters.pop(index.row())
+        self.message_model.deleteFilter(id)
         self.layoutChanged.emit()
 
 

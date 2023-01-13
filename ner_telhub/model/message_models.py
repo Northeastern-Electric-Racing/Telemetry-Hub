@@ -47,30 +47,29 @@ class MessageModel(QAbstractListModel):
         """
         Add a message to the model if it matches the filters.
         """
-        if not self._filters or msg.id in self._filters.keys():
-            """
-            If there are no filters or the message has a filtered id, continue.
-            """
-            if self._filters and self._filters[msg.id][1].msecsTo(msg.timestamp) >= self._filters[msg.id][0]:
-                """
-                If the message is past the interval, continue and set the last time.
-                """
-                self._filters[msg.id] = (self._filters[msg.id][0], msg.timestamp)
+        if self._filters:
+            # Check if msg is in the filter list and for a valid time interval
+            if msg.id in self._filters.keys():
+                time_since_last_record = self._filters[msg.id][1].msecsTo(msg.timestamp)
+                if time_since_last_record >= self._filters[msg.id][0]:
+                    self._filters[msg.id] = (self._filters[msg.id][0], msg.timestamp)
+                    self._decodeAndRecordMessage(msg)
+        else:
+            # No filters set, so record all messages
+            self._decodeAndRecordMessage(msg)
 
-            elif self._filters:
-                """
-                If there are filters and the message is not past the interval, do not add the message.
-                """
-                return
-
-            if self._record:
-                self._messages.append(msg)
-            try:
-                data_list: List[Data] = msg.decode()
-                self._model.addDataList(data_list)
-            except:
-                pass # TODO: Add error detection
-            self.layoutChanged.emit()
+    def _decodeAndRecordMessage(self, msg: Message) -> None:
+        """
+        Record a message if required, and add the decoded data to the data model.
+        """
+        if self._record:
+            self._messages.append(msg)
+        try:
+            data_list: List[Data] = msg.decode()
+            self._model.addDataList(data_list)
+        except:
+            pass # TODO: Add error detection
+        self.layoutChanged.emit()
 
     def deleteMessage(self, index: QModelIndex) -> None:
         """
@@ -103,11 +102,11 @@ class MessageModel(QAbstractListModel):
         """
         Adds the given filter to the list of filters.
         """
-        self._filters[id] = (interval, QDateTime.currentDateTime())
+        self._filters[id] = (interval, QDateTime.fromMSecsSinceEpoch(0))
 
-    def deleteFilter(self, index: QModelIndex):
+    def deleteFilter(self, id: int) -> None:
         """
-        Removes the filter with the given index.
+        Removes the filter with the given id.
         """
-        self._filters.pop(index.row())
+        self._filters.pop(id)
 
