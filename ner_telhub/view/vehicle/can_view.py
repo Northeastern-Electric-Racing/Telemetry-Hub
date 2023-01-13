@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (
     QLabel, QLineEdit, QHBoxLayout, 
     QVBoxLayout, QWidget, QListView,
-    QGridLayout, QCheckBox
+    QGridLayout, QCheckBox, QMessageBox
 )
 from PyQt6.QtCore import Qt
 
@@ -61,15 +61,11 @@ class ReceiveFilters(QWidget):
             id = int(self.id_entry.text())
             interval = int(self.interval_entry.text())
 
-            print("Adding Filter:")
-            print("  id - ", id)
-            print("  interval - ", interval)
-
             self.model.addFilter(id, interval)
-
-        except Exception as e:
-            # TODO: Add popup window for error
-            print("Error with the fields")
+        except RuntimeError:
+            QMessageBox.critical(self, "Input Error", f"Filter with ID {id} already exists")
+        except Exception:
+            QMessageBox.critical(self, "Input Error", "Error with the input fields.")
 
         self.id_entry.setText("")
         self.interval_entry.setText("")

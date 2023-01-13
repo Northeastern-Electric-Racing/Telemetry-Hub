@@ -1,9 +1,9 @@
-from typing import Any, List
+from typing import Any, List, Tuple, Dict
 
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import (
     QAbstractListModel, Qt,
-    QModelIndex
+    QModelIndex, QDateTime
 )
 
 from ner_processing.data import Data
@@ -19,11 +19,15 @@ class MessageModel(QAbstractListModel):
     def __init__(self, parent: QWidget, data_model: DataModelManager = None) -> None:
         """
         Initializes the list of messages and a potential data model to forward to.
+        The filters store as a dictionary where:
+          - the key is the id
+          - the value is a tuple of the interval and the last time data was sent using the given id
         """
         super(MessageModel, self).__init__(parent)
         self._messages: List[Message] = []
         self._model = data_model
         self._record = False
+        self._filters: Dict[int, Tuple[int, QDateTime]] = {}
 
     def data(self, index: QModelIndex, role: int) -> Any:
         """
@@ -41,7 +45,22 @@ class MessageModel(QAbstractListModel):
 
     def addMessage(self, msg: Message) -> None:
         """
-        Add a message to the model.
+        Add a message to the model if it matches the filters.
+        """
+        if self._filters:
+            # Check if msg is in the filter list and for a valid time interval
+            if msg.id in self._filters.keys():
+                time_since_last_record = self._filters[msg.id][1].msecsTo(msg.timestamp)
+                if time_since_last_record >= self._filters[msg.id][0]:
+                    self._filters[msg.id] = (self._filters[msg.id][0], msg.timestamp)
+                    self._decodeAndRecordMessage(msg)
+        else:
+            # No filters set, so record all messages
+            self._decodeAndRecordMessage(msg)
+
+    def _decodeAndRecordMessage(self, msg: Message) -> None:
+        """
+        Record a message if required, and add the decoded data to the data model.
         """
         if self._record:
             self._messages.append(msg)
@@ -79,5 +98,15 @@ class MessageModel(QAbstractListModel):
         """
         return self._record
 
-        
+    def addFilter(self, id: int, interval: int) -> None:
+        """
+        Adds the given filter to the list of filters.
+        """
+        self._filters[id] = (interval, QDateTime.fromMSecsSinceEpoch(0))
+
+    def deleteFilter(self, id: int) -> None:
+        """
+        Removes the filter with the given id.
+        """
+        self._filters.pop(id)
 
