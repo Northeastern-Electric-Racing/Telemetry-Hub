@@ -1,7 +1,9 @@
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QStackedLayout, 
+    QMainWindow, QWidget, QStackedLayout,
     QMessageBox, QDialog, QDialogButtonBox,
-    QVBoxLayout, QLabel, QRadioButton
+    QVBoxLayout, QLabel, QRadioButton,
+    QToolBar, QLineEdit, QGridLayout, 
+    QFileDialog
 )
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QSize
@@ -56,6 +58,71 @@ class ConnectionDialog(QDialog):
             self.reject()
 
 
+class FileDialog(QDialog):
+    """Dialog to export data to a CSV file."""
+
+    def __init__(self, parent: QWidget, model: DataModelManager):
+        super().__init__(parent)
+
+        self.setWindowTitle("Export as CSV")
+        self.model = model
+
+        self.filename_input = QLineEdit()
+        self.directory_input = QLineEdit()
+        self.directory_button = NERButton("...")
+        self.directory_button.addStyle("font-size: 20px")
+        self.directory_button.setMaximumSize(45, 25)
+        self.directory_button.pressed.connect(self.choose_directory)
+
+        self.layout = QGridLayout()
+        self.layout.addWidget(QLabel("File name: "), 0, 0)
+        self.layout.addWidget(self.filename_input, 0, 1)
+        self.layout.addWidget(QLabel("Directory name: "), 1, 0)
+        self.layout.addWidget(self.directory_input, 1, 1)
+        self.layout.addWidget(self.directory_button, 1, 2)
+
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        self.buttonBox.accepted.connect(self.on_accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
+
+    def choose_directory(self):
+        dir = QFileDialog().getExistingDirectory(self)
+        self.directory_input.setText(dir)
+
+    def on_accept(self):
+        try:
+            filename = self.create_extension(self.filename_input.text())
+        except:
+            QMessageBox.critical(self, "Invalid File Name", "File must be either a .csv or contain no extension.")
+            return
+
+        directory = self.directory_input.text()
+        full_path = directory + "/" + filename
+
+        worker = self.model.getCSVWorker(full_path)
+        worker.signals.error.connect(lambda error: QMessageBox.critical(self, "Export Error", error[1].__str__()))
+        worker.signals.message.connect(lambda msg: QMessageBox.about(self, "Export Status", msg))
+        try:
+            worker.start()
+        except RuntimeError as e:
+            QMessageBox.critical(self, "Internal Error", str(e))
+        self.accept()
+
+    @staticmethod
+    def create_extension(name: str):
+        """Verifies the file name has a csv extension, or adds one if not."""
+        components = name.split(".")
+        if len(components) == 1:
+            return name + ".csv"
+        elif len(components) == 2 and components[1] == "csv":
+            return name
+        else:
+            raise ValueError("Invalid file name format")
+
+
 class LiveToolbar(NERToolbar):
     def __init__(self, parent: QWidget, message_model: MessageModel, data_model: DataModelManager, input: LiveInput):
         super(LiveToolbar, self).__init__(parent)
@@ -70,11 +137,11 @@ class LiveToolbar(NERToolbar):
         self.start_button.pressed.connect(self.start)
         clear_button = NERButton("Clear", NERButton.Styles.RED)
         clear_button.pressed.connect(self.clear)
-        record_button = NERButton("Record", NERButton.Styles.BLUE)
-        record_button.pressed.connect(self.record)
+        export_button = NERButton("Export", NERButton.Styles.BLUE)
+        export_button.pressed.connect(self.export)
         self.addLeft(self.start_button)
         self.addLeft(clear_button)
-        self.addLeft(record_button)
+        self.addLeft(export_button)
     
     def start(self):
         if not self.feed_started:
@@ -98,8 +165,11 @@ class LiveToolbar(NERToolbar):
         self.model.deleteAllData()
         self.message_model.deleteAllMessages()
 
-    def record(self):
-        pass
+    def export(self):
+        if not self.feed_started:
+            FileDialog(self, self.model).exec()
+        else:
+            QMessageBox.information(self, "Export failed", "Cannot export to CSV while collecting data.")
 
 
 class VehicleWindow(QMainWindow):
