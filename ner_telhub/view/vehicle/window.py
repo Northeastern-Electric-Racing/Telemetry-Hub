@@ -1,5 +1,6 @@
+import multiprocessing as mp
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QStackedLayout, 
+    QApplication, QMainWindow, QWidget, QStackedLayout, 
     QMessageBox, QDialog, QDialogButtonBox,
     QVBoxLayout, QLabel, QRadioButton,
     QToolBar
@@ -58,12 +59,13 @@ class ConnectionDialog(QDialog):
 
 
 class LiveToolbar(QToolBar):
-    def __init__(self, parent: QWidget, message_model: MessageModel, data_model: DataModelManager, input: LiveInput):
+    def __init__(self, parent: QWidget, message_model: MessageModel, data_model: DataModelManager, send_pipe): # input: LiveInput):
         super(LiveToolbar, self).__init__(parent)
 
         self.message_model = message_model
         self.model = data_model
-        self.input = input
+        # self.input = input
+        self.send_pipe = send_pipe
         self.feed_started = False
 
         self.setStyleSheet("background-color: white; padding: 5%")
@@ -83,7 +85,8 @@ class LiveToolbar(QToolBar):
     def start(self):
         if not self.feed_started:
             try:
-                self.input.start()
+                # self.input.start()
+                self.send_pipe.send("start")
                 self.start_button.setText("Stop")
                 self.start_button.changeStyle(NERButton.Styles.RED)
                 self.start_button.addStyle("margin-right: 5%")
@@ -92,7 +95,8 @@ class LiveToolbar(QToolBar):
                 QMessageBox.information(self, "Couldn't start input: ", e.message)
         else:
             try:
-                self.input.stop()
+                # self.input.stop()
+                self.send_pipe.send("stop")
                 self.start_button.setText("Start")
                 self.start_button.changeStyle(NERButton.Styles.GREEN)
                 self.start_button.addStyle("margin-right: 5%")
@@ -113,8 +117,8 @@ class VehicleWindow(QMainWindow):
     Main vehicle window containing various views.
     """
 
-    def __init__(self, parent: QWidget):
-        super().__init__(parent)
+    def __init__(self, queue, send_pipe):
+        super().__init__()
 
         self.data_model = DataModelManager(self)
         self.message_model = MessageModel(self, self.data_model)
@@ -123,6 +127,8 @@ class VehicleWindow(QMainWindow):
         self.connection = XBee(self.message_model)
         self.connection.addCallback("vehicle", self.message_model.addMessage)
         self.port_name = None
+        self.queue = queue
+        self.send_pipe = send_pipe
 
         self.views = {
             0: ("CAN", CanView(self, self.message_model, self.receive_filter_model, self.send_filter_model)), 
@@ -138,7 +144,7 @@ class VehicleWindow(QMainWindow):
         for view in self.views.values():
             self.stacked_layout.addWidget(view[1])
         self.main_layout = QVBoxLayout()
-        self.main_layout.addWidget(LiveToolbar(self, self.message_model, self.data_model, self.connection))
+        self.main_layout.addWidget(LiveToolbar(self, self.message_model, self.data_model, self.send_pipe))# self.connection))
         self.main_layout.addLayout(self.stacked_layout)
 
         widget = QWidget(self)
@@ -189,7 +195,9 @@ class VehicleWindow(QMainWindow):
         # If a proper port was selected
         if port_status == 1:
             try:
-                self.connection.connect(self.port_name)
+                # self.connection.connect(self.port_name) # replace with writing to the pipe
+                self.send_pipe.send("connect")
+                self.send_pipe.send(self.port_name)
                 msg = "Successfully connected to " + self.port_name
             except LiveInputException as e:
                 msg = e.message
@@ -199,10 +207,19 @@ class VehicleWindow(QMainWindow):
 
     def disconnect(self):
         try:
-            self.connection.disconnect()
+            # self.connection.disconnect() # replace with the pipe
+            self.send_pipe.send("disconnect")
             msg = "Successfully disconnected from the serial port"
             self.port_name = None
         except LiveInputException as e:
             msg = e.message
         QMessageBox.information(self, "Disconnection Status", msg)
 
+def run(queue, send_pipe):
+    """
+    Runs the app by creating and executing the main window. 
+    """
+    app = QApplication([])
+    window = VehicleWindow(queue, send_pipe)
+    window.show()
+    app.exec()

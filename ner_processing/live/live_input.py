@@ -29,8 +29,8 @@ class LiveInput():
     Parent class representing a live input that can be connected to.
     """
 
-    def __init__(self, model: MessageModel):
-        self._model = model
+    def __init__(self, queue):
+        self._queue = queue
         self._callbacks = {}
 
     def addCallback(self, name: str, callback: Callable[[Message], None]) -> None:

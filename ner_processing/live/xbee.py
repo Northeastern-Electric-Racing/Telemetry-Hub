@@ -1,3 +1,4 @@
+import multiprocessing as mp
 from PyQt6.QtSerialPort import QSerialPort, QSerialPortInfo
 from PyQt6.QtCore import QIODeviceBase, QDateTime
 
@@ -14,11 +15,11 @@ class XBee(LiveInput):
     START_TOKEN = "T"
     END_TOKEN = "\r"
 
-    def __init__(self, model: MessageModel):
+    def __init__(self, queue):
         """
         Initialize the serial port and message handling variables.
         """
-        super().__init__(model)
+        super().__init__(queue)
         self._reset()
 
     def _reset(self) -> None:
@@ -129,7 +130,8 @@ class XBee(LiveInput):
                 try:
                     msg = self.parse(self.current_message)
                     if msg is not None:
-                        self._model.addMessage(self.parse(self.current_message))
+                        # self._model.addMessage(self.parse(self.current_message))
+                        self._queue.put(self.parse(self.current_message))
                 except MessageFormatException as e:
                     print(e.message)
                 except RuntimeError:
@@ -139,3 +141,19 @@ class XBee(LiveInput):
             elif self.message_started:
                 self.current_message += char
                 
+def run(queue, recv_pipe):
+    xbee = XBee(queue)
+
+    while True:
+        if recv_pipe.poll(timeout=5):
+            msg = recv_pipe.recv()
+
+            if msg == "connect":
+                port_name = recv_pipe.recv()
+                xbee.connect(port_name)
+            elif msg == "disconnect":
+                xbee.disconnect()
+            elif msg == "start":
+                xbee.start()
+            elif msg == "stop":
+                xbee.stop()
