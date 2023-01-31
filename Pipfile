@@ -8,6 +8,7 @@ pyqt6 = "*"
 pyqt6-charts = "*"
 numpy = "*"
 websockets = "*"
+boto3 = "*"
 
 [dev-packages]
 black = "*"
