@@ -69,7 +69,7 @@ class DataModel(QAbstractTableModel):
         """
         Returns the fixed data type of this model.
         """
-        return DATA_IDS[self._id]
+        return DATA_IDS[self._id]["name"]
 
     def getData(self) -> List[Tuple[QDateTime, Any]]:
         """
@@ -182,7 +182,7 @@ class DataModelManager(QObject):
         Gets the type of data of the given ID.
         """
         if id in DATA_IDS:
-            return DATA_IDS[id]
+            return DATA_IDS[id]["name"]
         else:
             raise ValueError("Invalid data ID")
 
