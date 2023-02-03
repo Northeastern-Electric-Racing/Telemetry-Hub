@@ -207,8 +207,6 @@ class ProcessView(QWidget):
     def __init__(self, parent: QWidget, file_model: FileModel, data_model: DataModelManager):
         super(ProcessView, self).__init__(parent)
 
-        self.process_started = False
-        self.worker = None
         self.file_model = file_model
         self.data_model = data_model
 
@@ -237,49 +235,33 @@ class ProcessView(QWidget):
         self.setLayout(layout)
 
     def start_process(self):
-        if self.can_start():
-            self.data_model.deleteAllData()
-            self.process_started = True
-            self.start_button.setText("Stop")
-            self.start_button.changeStyle(NERButton.Styles.RED)
-            self.progress_bar.setVisible(True)
-            self.clear_view()
-
-            self.worker = self.file_model.getProcessWorker(self.data_model)
-            self.worker.signals.finished.connect(self.stop_process)
-            self.worker.signals.error.connect(lambda error: QMessageBox.critical(self, "Processing Error", error[1].__str__()))
-            self.worker.signals.message.connect(self.update_view)
-            self.worker.signals.progress.connect(lambda val: self.progress_bar.setValue(val))
-            try:
-                self.worker.start()
-            except RuntimeError as e: 
-                self.stop_process()
-                QMessageBox.critical(self, "Internal Error", str(e))
-        else:
-            try:
-                if self.worker is not None:
-                    self.worker.stop()
-                self.worker = None
-            except:
-                pass
-    
-    def stop_process(self):
-        self.process_started = False
-        self.worker = None
-        self.start_button.setText("Start")
-        self.start_button.changeStyle(NERButton.Styles.GREEN)
-        self.progress_bar.setVisible(False)
-        self.progress_bar.setValue(0)
-
-    def can_start(self) -> bool:
-        if self.process_started:
-            return False
-        elif not self.data_model.isEmpty():
+        if not self.data_model.isEmpty():
             button = QMessageBox.question(self, "Warning", "Current model data will be lost. \n" \
                 "Would you like to continue?")
-            return button == QMessageBox.StandardButton.Yes
-        else:
-            return True
+            if button == QMessageBox.StandardButton.No:
+                return
+
+        self.data_model.deleteAllData()
+        self.start_button.setEnabled(False)
+        self.progress_bar.setVisible(True)
+        self.clear_view()
+
+        worker = self.file_model.getProcessWorker(self.data_model)
+        worker.signals.finished.connect(self.stop_process)
+        worker.signals.error.connect(lambda error: QMessageBox.critical(self, "Processing Error", error[1].__str__()))
+        worker.signals.message.connect(self.update_view)
+        worker.signals.progress.connect(lambda val: self.progress_bar.setValue(val))
+
+        try:
+            worker.start()
+        except RuntimeError as e: 
+            self.stop_process()
+            QMessageBox.critical(self, "Internal Error", str(e))
+    
+    def stop_process(self):
+        self.start_button.setEnabled(True)
+        self.progress_bar.setVisible(False)
+        self.progress_bar.setValue(0)
 
     def update_view(self, message: str):
         self.view_text += message
