@@ -15,7 +15,7 @@ from ner_telhub.model.data_models import DataModelManager
 from ner_processing.decode_files import LogFormat
 from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
 from ner_telhub.widgets.graphing_widgets import GraphDashboardWidget
-from ner_telhub.widgets.styled_widgets import NERButton, NERToolbar
+from ner_telhub.widgets.styled_widgets import NERButton, NERToolbar, NERLoadingSpinner
 from ner_telhub.utils.timestream import TimestreamIngestionService
 
 
@@ -49,11 +49,12 @@ class GraphDialog(QDialog):
 class ExportDialog(QDialog):
     """Dialog to export data to a CSV file."""
 
-    def __init__(self, parent: QWidget, model: DataModelManager):
+    def __init__(self, parent: QWidget, model: DataModelManager, spinner: NERLoadingSpinner):
         super().__init__(parent)
 
         self.setWindowTitle("Export CSV")
         self.model = model
+        self.spinner = spinner
 
         self.filename_input = QLineEdit()
         self.directory_input = QLineEdit()
@@ -91,10 +92,12 @@ class ExportDialog(QDialog):
         full_path = directory + "/" + filename
 
         worker = self.model.getCSVWorker(full_path)
+        worker.signals.finished.connect(lambda: self.spinner.stopAnimation())
         worker.signals.error.connect(lambda error : QMessageBox.critical(self, "Export Error", error[1].__str__()))
         worker.signals.message.connect(lambda msg : QMessageBox.about(self, "Export Status", msg))
         try:
             worker.start()
+            self.spinner.startAnimation()
         except RuntimeError as e: 
             QMessageBox.critical(self, "Internal Error", str(e))
         self.accept()
@@ -114,11 +117,12 @@ class ExportDialog(QDialog):
 class DatabaseDialog(QDialog):
     """Dialog to export data to a the database."""
 
-    def __init__(self, parent: QWidget, model: DataModelManager):
+    def __init__(self, parent: QWidget, model: DataModelManager, spinner: NERLoadingSpinner):
         super().__init__(parent)
 
         self.setWindowTitle("Database Export")
         self.model = model
+        self.spinner = spinner
 
         self.testid_input = QLineEdit();
         self.label = QLabel("""The test ID is a unique identifier that you can use to identify a testing session.
@@ -145,13 +149,20 @@ Make sure the test ID is a meaningful name so you can reload previous sessions b
         if testid == "":
             QMessageBox.critical(self, "Error", "You must specify a test ID")
             return 
+        
+        button = QMessageBox.question(self, "Warning", "You cannot undo this action, so please make sure you are authorized to complete it." \
+            "\nWould you like to continue?")
+        if button == QMessageBox.StandardButton.No:
+            return
 
         models = [self.model.getDataModel(id) for id in self.model.getAvailableIds()]
         worker = TimestreamIngestionService.getIngestionWorker(models, testid)
+        worker.signals.finished.connect(lambda: self.spinner.stopAnimation())
         worker.signals.error.connect(lambda error : QMessageBox.critical(self, "Export Error", error[1].__str__()))
         worker.signals.message.connect(lambda msg : QMessageBox.about(self, "Export Status", msg))
         try:
             worker.start()
+            self.spinner.startAnimation()
         except RuntimeError as e: 
             QMessageBox.critical(self, "Internal Error", str(e))
         self.accept()
@@ -318,14 +329,25 @@ class OptionsView(QWidget):
 
         # Populate layout 3
         self.graph_button = NERButton("Graph", NERButton.Styles.BLUE)
+        self.graph_button.setFixedWidth(200)
         self.graph_button.pressed.connect(lambda: GraphDialog(self, self.data_model).exec())
         self.csv_button = NERButton("CSV", NERButton.Styles.BLUE)
-        self.csv_button.pressed.connect(lambda: ExportDialog(self, self.data_model).exec())
+        self.csv_button.setFixedWidth(200)
+        self.csv_spinner = NERLoadingSpinner()
+        self.csv_button.pressed.connect(lambda: ExportDialog(self, self.data_model, self.csv_spinner).exec())
+        csv_layout = QHBoxLayout()
+        csv_layout.addWidget(self.csv_button)
+        csv_layout.addWidget(self.csv_spinner)
         self.database_button = NERButton("Database", NERButton.Styles.BLUE)
-        self.database_button.pressed.connect(lambda: DatabaseDialog(self, self.data_model).exec())
+        self.database_button.setFixedWidth(200)
+        self.database_spinner = NERLoadingSpinner()
+        self.database_button.pressed.connect(lambda: DatabaseDialog(self, self.data_model, self.database_spinner).exec())
+        database_layout = QHBoxLayout()
+        database_layout.addWidget(self.database_button)
+        database_layout.addWidget(self.database_spinner)
         layout3.addWidget(self.graph_button)
-        layout3.addWidget(self.csv_button)
-        layout3.addWidget(self.database_button)
+        layout3.addLayout(csv_layout)
+        layout3.addLayout(database_layout)
 
         # Populate main layout
         sub_layout = QHBoxLayout()
