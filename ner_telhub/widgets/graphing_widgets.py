@@ -174,24 +174,18 @@ class GraphWidget(QWidget):
         config_button = NERImageButton(NERImageButton.Icons.EDIT, NERButton.Styles.BLUE)
         config_button.pressed.connect(lambda: EditDialog(self, self.reset, self.model, self.state).exec())
         toolbar.addLeft(config_button)
-        reset_button = NERImageButton(NERImageButton.Icons.RESET, NERButton.Styles.RED)
+        reset_button = NERImageButton(NERImageButton.Icons.TRASH, NERButton.Styles.RED)
         reset_button.pressed.connect(self.reset)
         toolbar.addLeft(reset_button)
         show_button = NERImageButton(NERImageButton.Icons.EXPORT, NERButton.Styles.GRAY)
         show_button.pressed.connect(self.showTables)
         toolbar.addLeft(show_button)
-        remove_button = NERImageButton(NERImageButton.Icons.CLOSE, NERButton.Styles.GRAY)
-        remove_button.pressed.connect(self.remove)
-        toolbar.addLeft(remove_button)
 
         # Specific config for real time graphs
         if dynamic:
             refresh_button = NERImageButton(NERImageButton.Icons.REFRESH, NERButton.Styles.GRAY)
             refresh_button.pressed.connect(self.updateChart)
             toolbar.addRight(refresh_button)
-            clear_button = NERImageButton(NERImageButton.Icons.TRASH, NERButton.Styles.RED)
-            clear_button.pressed.connect(self.clearData)
-            toolbar.addRight(clear_button)
             self.live_data = False
             self.live_button = NERImageButton(NERImageButton.Icons.START, NERButton.Styles.GREEN)
             self.live_button.pressed.connect(self.toggleLiveData)
@@ -199,6 +193,10 @@ class GraphWidget(QWidget):
 
             self.timer = QTimer()
             self.timer.timeout.connect(self.updateChart)
+
+        remove_button = NERImageButton(NERImageButton.Icons.CLOSE, NERButton.Styles.RED)
+        remove_button.pressed.connect(self.remove)
+        toolbar.addRight(remove_button)
 
         # Chart Config
         self.chart = QChart()
@@ -286,17 +284,6 @@ class GraphWidget(QWidget):
                             self.model.getDataModel(self.state.data3).getMaxValue())
         self.chart_view.update()
 
-    def clearData(self):
-        """
-        Clears the graph's data from the model.
-        """
-        if self.state.data1 is not None:
-            self.model.getDataModel(self.state.data1).deleteAllData()
-        if self.state.data2 is not None:
-            self.model.getDataModel(self.state.data2).deleteAllData()
-        if self.state.data3 is not None:
-            self.model.getDataModel(self.state.data3).deleteAllData()
-
     def toggleLiveData(self):
         """
         Alters the 
@@ -382,35 +369,35 @@ class GraphDashboardWidget(GraphDashboard):
         self.setStyleSheet("""QSplitter { background-color: #f0f0f0} 
             QSplitterHandle { background-color: #999999 }""")
 
-        """
-        store row of QSplitters at the top level
-        """
-
         self.model = model
         self.dynamic = dynamic
 
         g = GraphWidget(self, 1, self.model, self.dynamic)
         self.graphs1 = [g]
         self.graphs2 = []
+        self.graphs3 = []
         self.next_index = 2
 
-        toolbar = QToolBar()
-        add_button = NERButton("+", NERButton.Styles.GRAY)
-        add_button.addStyle("margin-right: 5%")
+        self.toolbar = NERToolbar()
+        add_button = NERButton("Add Graph", NERButton.Styles.GRAY)
         add_button.pressed.connect(self.add)
-        toolbar.addWidget(add_button)
+        self.toolbar.addLeft(add_button)
 
         self.row1 = QSplitter()
         self.row2 = QSplitter()
+        self.row3 = QSplitter()
         self.row1.addWidget(g)
+        self.row2.hide()
+        self.row3.hide()
 
         self.graphs = QSplitter()
         self.graphs.setOrientation(Qt.Orientation.Vertical)
         self.graphs.addWidget(self.row1)
         self.graphs.addWidget(self.row2)
+        self.graphs.addWidget(self.row3)
 
         main_layout = QVBoxLayout()
-        main_layout.addWidget(toolbar)
+        main_layout.addWidget(self.toolbar)
         main_layout.addWidget(self.graphs)
         self.setLayout(main_layout)
 
@@ -419,26 +406,61 @@ class GraphDashboardWidget(GraphDashboard):
         Creates a new graph and adds it to the display.
         """
 
+        if len(self.graphs1) + len(self.graphs2) + len(self.graphs3) == 5:
+            # If it will reach 6 graphs after adding, hide button to prevent adding.
+            self.toolbar.hide()
+
         gi = GraphWidget(self, self.next_index, self.model, self.dynamic)
         self.next_index += 1
 
-        if len(self.graphs1) > len(self.graphs2):
-            self.row2.addWidget(gi)
-            self.graphs2.append(gi)
-
-        else:
+        if len(self.graphs1) <= len(self.graphs2) and len(self.graphs1) <= len(self.graphs3):
             self.row1.addWidget(gi)
             self.graphs1.append(gi)
+        elif len(self.graphs2) <= len(self.graphs3):
+            self.row2.addWidget(gi)
+            self.graphs2.append(gi)
+        else:
+            self.row3.addWidget(gi)
+            self.graphs3.append(gi)
+
+        # Shows any non-empty rows.
+        if self.graphs1:
+            self.row1.show()
+
+        if self.graphs2:
+            self.row2.show()
+
+        if self.graphs3:
+            self.row3.show()
 
     def removeGraph(self, graph):
         """
         Removes the given graph and closes its view.
         """
 
+        if len(self.graphs1) + len(self.graphs2) + len(self.graphs3) == 1:
+            # If only one graph left, do not allow deletion.
+            return
+
         if graph in self.graphs1:
             self.graphs1.remove(graph)
-
-        if graph in self.graphs2:
+        elif graph in self.graphs2:
             self.graphs2.remove(graph)
+        elif graph in self.graphs3:
+            self.graphs3.remove(graph)
 
         graph.close()
+
+        if len(self.graphs1) + len(self.graphs2) + len(self.graphs3) == 5:
+            # If it has gone back down to 5 graphs, unhide button to allow adding.
+            self.toolbar.show()
+
+        # Hides any non-empty rows.
+        if not self.graphs1:
+            self.row1.hide()
+
+        if not self.graphs2:
+            self.row2.hide()
+
+        if not self.graphs3:
+            self.row3.hide()
