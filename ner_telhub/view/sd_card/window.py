@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (
     QListView, QTextEdit,
     QGridLayout, QProgressBar, QDialog,
     QDialogButtonBox, QLineEdit, QMessageBox,
-    QCheckBox, QMenu, QToolBar
+    QCheckBox, QMenu
 )
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QSize, Qt
@@ -15,7 +15,7 @@ from ner_telhub.model.data_models import DataModelManager
 from ner_processing.decode_files import LogFormat
 from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
 from ner_telhub.widgets.graphing_widgets import GraphDashboardWidget
-from ner_telhub.widgets.styled_widgets import NERButton
+from ner_telhub.widgets.styled_widgets import NERButton, NERToolbar
 
 
 class GraphDialog(QDialog):
@@ -25,12 +25,11 @@ class GraphDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Graph View")
 
-        toolbar = QToolBar()
+        toolbar = NERToolbar()
         toolbar.setStyleSheet("background-color: white; padding: 5%")
         self.screen_button = NERButton("Full Screen", NERButton.Styles.GRAY)
-        self.screen_button.addStyle("margin-right: 5%")
         self.screen_button.pressed.connect(self.changeScreen)
-        toolbar.addWidget(self.screen_button)
+        toolbar.addLeft(self.screen_button)
 
         layout = QVBoxLayout()
         layout.addWidget(toolbar)

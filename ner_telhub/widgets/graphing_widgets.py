@@ -3,11 +3,10 @@ from typing import Callable
 
 from PyQt6.QtWidgets import (
     QLabel, QVBoxLayout, 
-    QWidget, QComboBox, QToolBar,
+    QWidget, QComboBox,
     QDialog, QGridLayout,
     QDialogButtonBox, QSplitter,
-    QTableView, QMessageBox, 
-    QSizePolicy
+    QTableView, QMessageBox
 )
 from PyQt6.QtCharts import (
     QLineSeries, QChart, QChartView, 
@@ -18,7 +17,7 @@ from PyQt6.QtGui import QPainter
 from PyQt6.QtCore import QSize, Qt, QTimer, QDateTime
 
 from ner_telhub.model.data_models import DataModelManager, DataModel
-from ner_telhub.widgets.styled_widgets import NERButton
+from ner_telhub.widgets.styled_widgets import NERButton, NERImageButton, NERToolbar
 
 
 class Format(Enum):
@@ -163,38 +162,29 @@ class GraphWidget(QWidget):
         self.setMinimumSize(QSize(300, 200))
 
         # Tool Bar Config
-        toolbar = QToolBar()
-        config_button = NERButton("Edit", NERButton.Styles.GREEN)
-        config_button.addStyle("margin-right: 5%")
+        toolbar = NERToolbar()
+        config_button = NERImageButton(NERImageButton.Icons.EDIT, NERButton.Styles.BLUE)
         config_button.pressed.connect(lambda: EditDialog(self, self.reset, self.model, self.state).exec())
-        toolbar.addWidget(config_button)
-        reset_button = NERButton("Reset", NERButton.Styles.RED)
-        reset_button.addStyle("margin-right: 5%")
+        toolbar.addLeft(config_button)
+        reset_button = NERImageButton(NERImageButton.Icons.RESET, NERButton.Styles.RED)
         reset_button.pressed.connect(self.reset)
-        toolbar.addWidget(reset_button)
-        show_button = NERButton("Data", NERButton.Styles.BLUE)
-        show_button.addStyle("margin-right: 5%")
+        toolbar.addLeft(reset_button)
+        show_button = NERImageButton(NERImageButton.Icons.EXPORT, NERButton.Styles.GRAY)
         show_button.pressed.connect(self.showTables)
-        toolbar.addWidget(show_button)
+        toolbar.addLeft(show_button)
 
         # Specific config for real time graphs
         if dynamic:
-            spacer = QWidget()
-            spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-            toolbar.addWidget(spacer)
-            refresh_button = NERButton("Refresh", NERButton.Styles.GREEN)
-            refresh_button.addStyle("margin-right: 5%")
+            refresh_button = NERImageButton(NERImageButton.Icons.REFRESH, NERButton.Styles.GRAY)
             refresh_button.pressed.connect(self.updateChart)
-            toolbar.addWidget(refresh_button)
-            clear_button = NERButton("Clear", NERButton.Styles.BLUE)
-            clear_button.addStyle("margin-right: 5%")
+            toolbar.addRight(refresh_button)
+            clear_button = NERImageButton(NERImageButton.Icons.TRASH, NERButton.Styles.RED)
             clear_button.pressed.connect(self.clearData)
-            toolbar.addWidget(clear_button)
+            toolbar.addRight(clear_button)
             self.live_data = False
-            self.live_button = NERButton("Start", NERButton.Styles.GREEN)
-            self.live_button.addStyle("margin-right: 5%")
+            self.live_button = NERImageButton(NERImageButton.Icons.START, NERButton.Styles.GREEN)
             self.live_button.pressed.connect(self.toggleLiveData)
-            toolbar.addWidget(self.live_button)
+            toolbar.addRight(self.live_button)
 
             self.timer = QTimer()
             self.timer.timeout.connect(self.updateChart)
@@ -295,14 +285,12 @@ class GraphWidget(QWidget):
         Alters the 
         """
         if self.live_data:
-            self.live_button.setText("Start")
             self.live_button.changeStyle(NERButton.Styles.GREEN)
-            self.live_button.addStyle("margin-right: 5%")
+            self.live_button.resetIcon(NERImageButton.Icons.START)
             self.timer.stop()
         else:
-            self.live_button.setText("Stop")
             self.live_button.changeStyle(NERButton.Styles.RED)
-            self.live_button.addStyle("margin-right: 5%")
+            self.live_button.resetIcon(NERImageButton.Icons.STOP)
             self.timer.start(1000)
         self.live_data = not self.live_data
 
