@@ -67,6 +67,7 @@ class NERImageButton(NERButton):
         START = "start_icon.png"
         STOP = "stop_icon.png"
         TRASH = "trash_icon.png"
+        CLOSE = "close_icon.png"
 
     def __init__(self, icon_file: Icons, style=NERButton.Styles.DEFAULT):
         super().__init__("", style=style)
