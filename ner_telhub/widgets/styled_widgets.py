@@ -63,10 +63,10 @@ class NERImageButton(NERButton):
         EDIT = "edit_icon.png"
         EXPORT = "export_icon.png"
         REFRESH = "refresh_icon.png"
-        RESET = "reset_icon.png"
         START = "start_icon.png"
         STOP = "stop_icon.png"
         TRASH = "trash_icon.png"
+        CLOSE = "close_icon.png"
 
     def __init__(self, icon_file: Icons, style=NERButton.Styles.DEFAULT):
         super().__init__("", style=style)
@@ -85,6 +85,7 @@ class NERToolbar(QToolBar):
         # Setup left side of toolbar
         left = QWidget()
         self.left_buttons = QHBoxLayout()
+        self.left_buttons.setContentsMargins(0, 0, 0, 0)
         left.setLayout(self.left_buttons)
         self.addWidget(left)
 
@@ -96,6 +97,7 @@ class NERToolbar(QToolBar):
         # Setup right side of toolbar
         right = QWidget()
         self.right_buttons = QHBoxLayout()
+        self.right_buttons.setContentsMargins(0, 0, 0, 0)
         right.setLayout(self.right_buttons)
         self.addWidget(right)
 
