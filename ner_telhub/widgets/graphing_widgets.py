@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from enum import Enum
+from functools import partial
 from typing import Callable, Set
 
 from PyQt6.QtWidgets import (
@@ -34,7 +35,11 @@ class GraphState():
     """
 
     def __init__(self, data: Set = None, format: Format = Format.LINE):
-        self.data = data
+        if data is not None:
+            self.data = data
+        else:
+            self.data = {}
+
         self.format = format
 
 
@@ -74,33 +79,42 @@ class EditDialog(QDialog):
         self.setWindowTitle("Edit Graph")
 
         self.data_entry = []
-        layout = QGridLayout()
+        self.layout = QGridLayout()
 
-        index = 0
+        self.format_entry = QComboBox()
+        self.format_entry.addItems(self._format_list)
+        self.format_entry.setCurrentText(state.format.name)
+        self.layout.addWidget(QLabel("Format:"), 0, 0)
+        self.layout.addWidget(self.format_entry, 0, 1, 1, 2)
 
+        add_button = NERButton("Add Data", NERButton.Styles.GRAY)
+        add_button.pressed.connect(self.add)
+        self.layout.addWidget(add_button, 1, 0, 1, -1)
+
+        self.next_index = 0
         for data in state.data:
             combo_box = QComboBox()
             combo_box.addItems(self._data_list)
             combo_box.setCurrentText(self.dataToText(data))
             self.data_entry.append(combo_box)
 
-            layout.addWidget(QLabel("Data " + str(index + 1) + ":"), index, 0)
-            layout.addWidget(self.data_entry[index], index, 1)
+            label = QLabel("Data " + str(self.next_index + 1) + ":")
 
-            index += 1
+            remove_button = NERImageButton(NERImageButton.Icons.TRASH, NERButton.Styles.RED)
+            remove_button.pressed.connect(partial(self.remove, label=label, entry=combo_box, button=remove_button))
 
-        self.format_entry = QComboBox()
-        self.format_entry.addItems(self._format_list)
-        self.format_entry.setCurrentText(state.format.name)
-        layout.addWidget(QLabel("Format:"), index, 0)
-        layout.addWidget(self.format_entry, index, 1)
+            self.layout.addWidget(label, self.next_index + 2, 0)
+            self.layout.addWidget(combo_box, self.next_index + 2, 1)
+            self.layout.addWidget(remove_button, self.next_index + 2, 2)
+
+            self.next_index += 1
 
         buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttonBox.accepted.connect(self.on_accept)
         buttonBox.rejected.connect(self.reject)
 
         main_layout = QVBoxLayout()
-        main_layout.addLayout(layout)
+        main_layout.addLayout(self.layout)
         main_layout.addWidget(buttonBox)
         self.setLayout(main_layout)
 
@@ -128,7 +142,13 @@ class EditDialog(QDialog):
         """
         data = []
         for entry in self.data_entry:
-            data.append(self.textToData(entry.currentText()))
+            ent = self.textToData(entry.currentText())
+
+            if ent is None:
+                QMessageBox.critical(self, "Input Error", "Data values cannot be \"None\"")
+                return
+
+            data.append(ent)
 
         # Check to make sure we're not adding the same data series twice
         for d in data:
@@ -140,6 +160,32 @@ class EditDialog(QDialog):
         state = GraphState(set(data), format)
         self.callback(state)
         self.accept()
+
+    def add(self):
+        if len(self._data_list) == 1:
+            QMessageBox.critical(self, "Error adding data", "There is no data to add")
+            return
+
+        combo_box = QComboBox()
+        combo_box.addItems(self._data_list)
+        self.data_entry.append(combo_box)
+
+        label = QLabel("Data " + str(self.next_index + 1) + ":")
+
+        remove_button = NERImageButton(NERImageButton.Icons.TRASH, NERButton.Styles.RED)
+        remove_button.pressed.connect(partial(self.remove, label=label, entry=combo_box, button=remove_button))
+
+        self.layout.addWidget(label, self.next_index + 2, 0)
+        self.layout.addWidget(combo_box, self.next_index + 2, 1)
+        self.layout.addWidget(remove_button, self.next_index + 2, 2)
+
+        self.next_index += 1
+
+    def remove(self, label: QLabel, entry: QComboBox, button: NERImageButton):
+        label.close()
+        self.data_entry.remove(entry)
+        entry.close()
+        button.close()
 
 
 class GraphDashboard(QWidget):
