@@ -299,7 +299,7 @@ class DataModelManager(QObject):
         except:
             raise RuntimeError("Internal processing error - thread configuration invalid")
 
-        header = ["time", "data_id", "description", "value"]
+        header = ["time", "data_id", "description", "value", "units"]
         with open(path, "w", encoding="UTF8", newline="") as f:
             writer = csv.writer(f)
             writer.writerow(header)
@@ -309,7 +309,7 @@ class DataModelManager(QObject):
                 desc = model.getDataType()
                 for data in model.getData():
                     str_time = data[0].toString("yyyy-MM-ddTHH:mm:ss.zzzZ")
-                    writer.writerow([str_time, id, desc, data[1]])
+                    writer.writerow([str_time, id, desc, data[1], DATA_IDS[id]["units"]])
         message_signal.emit(f"Finished CSV export")
 
 
