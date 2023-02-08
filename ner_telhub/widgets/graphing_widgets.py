@@ -411,6 +411,10 @@ class GraphDashboardWidget(GraphDashboard):
         add_button.pressed.connect(self.add)
         self.toolbar.addLeft(add_button)
 
+        default_graph_button = NERButton("Load Default Graphs", NERButton.Styles.GRAY)
+        default_graph_button.pressed.connect(self.loadDefaultGraphs)
+        self.toolbar.addRight(default_graph_button)
+
         self.row1 = QSplitter()
         self.row2 = QSplitter()
         self.row3 = QSplitter()
@@ -492,3 +496,52 @@ class GraphDashboardWidget(GraphDashboard):
 
         if not self.graphs3:
             self.row3.hide()
+
+    def loadDefaultGraphs(self):
+        default_ids = [45, 101, 91, 92, 93, 2, 89, 51, 1, 10, 28]
+        model_ids = self.model.getAvailableIds()
+
+        for id in default_ids:
+            if id not in model_ids:
+                QMessageBox.critical(self, "Error adding graphs", "All default graph ids must be in data")
+                return
+
+        graph1 = GraphWidget(self, 1, self.model, self.dynamic)
+        graph2 = GraphWidget(self, 2, self.model, self.dynamic)
+        graph3 = GraphWidget(self, 3, self.model, self.dynamic)
+        graph4 = GraphWidget(self, 4, self.model, self.dynamic)
+        graph5 = GraphWidget(self, 5, self.model, self.dynamic)
+        graph6 = GraphWidget(self, 6, self.model, self.dynamic)
+
+        graph1.reset(GraphState([45], Format.LINE))
+        graph2.reset(GraphState([101], Format.LINE))
+        graph3.reset(GraphState([91, 92, 93], Format.LINE))
+        graph4.reset(GraphState([2, 89, 51], Format.LINE))
+        graph5.reset(GraphState([1], Format.LINE))
+        graph6.reset(GraphState([10, 28], Format.LINE))
+
+        for graph in self.graphs1:
+            graph.close()
+
+        for graph in self.graphs2:
+            graph.close()
+
+        for graph in self.graphs3:
+            graph.close()
+
+        self.graphs1 = [graph1, graph4]
+        self.graphs2 = [graph2, graph5]
+        self.graphs3 = [graph3, graph6]
+
+        for graph in self.graphs1:
+            self.row1.addWidget(graph)
+
+        for graph in self.graphs2:
+            self.row2.addWidget(graph)
+
+        for graph in self.graphs3:
+            self.row3.addWidget(graph)
+
+        self.row1.show()
+        self.row2.show()
+        self.row3.show()
