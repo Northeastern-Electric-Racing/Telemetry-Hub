@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from enum import Enum
-from typing import Callable
+from functools import partial
+from typing import Callable, List
 
 from PyQt6.QtWidgets import (
     QLabel, QVBoxLayout,
@@ -33,10 +34,12 @@ class GraphState():
     Data class holding the current state of a graph.
     """
 
-    def __init__(self, data1: int = None, data2: int = None, data3: int = None, format: Format = Format.LINE):
-        self.data1 = data1
-        self.data2 = data2
-        self.data3 = data3
+    def __init__(self, data: List = None, format: Format = Format.LINE):
+        if data is not None:
+            self.data = data
+        else:
+            self.data = []
+
         self.format = format
 
 
@@ -75,35 +78,43 @@ class EditDialog(QDialog):
 
         self.setWindowTitle("Edit Graph")
 
-        self.data_entry_1 = QComboBox()
-        self.data_entry_2 = QComboBox()
-        self.data_entry_3 = QComboBox()
-        self.format_entry = QComboBox()
-        self.data_entry_1.addItems(self._data_list)
-        self.data_entry_2.addItems(self._data_list)
-        self.data_entry_3.addItems(self._data_list)
-        self.format_entry.addItems(self._format_list)
-        self.data_entry_1.setCurrentText(self.dataToText(state.data1))
-        self.data_entry_2.setCurrentText(self.dataToText(state.data2))
-        self.data_entry_3.setCurrentText(self.dataToText(state.data3))
-        self.format_entry.setCurrentText(state.format.name)
+        self.data_entry = []
+        self.layout = QGridLayout()
 
-        layout = QGridLayout()
-        layout.addWidget(QLabel("Data 1:"), 0, 0)
-        layout.addWidget(self.data_entry_1, 0, 1)
-        layout.addWidget(QLabel("Data 2:"), 1, 0)
-        layout.addWidget(self.data_entry_2, 1, 1)
-        layout.addWidget(QLabel("Data 3:"), 2, 0)
-        layout.addWidget(self.data_entry_3, 2, 1)
-        layout.addWidget(QLabel("Format:"), 3, 0)
-        layout.addWidget(self.format_entry, 3, 1)
+        self.format_entry = QComboBox()
+        self.format_entry.addItems(self._format_list)
+        self.format_entry.setCurrentText(state.format.name)
+        self.layout.addWidget(QLabel("Format:"), 0, 0)
+        self.layout.addWidget(self.format_entry, 0, 1, 1, 2)
+
+        add_button = NERButton("Add Data", NERButton.Styles.GRAY)
+        add_button.pressed.connect(self.add)
+        self.layout.addWidget(add_button, 1, 0, 1, -1)
+
+        self.next_index = 0
+        for data in state.data:
+            combo_box = QComboBox()
+            combo_box.addItems(self._data_list)
+            combo_box.setCurrentText(self.dataToText(data))
+            self.data_entry.append(combo_box)
+
+            label = QLabel("Data " + str(self.next_index + 1) + ":")
+
+            remove_button = NERImageButton(NERImageButton.Icons.TRASH, NERButton.Styles.RED)
+            remove_button.pressed.connect(partial(self.remove, label=label, entry=combo_box, button=remove_button))
+
+            self.layout.addWidget(label, self.next_index + 2, 0)
+            self.layout.addWidget(combo_box, self.next_index + 2, 1)
+            self.layout.addWidget(remove_button, self.next_index + 2, 2)
+
+            self.next_index += 1
 
         buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttonBox.accepted.connect(self.on_accept)
         buttonBox.rejected.connect(self.reject)
 
         main_layout = QVBoxLayout()
-        main_layout.addLayout(layout)
+        main_layout.addLayout(self.layout)
         main_layout.addWidget(buttonBox)
         self.setLayout(main_layout)
 
@@ -129,21 +140,52 @@ class EditDialog(QDialog):
         """
         Actions to perform when the window OK button is pressed.
         """
-        data1 = self.textToData(self.data_entry_1.currentText())
-        data2 = self.textToData(self.data_entry_2.currentText())
-        data3 = self.textToData(self.data_entry_3.currentText())
+        data = []
+        for entry in self.data_entry:
+            ent = self.textToData(entry.currentText())
+
+            if ent is None:
+                QMessageBox.critical(self, "Input Error", "Data values cannot be \"None\"")
+                return
+
+            data.append(ent)
 
         # Check to make sure we're not adding the same data series twice
-        if (data1 is not None and data1 == data2) or \
-                (data1 is not None and data1 == data3) or \
-                (data2 is not None and data2 == data3):
-            QMessageBox.critical(self, "Input Error", "Each data value should be unique")
-            return
+        for d in data:
+            if d is not None and data.count(d) > 1:
+                QMessageBox.critical(self, "Input Error", "Each data value should be unique")
+                return
 
         format = Format[self.format_entry.currentText()]
-        state = GraphState(data1, data2, data3, format)
+        state = GraphState(data, format)
         self.callback(state)
         self.accept()
+
+    def add(self):
+        if len(self._data_list) == 1:
+            QMessageBox.critical(self, "Error adding data", "There is no data to add")
+            return
+
+        combo_box = QComboBox()
+        combo_box.addItems(self._data_list)
+        self.data_entry.append(combo_box)
+
+        label = QLabel("Data " + str(self.next_index + 1) + ":")
+
+        remove_button = NERImageButton(NERImageButton.Icons.TRASH, NERButton.Styles.RED)
+        remove_button.pressed.connect(partial(self.remove, label=label, entry=combo_box, button=remove_button))
+
+        self.layout.addWidget(label, self.next_index + 2, 0)
+        self.layout.addWidget(combo_box, self.next_index + 2, 1)
+        self.layout.addWidget(remove_button, self.next_index + 2, 2)
+
+        self.next_index += 1
+
+    def remove(self, label: QLabel, entry: QComboBox, button: NERImageButton):
+        label.close()
+        self.data_entry.remove(entry)
+        entry.close()
+        button.close()
 
 
 class GraphDashboard(QWidget):
@@ -245,43 +287,29 @@ class GraphWidget(QWidget):
         self.chart.addAxis(self.axis_y, Qt.AlignmentFlag.AlignLeft)
 
         # Add data if provided
-        if self.state.data1 is not None:
-            self.addSeries(self.model.getDataType(self.state.data1), self.state.data1)
-        if self.state.data2 is not None:
-            self.addSeries(self.model.getDataType(self.state.data2), self.state.data2)
-        if self.state.data3 is not None:
-            self.addSeries(self.model.getDataType(self.state.data3), self.state.data3)
+        for data in self.state.data:
+            if data is not None:
+                self.addSeries(self.model.getDataType(data), data)
 
     def showTables(self):
         """
         Shows current data tables.
         """
-        if self.state.data1 is not None:
-            DataTable(self, self.model.getDataModel(self.state.data1)).show()
-        if self.state.data2 is not None:
-            DataTable(self, self.model.getDataModel(self.state.data2)).show()
-        if self.state.data3 is not None:
-            DataTable(self, self.model.getDataModel(self.state.data3)).show()
+        for data in self.state.data:
+            if data is not None:
+                DataTable(self, self.model.getDataModel(data)).show()
 
     def updateChart(self):
         """
         Updates the axis of the chart by finding the max/min 
         """
-        if self.state.data1 is not None:
-            self.updateAxis(self.model.getDataModel(self.state.data1).getMinTime(),
-                            self.model.getDataModel(self.state.data1).getMaxTime(),
-                            self.model.getDataModel(self.state.data1).getMinValue(),
-                            self.model.getDataModel(self.state.data1).getMaxValue())
-        if self.state.data2 is not None:
-            self.updateAxis(self.model.getDataModel(self.state.data2).getMinTime(),
-                            self.model.getDataModel(self.state.data2).getMaxTime(),
-                            self.model.getDataModel(self.state.data2).getMinValue(),
-                            self.model.getDataModel(self.state.data2).getMaxValue())
-        if self.state.data3 is not None:
-            self.updateAxis(self.model.getDataModel(self.state.data3).getMinTime(),
-                            self.model.getDataModel(self.state.data3).getMaxTime(),
-                            self.model.getDataModel(self.state.data3).getMinValue(),
-                            self.model.getDataModel(self.state.data3).getMaxValue())
+        for data in self.state.data:
+            if data is not None:
+                self.updateAxis(self.model.getDataModel(data).getMinTime(),
+                                self.model.getDataModel(data).getMaxTime(),
+                                self.model.getDataModel(data).getMinValue(),
+                                self.model.getDataModel(data).getMaxValue())
+
         self.chart_view.update()
 
     def toggleLiveData(self):
