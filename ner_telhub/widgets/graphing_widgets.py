@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from enum import Enum
 from functools import partial
-from typing import Callable, Set
+from typing import Callable, List
 
 from PyQt6.QtWidgets import (
     QLabel, QVBoxLayout,
@@ -34,11 +34,11 @@ class GraphState():
     Data class holding the current state of a graph.
     """
 
-    def __init__(self, data: Set = None, format: Format = Format.LINE):
+    def __init__(self, data: List = None, format: Format = Format.LINE):
         if data is not None:
             self.data = data
         else:
-            self.data = {}
+            self.data = []
 
         self.format = format
 
@@ -157,7 +157,7 @@ class EditDialog(QDialog):
                 return
 
         format = Format[self.format_entry.currentText()]
-        state = GraphState(set(data), format)
+        state = GraphState(data, format)
         self.callback(state)
         self.accept()
 
