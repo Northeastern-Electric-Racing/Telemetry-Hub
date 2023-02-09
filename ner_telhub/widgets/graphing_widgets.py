@@ -498,7 +498,7 @@ class GraphDashboardWidget(GraphDashboard):
             self.row3.hide()
 
     def loadDefaultGraphs(self):
-        expected_default_ids = [[45], [101], [91, 90, 93], [2, 89, 51], [1], [10, 28]]
+        expected_default_ids = [[45], [101], [91, 92, 93], [2, 89, 51], [1], [10, 28]]
         actual_default_ids = [[], [], [], [], [], []]
         model_ids = self.model.getAvailableIds()
 
@@ -510,7 +510,6 @@ class GraphDashboardWidget(GraphDashboard):
             for id in expected_default_ids[i]:
                 if id in model_ids:
                     actual_default_ids[i].append(id)
-
 
         new_graphs = []
         for i in range(len(actual_default_ids)):
