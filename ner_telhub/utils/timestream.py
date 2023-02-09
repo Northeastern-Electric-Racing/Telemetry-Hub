@@ -1,5 +1,7 @@
 import boto3
 from botocore.config import Config
+from dotenv import load_dotenv
+import os
 from typing import List, Tuple
 from PyQt6.QtCore import pyqtBoundSignal, QDateTime
 
@@ -7,12 +9,13 @@ from ner_processing.data import Data
 from ner_telhub.model.data_models import DataModel, DataModelManager
 from ner_telhub.utils.threads import Worker
 
+load_dotenv()
 
-DATABASE_NAME = 'TelemetryDatabase'
-TABLE_NAME = 'Car17D'
-REGION_NAME = 'us-east-1'
-ACCESS_KEY = 'AKIA4C5BHZ6YONPVPQ4M'
-SECRET_ACCESS_KEY = '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'
+DATABASE_NAME = os.getenv("TIMESTREAM_DATABASE")
+TABLE_NAME = os.getenv("TIMESTREAM_TABLE")
+REGION_NAME = os.getenv("TIMESTREAM_REGION")
+ACCESS_KEY = os.getenv("TIMESTREAM_ACCESS_KEY")
+SECRET_ACCESS_KEY = os.getenv("TIMESTREAM_SECRET_ACCESS_KEY")
 BATCH_SIZE = 100 # WARNING: Do not change to more than 100 (max allowed by timestream)
 
 MAX_QUERY_SIZE = 1000000; # In data points (used to prevent overflowing user)
@@ -20,8 +23,6 @@ ONE_GB_IN_BYTES = 1073741824
 QUERY_COST_PER_GB_IN_DOLLARS = 0.01 
 
 DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss.zzz"
-
-
 
 class TimestreamIngestionService:
 

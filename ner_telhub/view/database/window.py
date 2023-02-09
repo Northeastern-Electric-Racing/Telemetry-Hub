@@ -81,14 +81,14 @@ class QueryDialog(QDialog):
             start_time = self.query_service.getStartTimeForSession(self.test_id)
             self.mintime_input.setText(start_time.toString(DATE_TIME_FORMAT))
         except Exception as e:
-            QMessageBox.critical(self, "Error", "Could not get test session start time: " + e)
+            raise RuntimeError("Could not get test session start time: " + str(e))
     
     def findMaxTime(self):
         try:
             end_time = self.query_service.getEndTimeForSession(self.test_id)
             self.maxtime_input.setText(end_time.toString(DATE_TIME_FORMAT))
         except Exception as e:
-            QMessageBox.critical(self, "Error", "Could not get test session end time: " + e)
+            raise RuntimeError("Could not get test session end time: " + str(e))
     
     def findDataCount(self):
         try:
@@ -101,7 +101,7 @@ class QueryDialog(QDialog):
                 data_count = self.query_service.getDataCount(self.test_id, time_range=(min_time, max_time))
             self.data_count_label.setText(f"Query size - {data_count} data points")
         except Exception as e:
-            QMessageBox.critical(self, "Error", "Could not get the query data count: " + e)
+            raise RuntimeError("Could not get the query data count: " + str(e))
 
     def onAccept(self):
         """
@@ -190,6 +190,7 @@ class QueryToolbar(QToolBar):
             return self.query_service.getTestIds()
         except:
             QMessageBox.critical(self, "Error", "Could not get the available test IDs. Internal Error")
+            return []
 
     def loadData(self):
         """
@@ -200,8 +201,16 @@ class QueryToolbar(QToolBar):
                 "mix the data together. Clear the data if this is not desired. \nWould you like to continue?")
             if button == QMessageBox.StandardButton.No:
                 return
-        test_id = self.testid_entry.currentText()
-        QueryDialog(self, self.data_model, self.query_service, self.startQuery, test_id).exec()
+        try:
+            test_id = self.testid_entry.currentText()
+        except:
+            QMessageBox.critical(self, "Error", "No Test ID specified, could not load data")
+            return
+        try:
+            QueryDialog(self, self.data_model, self.query_service, self.startQuery, test_id).exec()
+        except:
+            QMessageBox.critical(self, "Error", "Could not connect to database to load data. Check credentials")
+
     
     def startQuery(self, **kwargs):
         """
