@@ -199,7 +199,7 @@ class GraphWidget(QWidget):
     Main graph widget for displaying data in charts.
     """
 
-    def __init__(self, parent: GraphDashboard, index: int, model: DataModelManager, dynamic=False, format=Format.LINE):
+    def __init__(self, parent: GraphDashboard, model: DataModelManager, dynamic=False, format=Format.LINE):
         """
         Initializes the chart and toolbar. To differentiate between live and static dashboards,
         use the the dynamic variable.
@@ -242,7 +242,6 @@ class GraphWidget(QWidget):
 
         # Chart Config
         self.chart = QChart()
-        self.chart.setTitle(f"Graph {index}")
         self.chart.setTheme(QChart.ChartTheme.ChartThemeLight)
         self.chart.setAnimationOptions(QChart.AnimationOption.SeriesAnimations)
 
@@ -400,11 +399,10 @@ class GraphDashboardWidget(GraphDashboard):
         self.model = model
         self.dynamic = dynamic
 
-        g = GraphWidget(self, 1, self.model, self.dynamic)
+        g = GraphWidget(self, self.model, self.dynamic)
         self.graphs1 = [g]
         self.graphs2 = []
         self.graphs3 = []
-        self.next_index = 2
 
         self.toolbar = NERToolbar()
         add_button = NERButton("Add Graph", NERButton.Styles.GRAY)
@@ -438,12 +436,11 @@ class GraphDashboardWidget(GraphDashboard):
         Creates a new graph and adds it to the display.
         """
 
-        if len(self.graphs1) + len(self.graphs2) + len(self.graphs3) == 5:
-            # If it will reach 6 graphs after adding, hide button to prevent adding.
-            self.toolbar.hide()
+        if len(self.graphs1) + len(self.graphs2) + len(self.graphs3) == 6:
+            QMessageBox.critical(self, "Graph Error", "Cannot have more than 6 graphs on the dashboard")
+            return
 
-        gi = GraphWidget(self, self.next_index, self.model, self.dynamic)
-        self.next_index += 1
+        gi = GraphWidget(self, self.model, self.dynamic)
 
         if len(self.graphs1) <= len(self.graphs2) and len(self.graphs1) <= len(self.graphs3):
             self.row1.addWidget(gi)
@@ -471,7 +468,7 @@ class GraphDashboardWidget(GraphDashboard):
         """
 
         if len(self.graphs1) + len(self.graphs2) + len(self.graphs3) == 1:
-            # If only one graph left, do not allow deletion.
+            QMessageBox.critical(self, "Graph Error", "Must have at least 1 graph on the dashboard")
             return
 
         if graph in self.graphs1:
@@ -482,10 +479,6 @@ class GraphDashboardWidget(GraphDashboard):
             self.graphs3.remove(graph)
 
         graph.close()
-
-        if len(self.graphs1) + len(self.graphs2) + len(self.graphs3) == 5:
-            # If it has gone back down to 5 graphs, unhide button to allow adding.
-            self.toolbar.show()
 
         # Hides any non-empty rows.
         if not self.graphs1:
@@ -513,7 +506,7 @@ class GraphDashboardWidget(GraphDashboard):
 
         new_graphs = []
         for i in range(len(actual_default_ids)):
-            new_graphs.append(GraphWidget(self, i + 1, self.model, self.dynamic))
+            new_graphs.append(GraphWidget(self, self.model, self.dynamic))
             new_graphs[i].reset(GraphState(actual_default_ids[i], Format.LINE))
 
         graphs = [self.graphs1, self.graphs2, self.graphs3]
@@ -527,3 +520,7 @@ class GraphDashboardWidget(GraphDashboard):
                 rows[i].addWidget(graph)
 
             rows[i].show()
+        
+        self.graphs1 = graphs[0]
+        self.graphs2 = graphs[1]
+        self.graphs3 = graphs[2]
