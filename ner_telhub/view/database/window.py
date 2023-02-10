@@ -1,16 +1,15 @@
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QMessageBox,
-    QVBoxLayout, QLabel, QToolBar, 
+    QVBoxLayout, QLabel, QProgressBar,
     QSizePolicy, QLineEdit, QGridLayout,
     QDialogButtonBox, QDialog, QComboBox,
-    QProgressBar,
 )
 from PyQt6.QtCore import QSize
 from typing import Callable
 
 from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.widgets.menu_widgets import DataIds
-from ner_telhub.widgets.styled_widgets import NERButton
+from ner_telhub.widgets.styled_widgets import NERButton, NERToolbar
 from ner_telhub.widgets.graphing_widgets import GraphDashboardWidget
 from ner_telhub.utils.timestream import TimestreamQueryService, DATE_TIME_FORMAT
 
@@ -37,8 +36,11 @@ class QueryDialog(QDialog):
         self.dataid_input = QLineEdit()
         self.dataid_input.setMinimumWidth(150)
         self.mintime_button = NERButton("Reset", NERButton.Styles.GRAY)
+        self.mintime_button.setToolTip("Reset to the overall session minimum time")
         self.maxtime_button = NERButton("Reset", NERButton.Styles.GRAY)
+        self.maxtime_button.setToolTip("Reset to the overall session maximum time")
         self.dataid_button = NERButton("Show Options", NERButton.Styles.GRAY)
+        self.dataid_button.setToolTip("Show table of potential data IDs")
         self.dataid_button.pressed.connect(lambda : DataIds().exec())
         self.mintime_button.pressed.connect(self.findMinTime)
         self.maxtime_button.pressed.connect(self.findMaxTime)
@@ -48,6 +50,7 @@ class QueryDialog(QDialog):
         self.data_count_label = QLabel("Query size - 0 data points")
         self.data_count_button = NERButton("Calculate Size", NERButton.Styles.BLUE)
         self.data_count_button.pressed.connect(self.findDataCount)
+        self.data_count_button.setToolTip("Find data count for the above parameters")
         self.help_label = QLabel("Note: It is recommended for your queries to be under 1 million data points to prevent \n" \
             "long running operations. Calculate the potential size after specifying fields to verify this.")
         self.findDataCount()
@@ -139,7 +142,7 @@ class QueryDialog(QDialog):
         return query_args
 
 
-class QueryToolbar(QToolBar):
+class QueryToolbar(NERToolbar):
     def __init__(self, 
                  parent: QWidget, 
                  data_model: DataModelManager, 
@@ -161,26 +164,23 @@ class QueryToolbar(QToolBar):
         test_ids = self.findTestIds()
         self.testid_entry.addItems(test_ids)
         self.testid_entry.setMinimumWidth(150)
-        self.testid_entry.setStyleSheet("QComboBox {background-color: white; selection-background-color: white}");
+        self.testid_entry.setStyleSheet("QComboBox {background-color: white; selection-background-color: white}")
         self.load_button = NERButton("Load Data", NERButton.Styles.GREEN)
         self.load_button.addStyle("margin-left: 5%; margin-right: 5%")
         self.load_button.pressed.connect(self.loadData)
-        self.addWidget(QLabel("Test Session ID:"))
-        self.addWidget(self.testid_entry)
-        self.addWidget(self.load_button)
+        self.load_button.setToolTip("Open a window to specify load parameters for given test ID")
+        self.addLeft(QLabel("Test Session ID:"))
+        self.addLeft(self.testid_entry)
+        self.addLeft(self.load_button)
 
-        # Middle of toolbar using spacers
-        spacer = QWidget()
-        spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.addWidget(spacer)
-        
         # Right side of toolbar
         self.model_info = QLabel("0 data points")
         self.clear_button = NERButton("Clear Data", NERButton.Styles.RED)
         self.clear_button.addStyle("margin-right: 5%")
         self.clear_button.pressed.connect(lambda: self.data_model.deleteAllData())
-        self.addWidget(self.model_info)    
-        self.addWidget(self.clear_button)
+        self.clear_button.setToolTip("Clear all loaded data")
+        self.addRight(self.model_info)    
+        self.addRight(self.clear_button)
 
     def modelUpdated(self):
         self.model_info.setText(f"{self.data_model.getDataCount()} data points")

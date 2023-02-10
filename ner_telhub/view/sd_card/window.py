@@ -58,10 +58,11 @@ class ExportDialog(QDialog):
 
         self.filename_input = QLineEdit()
         self.directory_input = QLineEdit()
-        self.directory_button = NERButton("...")
+        self.directory_button = NERButton("...", NERButton.Styles.GRAY)
         self.directory_button.addStyle("font-size: 20px")
         self.directory_button.setMaximumSize(45, 25)
         self.directory_button.pressed.connect(self.choose_directory)
+        self.directory_button.setToolTip("Choose from file system")
 
         self.layout = QGridLayout()
         self.layout.addWidget(QLabel("File name: "), 0, 0)
@@ -184,7 +185,9 @@ class FileView(QWidget):
         self.view.setModel(self.file_model)
 
         self.add_button = NERButton("Add Files", NERButton.Styles.GREEN)
+        self.add_button.setToolTip("Add files from the file system to process")
         self.remove_button = NERButton("Remove Files", NERButton.Styles.RED)
+        self.remove_button.setToolTip("Remove file(s) from the text box")
         self.add_button.pressed.connect(self.add_files)
         self.remove_button.pressed.connect(self.remove_files)
 
@@ -231,6 +234,7 @@ class ProcessView(QWidget):
 
         self.start_button = NERButton("Start", NERButton.Styles.GREEN)
         self.start_button.pressed.connect(self.start_process)
+        self.start_button.setToolTip("Start/stop processing the specified log files")
 
         # Setup Progress Bar
         self.progress_bar = QProgressBar()
@@ -307,12 +311,15 @@ class OptionsView(QWidget):
         self.model_info = QLabel("0 data points")
         self.clear_button = NERButton("Clear", NERButton.Styles.RED)
         self.clear_button.pressed.connect(self.clearModel)
+        self.clear_button.setToolTip("Delete all data in the application")
         layout1.addWidget(self.model_info)
         layout1.addWidget(self.clear_button)
 
         # Populate layout 2
         self.id_input = QLineEdit()
+        self.id_input.setToolTip("Space separated list of data IDs.")
         self.filter_method = QCheckBox()
+        self.filter_method.setToolTip("Whether to keep or delete the specified IDs")
         self.is_method_keep = True
         self.filter_method.setChecked(self.is_method_keep)
         self.setFilterMethod(self.is_method_keep)
@@ -324,22 +331,26 @@ class OptionsView(QWidget):
         filter_layout.addWidget(self.filter_method, 1, 1)
         self.filter_button = NERButton("Filter", NERButton.Styles.BLUE)
         self.filter_button.pressed.connect(self.applyFilters)
+        self.filter_button.setToolTip("Start the filter")
         layout2.addLayout(filter_layout)
         layout2.addWidget(self.filter_button)
 
         # Populate layout 3
         self.graph_button = NERButton("Graph", NERButton.Styles.BLUE)
-        self.graph_button.setFixedWidth(200)
+        self.graph_button.setFixedWidth(150)
+        self.graph_button.setToolTip("Open a graph dashboard with the loaded data")
         self.graph_button.pressed.connect(lambda: GraphDialog(self, self.data_model).exec())
         self.csv_button = NERButton("CSV", NERButton.Styles.BLUE)
-        self.csv_button.setFixedWidth(200)
+        self.csv_button.setFixedWidth(150)
+        self.csv_button.setToolTip("Export the data to a CSV file")
         self.csv_spinner = NERLoadingSpinner()
         self.csv_button.pressed.connect(lambda: ExportDialog(self, self.data_model, self.csv_spinner).exec())
         csv_layout = QHBoxLayout()
         csv_layout.addWidget(self.csv_button)
         csv_layout.addWidget(self.csv_spinner)
         self.database_button = NERButton("Database", NERButton.Styles.BLUE)
-        self.database_button.setFixedWidth(200)
+        self.database_button.setFixedWidth(150)
+        self.database_button.setToolTip("Export the data to the database")
         self.database_spinner = NERLoadingSpinner()
         self.database_button.pressed.connect(lambda: DatabaseDialog(self, self.data_model, self.database_spinner).exec())
         database_layout = QHBoxLayout()
@@ -426,6 +437,7 @@ class SdCardWindow(QMainWindow):
         help_menu = menu.addMenu("Help")
 
         format_submenu = QMenu("Format", self)
+        format_submenu.setToolTip("Change the format of the log files")
         edit_menu.addMenu(format_submenu)
 
         self.options: Dict[int, QAction] = {}
