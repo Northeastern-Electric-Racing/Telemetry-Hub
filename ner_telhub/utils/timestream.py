@@ -327,7 +327,11 @@ class TimestreamQueryService:
             if progress_pct != current_progress_pct:
                 current_progress_pct = progress_pct
                 progress_signal.emit(progress_pct)
-        manager.addDataList(data_list)
+            if len(data_list) >= 10000:
+                manager.addDataList(data_list)
+                data_list.clear()
+        if len(data_list) > 0:
+            manager.addDataList(data_list)
 
     def _parse_row(self, column_info, row) -> List[Tuple[str, str]]:
         data = row['Data']
