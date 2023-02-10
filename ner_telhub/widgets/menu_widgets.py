@@ -45,7 +45,7 @@ class MessageIds(QDialog):
 class DataIds(QDialog):
     """Shows information on data ids in the system."""
 
-    def __init__(self, parent: QWidget):
+    def __init__(self, parent: QWidget = None):
         super().__init__(parent)
         self.setWindowTitle("Data Information")
         data = DATA_IDS

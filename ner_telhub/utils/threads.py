@@ -55,7 +55,6 @@ class Worker(QRunnable):
         self.kwargs["progress"] = self.signals.progress # Give function access to progress/message signals
         self.kwargs["message"] = self.signals.message
         self.runningThread = None
-    
 
     def run(self):
         """Runs the actual thread function, emitting status signals."""
@@ -84,19 +83,4 @@ class Worker(QRunnable):
         if threadpool.activeThreadCount() >= threadpool.maxThreadCount():
             raise RuntimeError(f"Exceeded max system thread count of {threadpool.maxThreadCount()}")
         threadpool.start(self)
-
-
-    def stop(self):
-        """Stops this thread and emits corresponding signals."""
-
-        self.runningThread.terminate()
-        self.runningThread = None
-        self.signals.finished.emit()
-
-
-
-
-
-        
-
 

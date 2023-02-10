@@ -30,11 +30,16 @@ class DataModel(QAbstractTableModel):
             self._id = id
         else:
             raise ValueError("Invalid data id.")
-
         self._data: List[Tuple[QDateTime, Any]] = []
         self._lock = QReadWriteLock()
+        self._reset_state()
+
+    def _reset_state(self):
+        QWriteLocker(self._lock)
+        self._data.clear()
         self.min_value = sys.maxsize
         self.max_value = -sys.maxsize
+        self.compressing = False # Stores whether we are currently removing duplicated data values
 
     def data(self, index: QModelIndex, role: int) -> Any:
         """
@@ -123,17 +128,32 @@ class DataModel(QAbstractTableModel):
     def addData(self, timestamp: QDateTime, value: Any) -> None:
         """
         Adds the given piece of data to the model.
-        
-        Slow operation due to the locking of the mutex for a single data point. 
-        For adding multiple elements at the same time, see addDataList().
+
+        Performs compression of consecutive data points with the same values to reduce storage.
+        This is done by starting to 'compress' once two consecutive data points have the same
+        value, and stoping when a new value is reached.
         """
         QWriteLocker(self._lock)
         # TODO: Add filtering like the lines below here 
         # if self._id == 45 and abs(value) > 2000:
         #     print(value)
         #     return
-        
-        self._data.append((timestamp, value))
+
+        if len(self._data) == 0:
+            self._data.append((timestamp, value))
+        else:
+            last_value = self._data[-1][1]
+            if self.compressing:
+                if value == last_value:
+                    self._data[-1] = (timestamp, value) # Reset last value in list instead of adding on
+                else:
+                    self._data.append((timestamp, value)) # Add new distinct value and stop compressing
+                    self.compressing = False
+            else:
+                self._data.append((timestamp, value))
+                if value == last_value:
+                    self.compressing = True # Start compressing if two consecutive values found
+
         if type(value) == int or type(value) == float:
             if value < self.min_value:
                 self.min_value = value
@@ -146,7 +166,7 @@ class DataModel(QAbstractTableModel):
         Deletes all data from the model.
         """
         QWriteLocker(self._lock)
-        self._data.clear()
+        self._reset_state()
         self.layoutChanged.emit()
 
 

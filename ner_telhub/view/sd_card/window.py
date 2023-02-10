@@ -15,7 +15,8 @@ from ner_telhub.model.data_models import DataModelManager
 from ner_processing.decode_files import LogFormat
 from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
 from ner_telhub.widgets.graphing_widgets import GraphDashboardWidget
-from ner_telhub.widgets.styled_widgets import NERButton, NERToolbar
+from ner_telhub.widgets.styled_widgets import NERButton, NERToolbar, NERLoadingSpinner
+from ner_telhub.utils.timestream import TimestreamIngestionService
 
 
 class GraphDialog(QDialog):
@@ -48,11 +49,12 @@ class GraphDialog(QDialog):
 class ExportDialog(QDialog):
     """Dialog to export data to a CSV file."""
 
-    def __init__(self, parent: QWidget, model: DataModelManager):
+    def __init__(self, parent: QWidget, model: DataModelManager, spinner: NERLoadingSpinner):
         super().__init__(parent)
 
         self.setWindowTitle("Export CSV")
         self.model = model
+        self.spinner = spinner
 
         self.filename_input = QLineEdit()
         self.directory_input = QLineEdit()
@@ -90,10 +92,12 @@ class ExportDialog(QDialog):
         full_path = directory + "/" + filename
 
         worker = self.model.getCSVWorker(full_path)
+        worker.signals.finished.connect(lambda: self.spinner.stopAnimation())
         worker.signals.error.connect(lambda error : QMessageBox.critical(self, "Export Error", error[1].__str__()))
         worker.signals.message.connect(lambda msg : QMessageBox.about(self, "Export Status", msg))
         try:
             worker.start()
+            self.spinner.startAnimation()
         except RuntimeError as e: 
             QMessageBox.critical(self, "Internal Error", str(e))
         self.accept()
@@ -108,6 +112,60 @@ class ExportDialog(QDialog):
             return name
         else:
             raise ValueError("Invalid file name format")
+
+
+class DatabaseDialog(QDialog):
+    """Dialog to export data to a the database."""
+
+    def __init__(self, parent: QWidget, model: DataModelManager, spinner: NERLoadingSpinner):
+        super().__init__(parent)
+
+        self.setWindowTitle("Database Export")
+        self.model = model
+        self.spinner = spinner
+
+        self.testid_input = QLineEdit();
+        self.label = QLabel("""The test ID is a unique identifier that you can use to identify a testing session.
+Make sure the test ID is a meaningful name so you can reload previous sessions by their ID.""")
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(QLabel("Test ID:"))
+        self.layout.addWidget(self.testid_input)
+        self.layout.addWidget(self.label)
+        
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        self.buttonBox.accepted.connect(self.on_accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
+
+    def on_accept(self):
+        if self.model.getDataCount() == 0:
+            QMessageBox.critical(self, "Error", "Cannot export data - data model is empty.")
+            return 
+
+        testid = self.testid_input.text()
+        if testid == "":
+            QMessageBox.critical(self, "Error", "You must specify a test ID")
+            return 
+        
+        button = QMessageBox.question(self, "Warning", "You cannot undo this action, so please make sure you are authorized to complete it." \
+            "\nWould you like to continue?")
+        if button == QMessageBox.StandardButton.No:
+            return
+
+        models = [self.model.getDataModel(id) for id in self.model.getAvailableIds()]
+        worker = TimestreamIngestionService.getIngestionWorker(models, testid)
+        worker.signals.finished.connect(lambda: self.spinner.stopAnimation())
+        worker.signals.error.connect(lambda error : QMessageBox.critical(self, "Export Error", error[1].__str__()))
+        worker.signals.message.connect(lambda msg : QMessageBox.about(self, "Export Status", msg))
+        try:
+            worker.start()
+            self.spinner.startAnimation()
+        except RuntimeError as e: 
+            QMessageBox.critical(self, "Internal Error", str(e))
+        self.accept()
 
 
 class FileView(QWidget):
@@ -160,8 +218,6 @@ class ProcessView(QWidget):
     def __init__(self, parent: QWidget, file_model: FileModel, data_model: DataModelManager):
         super(ProcessView, self).__init__(parent)
 
-        self.process_started = False
-        self.worker = None
         self.file_model = file_model
         self.data_model = data_model
 
@@ -190,49 +246,33 @@ class ProcessView(QWidget):
         self.setLayout(layout)
 
     def start_process(self):
-        if self.can_start():
-            self.data_model.deleteAllData()
-            self.process_started = True
-            self.start_button.setText("Stop")
-            self.start_button.changeStyle(NERButton.Styles.RED)
-            self.progress_bar.setVisible(True)
-            self.clear_view()
-
-            self.worker = self.file_model.getProcessWorker(self.data_model)
-            self.worker.signals.finished.connect(self.stop_process)
-            self.worker.signals.error.connect(lambda error: QMessageBox.critical(self, "Processing Error", error[1].__str__()))
-            self.worker.signals.message.connect(self.update_view)
-            self.worker.signals.progress.connect(lambda val: self.progress_bar.setValue(val))
-            try:
-                self.worker.start()
-            except RuntimeError as e: 
-                self.stop_process()
-                QMessageBox.critical(self, "Internal Error", str(e))
-        else:
-            try:
-                if self.worker is not None:
-                    self.worker.stop()
-                self.worker = None
-            except:
-                pass
-    
-    def stop_process(self):
-        self.process_started = False
-        self.worker = None
-        self.start_button.setText("Start")
-        self.start_button.changeStyle(NERButton.Styles.GREEN)
-        self.progress_bar.setVisible(False)
-        self.progress_bar.setValue(0)
-
-    def can_start(self) -> bool:
-        if self.process_started:
-            return False
-        elif not self.data_model.isEmpty():
+        if not self.data_model.isEmpty():
             button = QMessageBox.question(self, "Warning", "Current model data will be lost. \n" \
                 "Would you like to continue?")
-            return button == QMessageBox.StandardButton.Yes
-        else:
-            return True
+            if button == QMessageBox.StandardButton.No:
+                return
+
+        self.data_model.deleteAllData()
+        self.start_button.setEnabled(False)
+        self.progress_bar.setVisible(True)
+        self.clear_view()
+
+        worker = self.file_model.getProcessWorker(self.data_model)
+        worker.signals.finished.connect(self.stop_process)
+        worker.signals.error.connect(lambda error: QMessageBox.critical(self, "Processing Error", error[1].__str__()))
+        worker.signals.message.connect(self.update_view)
+        worker.signals.progress.connect(lambda val: self.progress_bar.setValue(val))
+
+        try:
+            worker.start()
+        except RuntimeError as e: 
+            self.stop_process()
+            QMessageBox.critical(self, "Internal Error", str(e))
+    
+    def stop_process(self):
+        self.start_button.setEnabled(True)
+        self.progress_bar.setVisible(False)
+        self.progress_bar.setValue(0)
 
     def update_view(self, message: str):
         self.view_text += message
@@ -289,15 +329,25 @@ class OptionsView(QWidget):
 
         # Populate layout 3
         self.graph_button = NERButton("Graph", NERButton.Styles.BLUE)
+        self.graph_button.setFixedWidth(200)
         self.graph_button.pressed.connect(lambda: GraphDialog(self, self.data_model).exec())
         self.csv_button = NERButton("CSV", NERButton.Styles.BLUE)
-        self.csv_button.pressed.connect(lambda: ExportDialog(self, self.data_model).exec())
-        self.database_button = NERButton("Database")
-        self.database_button.pressed.connect(self.databaseExport)
-        self.database_button.setDisabled(True)
+        self.csv_button.setFixedWidth(200)
+        self.csv_spinner = NERLoadingSpinner()
+        self.csv_button.pressed.connect(lambda: ExportDialog(self, self.data_model, self.csv_spinner).exec())
+        csv_layout = QHBoxLayout()
+        csv_layout.addWidget(self.csv_button)
+        csv_layout.addWidget(self.csv_spinner)
+        self.database_button = NERButton("Database", NERButton.Styles.BLUE)
+        self.database_button.setFixedWidth(200)
+        self.database_spinner = NERLoadingSpinner()
+        self.database_button.pressed.connect(lambda: DatabaseDialog(self, self.data_model, self.database_spinner).exec())
+        database_layout = QHBoxLayout()
+        database_layout.addWidget(self.database_button)
+        database_layout.addWidget(self.database_spinner)
         layout3.addWidget(self.graph_button)
-        layout3.addWidget(self.csv_button)
-        layout3.addWidget(self.database_button)
+        layout3.addLayout(csv_layout)
+        layout3.addLayout(database_layout)
 
         # Populate main layout
         sub_layout = QHBoxLayout()
@@ -343,9 +393,6 @@ class OptionsView(QWidget):
             return 
 
         self.data_model.filter(filter_list, self.is_method_keep)
-
-    def databaseExport(self):
-        pass
 
 
 class SdCardWindow(QMainWindow):

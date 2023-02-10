@@ -1,10 +1,10 @@
 from enum import Enum
 import os
 
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QMovie
 from PyQt6.QtWidgets import (
     QHBoxLayout, QPushButton, QSizePolicy, 
-    QToolBar, QWidget
+    QToolBar, QWidget, QLabel
 )
 
 resources = os.path.dirname(__file__) + "/../../resources"
@@ -75,6 +75,7 @@ class NERImageButton(NERButton):
     def resetIcon(self, icon_file: Icons):
         self.setIcon(QIcon(os.path.join(resources, icon_file.value)))
 
+
 class NERToolbar(QToolBar):
     """
     Creates a Toolbar that supports adding Widgets to either side.
@@ -106,3 +107,23 @@ class NERToolbar(QToolBar):
     
     def addRight(self, widget: QWidget):
         self.right_buttons.addWidget(widget)
+
+
+class NERLoadingSpinner(QLabel):
+    """
+    Loading circle label to indicate long running tasks.
+    """
+    def __init__(self):
+        super().__init__()
+
+        self.movie = QMovie(os.path.join(resources, "loading_circle.gif"))
+        self.setMovie(self.movie)
+
+    def startAnimation(self):
+        self.movie.start()
+        self.setVisible(True)
+
+    def stopAnimation(self):
+        self.movie.stop()
+        self.setVisible(False)
+

@@ -4,7 +4,7 @@ from typing import List
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import (
     QAbstractListModel, Qt, 
-    pyqtBoundSignal, QModelIndex
+    pyqtBoundSignal, QModelIndex,
 )
 
 from ner_processing.decode_files import LogFormat, processLine
@@ -22,7 +22,7 @@ class FileModel(QAbstractListModel):
         """
         Initializes the model with a certain format.
         """
-        super(FileModel, self).__init__()
+        super(FileModel, self).__init__(parent)
         self._filepaths = []
         self.file_format = format
 
