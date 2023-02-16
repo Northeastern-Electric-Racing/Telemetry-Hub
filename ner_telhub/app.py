@@ -1,16 +1,15 @@
-import sys, os
-
+import os
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QLabel, 
-    QVBoxLayout, QWidget
+    QVBoxLayout, QHBoxLayout, QWidget, 
+    QPushButton
 )
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtGui import QIcon, QPixmap, QFont, QFontDatabase
 
 from ner_telhub.view.database.window import DatabaseWindow
 from ner_telhub.view.sd_card.window import SdCardWindow
 from ner_telhub.view.vehicle.window import VehicleWindow
-from ner_telhub.widgets.styled_widgets import NERButton
 
 resources = os.path.dirname(__file__) + "/../resources"
 
@@ -31,41 +30,52 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Telemetry Hub")
-        self.setFixedSize(QSize(400, 400))
+        self.setFixedSize(QSize(960, 720))
         self.setWindowIcon(QIcon(os.path.join(resources, "ner_logo.ico")))
 
         self.vehicle_window = None
         self.sd_card_window = None
         self.database_window = None
 
-        layout = QVBoxLayout()
+        main_layout = QVBoxLayout()
+        bottom_layout = QHBoxLayout()
 
-        title = QLabel("Telemetry Hub")
+        id = QFontDatabase.addApplicationFont("MachineGunk.ttf")
+        families = QFontDatabase.applicationFontFamilies(id)
+
+        title = QLabel("--- T E L E M E T R Y   H U B ---")
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
-        title_font = title.font()
+        title_font = QFont(families[0], 80)
         title_font.setBold(True)
-        title_font.setPointSize(20)
+        title_font.setItalic(True)
+        title_font.setPointSize(40)
         title.setFont(title_font)
-        layout.addWidget(title)
+        main_layout.addWidget(title)
 
         lbl = QLabel()
-        lbl.setPixmap(QPixmap(os.path.join(resources, "ner_logo.png")))
-        lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
-        layout.addWidget(lbl)
+        lbl.setPixmap(QPixmap(os.path.join(resources, "aoun_racing2.png")))
+        lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignBottom)
+        main_layout.addWidget(lbl)
 
-        layout.addWidget(QLabel("Select an option below to connect to:"))
-        self.vehicle_button = NERButton("Vehicle", NERButton.Styles.RED)
-        self.sd_card_button = NERButton("SD Card", NERButton.Styles.RED)
-        self.database_button = NERButton("Database", NERButton.Styles.RED)
+        BUTTON_STYLE = """QPushButton {color: white; background-color: #EE3535; font-size: 20px; border-radius: 10px; padding: 10% 10%;}
+            QPushButton:hover {background-color: #ff8080; color: white;}"""
+
+        self.vehicle_button = QPushButton("Vehicle", self)
+        self.vehicle_button.setStyleSheet(BUTTON_STYLE)
+        self.sd_card_button = QPushButton("SD Card", self)
+        self.sd_card_button.setStyleSheet(BUTTON_STYLE)
+        self.database_button = QPushButton("Database", self)
+        self.database_button.setStyleSheet(BUTTON_STYLE)
+
         self.vehicle_button.clicked.connect(self.openVehicleWindow)
         self.sd_card_button.clicked.connect(self.openSdCardWindow)
         self.database_button.clicked.connect(self.openDatabaseWindow)
-        layout.addWidget(self.vehicle_button)
-        layout.addWidget(self.sd_card_button)
-        layout.addWidget(self.database_button)
-
+        bottom_layout.addWidget(self.vehicle_button)
+        bottom_layout.addWidget(self.sd_card_button)
+        bottom_layout.addWidget(self.database_button)
+        main_layout.addLayout(bottom_layout)
         widget = QWidget()
-        widget.setLayout(layout)
+        widget.setLayout(main_layout)
         self.setCentralWidget(widget)
 
     def openVehicleWindow(self):
