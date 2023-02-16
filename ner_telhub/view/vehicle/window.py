@@ -2,8 +2,7 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QStackedLayout,
     QMessageBox, QDialog, QDialogButtonBox,
     QVBoxLayout, QLabel, QRadioButton,
-    QToolBar, QLineEdit, QGridLayout, 
-    QFileDialog
+    QLineEdit, QGridLayout, QFileDialog
 )
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QSize
@@ -69,10 +68,11 @@ class FileDialog(QDialog):
 
         self.filename_input = QLineEdit()
         self.directory_input = QLineEdit()
-        self.directory_button = NERButton("...")
+        self.directory_button = NERButton("...", NERButton.Styles.GRAY)
         self.directory_button.addStyle("font-size: 20px")
         self.directory_button.setMaximumSize(45, 25)
         self.directory_button.pressed.connect(self.choose_directory)
+        self.directory_button.setToolTip("Choose from file system")
 
         self.layout = QGridLayout()
         self.layout.addWidget(QLabel("File name: "), 0, 0)
@@ -135,10 +135,13 @@ class LiveToolbar(NERToolbar):
         self.setStyleSheet("background-color: white; padding: 5%")
         self.start_button = NERButton("Start", NERButton.Styles.GREEN)
         self.start_button.pressed.connect(self.start)
+        self.start_button.setToolTip("Start/stop the live data feed")
         clear_button = NERButton("Clear", NERButton.Styles.RED)
         clear_button.pressed.connect(self.clear)
+        clear_button.setToolTip("Clear all data currently received")
         export_button = NERButton("Export", NERButton.Styles.BLUE)
         export_button.pressed.connect(self.export)
+        export_button.setToolTip("Export received data to a CSV file")
         self.addLeft(self.start_button)
         self.addLeft(clear_button)
         self.addLeft(export_button)

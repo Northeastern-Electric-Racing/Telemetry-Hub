@@ -87,7 +87,8 @@ class EditDialog(QDialog):
         self.layout.addWidget(QLabel("Format:"), 0, 0)
         self.layout.addWidget(self.format_entry, 0, 1, 1, 2)
 
-        add_button = NERButton("Add Data", NERButton.Styles.GRAY)
+        add_button = NERButton("Add Data Input", NERButton.Styles.GRAY)
+        add_button.setToolTip("Add an input to specify data")
         add_button.pressed.connect(self.add)
         self.layout.addWidget(add_button, 1, 0, 1, -1)
 
@@ -215,22 +216,27 @@ class GraphWidget(QWidget):
         toolbar = NERToolbar()
         config_button = NERImageButton(NERImageButton.Icons.EDIT, NERButton.Styles.BLUE)
         config_button.pressed.connect(lambda: EditDialog(self, self.reset, self.model, self.state).exec())
+        config_button.setToolTip("Edit the configuration of this graph")
         toolbar.addLeft(config_button)
         reset_button = NERImageButton(NERImageButton.Icons.TRASH, NERButton.Styles.RED)
         reset_button.pressed.connect(self.reset)
+        reset_button.setToolTip("Reset this to be a blank graph")
         toolbar.addLeft(reset_button)
         show_button = NERImageButton(NERImageButton.Icons.EXPORT, NERButton.Styles.GRAY)
         show_button.pressed.connect(self.showTables)
+        show_button.setToolTip("Show the data in this graph in a tabular form")
         toolbar.addLeft(show_button)
 
         # Specific config for real time graphs
         if dynamic:
             refresh_button = NERImageButton(NERImageButton.Icons.REFRESH, NERButton.Styles.GRAY)
             refresh_button.pressed.connect(self.updateChart)
+            refresh_button.setToolTip("Refresh the live data")
             toolbar.addRight(refresh_button)
             self.live_data = False
             self.live_button = NERImageButton(NERImageButton.Icons.START, NERButton.Styles.GREEN)
             self.live_button.pressed.connect(self.toggleLiveData)
+            self.live_button.setToolTip("Start/stop live updating automatically")
             toolbar.addRight(self.live_button)
 
             self.timer = QTimer()
@@ -238,6 +244,7 @@ class GraphWidget(QWidget):
 
         remove_button = NERImageButton(NERImageButton.Icons.CLOSE, NERButton.Styles.RED)
         remove_button.pressed.connect(self.remove)
+        remove_button.setToolTip("Delete this graph")
         toolbar.addRight(remove_button)
 
         # Chart Config
@@ -313,7 +320,7 @@ class GraphWidget(QWidget):
 
     def toggleLiveData(self):
         """
-        Alters the 
+        Starts of stops the live data button/timer.
         """
         if self.live_data:
             self.live_button.changeStyle(NERButton.Styles.GREEN)
@@ -406,11 +413,13 @@ class GraphDashboardWidget(GraphDashboard):
 
         self.toolbar = NERToolbar()
         add_button = NERButton("Add Graph", NERButton.Styles.GRAY)
+        add_button.setToolTip("Add a graph to the dashboard")
         add_button.pressed.connect(self.add)
         self.toolbar.addLeft(add_button)
 
         default_graph_button = NERButton("Load Default Graphs", NERButton.Styles.GRAY)
         default_graph_button.pressed.connect(self.loadDefaultGraphs)
+        default_graph_button.setToolTip("Set the graphs to show important data points")
         self.toolbar.addRight(default_graph_button)
 
         self.row1 = QSplitter()

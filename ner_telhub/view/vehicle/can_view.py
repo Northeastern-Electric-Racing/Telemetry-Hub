@@ -181,6 +181,7 @@ class MessageFeed(QWidget):
         self.store_messages = False
         self.store_message_checkbox = QCheckBox("record messages")
         self.store_message_checkbox.setChecked(self.store_messages)
+        self.store_message_checkbox.setToolTip("Record raw messages to be able to see them in the above box.")
         self.model.setRecordState(self.store_messages)
         self.store_message_checkbox.stateChanged.connect(lambda state : self.model.setRecordState(state))
 
