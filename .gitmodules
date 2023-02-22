@@ -1,0 +1,3 @@
+[submodule "Ner_Processing"]
+	path = Ner_Processing
+	url = https://github.com/Northeastern-Electric-Racing/Ner_Processing

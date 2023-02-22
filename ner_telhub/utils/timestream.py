@@ -5,7 +5,7 @@ import os
 from typing import List, Tuple
 from PyQt6.QtCore import pyqtBoundSignal, QDateTime
 
-from ner_processing.data import Data
+from Ner_Processing.data import Data
 from ner_telhub.model.data_models import DataModel, DataModelManager
 from ner_telhub.utils.threads import Worker
 
@@ -84,7 +84,7 @@ class TimestreamIngestionService:
                     'MeasureName': str(id),
                     'MeasureValue': str(data[1]),
                     'MeasureValueType': measure_type,
-                    'Time': str(data[0].toMSecsSinceEpoch())
+                    'Time': str(int(data[0].timestamp()*1000))
                 }
                 records.append(record)
                 total_counter += 1
@@ -314,7 +314,7 @@ class TimestreamQueryService:
             try:
                 test_id = d['TestId']
                 data_id = int(d['measure_name'])
-                time = QDateTime.fromString(d['time'][:-6], DATE_TIME_FORMAT)
+                time = QDateTime.fromString(d['time'][:-6], DATE_TIME_FORMAT).toPyDateTime()
                 if 'measure_value::double' in d:
                     value = float(d['measure_value::double'])
                 else:

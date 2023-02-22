@@ -1,4 +1,5 @@
 import csv
+from datetime import datetime
 import numpy as np
 import sys
 from typing import List, Any, Tuple
@@ -8,11 +9,11 @@ from PyQt6.QtCore import (
     QReadWriteLock, QModelIndex,
     QReadLocker, QWriteLocker,
     pyqtBoundSignal, pyqtSignal,
-    QObject, QDateTime
+    QObject
 )
 
-from ner_processing.master_mapping import DATA_IDS
-from ner_processing.data import Data
+from Ner_Processing.master_mapping import DATA_IDS
+from Ner_Processing.data import Data
 from ner_telhub.utils.threads import Worker
 
 
@@ -30,7 +31,7 @@ class DataModel(QAbstractTableModel):
             self._id = id
         else:
             raise ValueError("Invalid data id.")
-        self._data: List[Tuple[QDateTime, Any]] = []
+        self._data: List[Tuple[datetime, Any]] = []
         self._lock = QReadWriteLock()
         self._reset_state()
 
@@ -48,8 +49,8 @@ class DataModel(QAbstractTableModel):
         QReadLocker(self._lock)
         if role == Qt.ItemDataRole.DisplayRole:
             value = self._data[index.row()][index.column()]
-            if isinstance(value, QDateTime):
-                return value.toMSecsSinceEpoch()
+            if isinstance(value, datetime):
+                return int(value.timestamp() * 1000)
             return value
 
     def rowCount(self, index=None) -> int:
@@ -76,7 +77,7 @@ class DataModel(QAbstractTableModel):
         """
         return DATA_IDS[self._id]["name"]
 
-    def getData(self) -> List[Tuple[QDateTime, Any]]:
+    def getData(self) -> List[Tuple[datetime, Any]]:
         """
         Gets the list of data currently in the model.
         """
@@ -91,9 +92,9 @@ class DataModel(QAbstractTableModel):
         TODO: Add threading 
         """
         QReadLocker(self._lock)
-        return np.array(self._data, Tuple[QDateTime, Any])
+        return np.array(self._data, Tuple[datetime, Any])
 
-    def getMinTime(self) -> QDateTime:
+    def getMinTime(self) -> datetime:
         """
         Gets the time of the first data element (which is the min time for valid data sets).
         """
@@ -101,9 +102,9 @@ class DataModel(QAbstractTableModel):
         try:
             return self._data[0][0]
         except IndexError:
-            return QDateTime.fromMSecsSinceEpoch(9999999999999) # Give big min time when no data
+            return datetime.fromtimestamp(9999999999.999) # Give big min time when no data
 
-    def getMaxTime(self) -> QDateTime:
+    def getMaxTime(self) -> datetime:
         """
         Gets the time of the last data element (which is the max time for valid data sets).
         """
@@ -111,7 +112,7 @@ class DataModel(QAbstractTableModel):
         try:
             return self._data[len(self._data) - 1][0]
         except IndexError:
-            return QDateTime.fromMSecsSinceEpoch(0) # Give small max time when no data
+            return datetime.fromtimestamp(0) # Give small max time when no data
 
     def getMinValue(self) -> Any:
         """
@@ -125,7 +126,7 @@ class DataModel(QAbstractTableModel):
         """
         return self.max_value
 
-    def addData(self, timestamp: QDateTime, value: Any) -> None:
+    def addData(self, timestamp: datetime, value: Any) -> None:
         """
         Adds the given piece of data to the model.
 
@@ -328,7 +329,7 @@ class DataModelManager(QObject):
                 id = model.getDataId()
                 desc = model.getDataType()
                 for data in model.getData():
-                    str_time = data[0].toString("yyyy-MM-ddTHH:mm:ss.zzzZ")
+                    str_time = data[0].strftime("%Y-%m-%dT%H:%M:%S.%fZ")
                     writer.writerow([str_time, id, desc, data[1], DATA_IDS[id]["units"]])
         message_signal.emit(f"Finished CSV export")
 

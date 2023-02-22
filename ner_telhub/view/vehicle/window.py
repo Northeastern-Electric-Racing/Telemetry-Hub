@@ -7,8 +7,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QSize
 
-from ner_processing.live.xbee import XBee
-from ner_processing.live.live_input import LiveInput, LiveInputException
+from ner_live.xbee import XBee
+from ner_live.live_input import LiveInput, LiveInputException
 
 from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.model.message_models import MessageModel
