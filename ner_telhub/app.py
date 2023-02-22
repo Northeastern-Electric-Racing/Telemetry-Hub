@@ -40,7 +40,7 @@ class MainWindow(QMainWindow):
         main_layout = QVBoxLayout()
         bottom_layout = QHBoxLayout()
 
-        id = QFontDatabase.addApplicationFont("MachineGunk.ttf")
+        id = QFontDatabase.addApplicationFont(os.path.join(resources, "MachineGunk.ttf"))
         families = QFontDatabase.applicationFontFamilies(id)
 
         title = QLabel("--- T E L E M E T R Y   H U B ---")
