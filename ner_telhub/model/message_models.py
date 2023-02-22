@@ -6,8 +6,8 @@ from PyQt6.QtCore import (
     QModelIndex, QDateTime
 )
 
-from ner_processing.data import Data
-from ner_processing.message import Message
+from Ner_Processing.data import Data
+from Ner_Processing.message import Message
 from ner_telhub.model.data_models import DataModelManager
 
 

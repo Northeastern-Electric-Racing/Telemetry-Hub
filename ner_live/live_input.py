@@ -3,7 +3,7 @@ from enum import Enum
 
 from PyQt6.QtSerialPort import QSerialPortInfo
 
-from ner_processing.message import Message
+from Ner_Processing.message import Message
 from ner_telhub.model.message_models import MessageModel
 
 

@@ -7,8 +7,8 @@ from PyQt6.QtCore import (
     pyqtBoundSignal, QModelIndex,
 )
 
-from ner_processing.decode_files import LogFormat, processLine
-from ner_processing.message import Message
+from Ner_Processing.decode_files import LogFormat, processLine
+from Ner_Processing.message import Message
 from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.utils.threads import Worker
 

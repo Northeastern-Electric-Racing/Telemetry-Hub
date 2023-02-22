@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from datetime import datetime
 from enum import Enum
 from functools import partial
 from typing import Callable, List
@@ -16,7 +17,7 @@ from PyQt6.QtCharts import (
     QValueAxis
 )
 from PyQt6.QtGui import QPainter
-from PyQt6.QtCore import QSize, Qt, QTimer, QDateTime
+from PyQt6.QtCore import QSize, Qt, QTimer
 
 from ner_telhub.model.data_models import DataModelManager, DataModel
 from ner_telhub.widgets.styled_widgets import NERButton, NERImageButton, NERToolbar
@@ -352,7 +353,7 @@ class GraphWidget(QWidget):
         series.attachAxis(self.axis_x)
         series.attachAxis(self.axis_y)
 
-    def updateAxis(self, xmin: QDateTime, xmax: QDateTime, ymin: float, ymax: float):
+    def updateAxis(self, xmin: datetime, xmax: datetime, ymin: float, ymax: float):
         """
         Updates the axis to use the new data values if they expand the bounds of the graph.
         """
