@@ -52,7 +52,7 @@ class MessageModel(QAbstractListModel):
             if msg.id in self._filters.keys():
                 time_since_last_record = self._filters[msg.id][1].msecsTo(msg.timestamp)
                 if time_since_last_record >= self._filters[msg.id][0]:
-                    self._filters[msg.id] = (self._filters[msg.id][0], msg.timestamp)
+                    self._filters[msg.id] = (self._filters[msg.id][0], QDateTime(msg.timestamp))
                     self._decodeAndRecordMessage(msg)
         else:
             # No filters set, so record all messages
