@@ -12,7 +12,7 @@ from ner_live.live_input import LiveInput, LiveInputException
 
 from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.model.message_models import MessageModel
-from ner_telhub.model.filter_models import ReceiveFilterModel, SendFilterModel
+from ner_telhub.model.filter_models import ReceiveFilterModel
 from ner_telhub.view.vehicle.can_view import CanView
 from ner_telhub.view.vehicle.data_view import DataView
 from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
@@ -186,13 +186,12 @@ class VehicleWindow(QMainWindow):
         self.data_model = DataModelManager(self)
         self.message_model = MessageModel(self, self.data_model)
         self.receive_filter_model = ReceiveFilterModel(self, self.message_model)
-        self.send_filter_model = SendFilterModel(self)
         self.connection = XBee(self.message_model)
         self.connection.addCallback("vehicle", self.message_model.addMessage)
         self.port_name = None
 
         self.views = {
-            0: ("CAN", CanView(self, self.message_model, self.receive_filter_model, self.send_filter_model)), 
+            0: ("CAN", CanView(self, self.message_model, self.receive_filter_model)),
             1: ("Data", DataView(self, self.data_model))
         }
 
