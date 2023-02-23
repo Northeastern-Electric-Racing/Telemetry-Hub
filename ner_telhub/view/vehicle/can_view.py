@@ -15,7 +15,7 @@ class ReceiveFilters(QWidget):
     """
     Section to define inputs for adding receive filters.
     """
-    
+
     def __init__(self, parent: QWidget, model: ReceiveFilterModel):
         super(ReceiveFilters, self).__init__(parent)
 
@@ -38,7 +38,7 @@ class ReceiveFilters(QWidget):
         # Style basic widgets
         self.header.setStyleSheet("font-size: 30px; font-weight: bold")
         self.header.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        
+
         inputs_layout = QGridLayout()
         inputs_layout.addWidget(QLabel("ID:"), 0, 0)
         inputs_layout.addWidget(self.id_entry, 0, 1)
@@ -66,12 +66,17 @@ class ReceiveFilters(QWidget):
 
         try:
             id = int(self.id_entry.currentText().split(":")[0])
-            interval = int(self.interval_entry.text()) if self.interval_entry.text() != "" else 0
+            interval = int(self.interval_entry.text()
+                           ) if self.interval_entry.text() != "" else 0
             self.model.addFilter(id, interval)
         except RuntimeError:
-            QMessageBox.critical(self, "Input Error", f"Filter with ID {id} already exists")
+            QMessageBox.critical(
+                self,
+                "Input Error",
+                f"Filter with ID {id} already exists")
         except Exception:
-            QMessageBox.critical(self, "Input Error", "Error with the input fields.")
+            QMessageBox.critical(
+                self, "Input Error", "Error with the input fields.")
 
         self.id_entry.setCurrentText("None")
         self.interval_entry.setText("")
@@ -91,7 +96,7 @@ class MessageFeed(QWidget):
     """
     Section showing the current message feed.
     """
-    
+
     def __init__(self, parent: QWidget, model: MessageModel):
         super(MessageFeed, self).__init__(parent)
 
@@ -102,9 +107,11 @@ class MessageFeed(QWidget):
         self.store_messages = False
         self.store_message_checkbox = QCheckBox("record messages")
         self.store_message_checkbox.setChecked(self.store_messages)
-        self.store_message_checkbox.setToolTip("Record raw messages to be able to see them in the above box.")
+        self.store_message_checkbox.setToolTip(
+            "Record raw messages to be able to see them in the above box.")
         self.model.setRecordState(self.store_messages)
-        self.store_message_checkbox.stateChanged.connect(lambda state : self.model.setRecordState(state))
+        self.store_message_checkbox.stateChanged.connect(
+            lambda state: self.model.setRecordState(state))
 
         layout = QVBoxLayout()
         layout.addWidget(self.view)
@@ -117,15 +124,15 @@ class CanView(QWidget):
     """
     Main CAN view class.
     """
-    
+
     def __init__(self, parent: QWidget,
-            message_model: MessageModel, 
-            receive_filter_model: ReceiveFilterModel):
+                 message_model: MessageModel,
+                 receive_filter_model: ReceiveFilterModel):
         super(CanView, self).__init__(parent)
 
         filter_layout = QVBoxLayout()
         filter_layout.addWidget(ReceiveFilters(self, receive_filter_model))
-        
+
         layout = QHBoxLayout()
         layout.addWidget(MessageFeed(self, message_model))
         layout.addLayout(filter_layout)

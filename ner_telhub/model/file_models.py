@@ -3,7 +3,7 @@ from typing import List
 
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import (
-    QAbstractListModel, Qt, 
+    QAbstractListModel, Qt,
     pyqtBoundSignal, QModelIndex,
 )
 
@@ -75,16 +75,20 @@ class FileModel(QAbstractListModel):
 
     def getProcessWorker(self, manager: DataModelManager) -> Worker:
         """
-        Returns a worker to process this file model's log file paths, storing results 
+        Returns a worker to process this file model's log file paths, storing results
         in the given data model.
         """
-        return Worker(self._processFileData, *self._filepaths, format=self.file_format, manager=manager)
+        return Worker(
+            self._processFileData,
+            *self._filepaths,
+            format=self.file_format,
+            manager=manager)
 
     @staticmethod
     def _processFileData(*args, **kwargs) -> None:
         """
         Processes a file from inside a Worker thread.
-        
+
         CAUTION
         -------
         This is a worker function meant to be called from a thread (see Worker).
@@ -98,8 +102,9 @@ class FileModel(QAbstractListModel):
             manager: DataModelManager = kwargs["manager"]
             progress_signal: pyqtBoundSignal = kwargs["progress"]
             message_signal: pyqtBoundSignal = kwargs["message"]
-        except:
-            raise RuntimeError("Internal processing error - thread configuration invalid")
+        except BaseException:
+            raise RuntimeError(
+                "Internal processing error - thread configuration invalid")
 
         # Create tracking variables for counts/errors
         estimated_line_count = FileModel.getLineCount(filepaths)
@@ -119,12 +124,15 @@ class FileModel(QAbstractListModel):
                     try:
                         message: Message = processLine(line, format)
                         processed_data.extend(message.decode())
-                    except:
+                    except BaseException:
                         error_count += 1
-                        message_signal.emit(f" Error processing line {file_line_count}")
+                        message_signal.emit(
+                            f" Error processing line {file_line_count}")
                         if error_count >= max_error_count:
-                            raise RuntimeError(f"Malformed file or wrong processing format.\nHit max error count ({max_error_count}).")
-                    progress_pct = int(100 * lines_processed / estimated_line_count)
+                            raise RuntimeError(
+                                f"Malformed file or wrong processing format.\nHit max error count ({max_error_count}).")
+                    progress_pct = int(
+                        100 * lines_processed / estimated_line_count)
                     if progress_pct != current_progress_pct:
                         current_progress_pct = progress_pct
                         progress_signal.emit(progress_pct)
@@ -137,8 +145,8 @@ class FileModel(QAbstractListModel):
     def getLineCount(filepaths: List[str]) -> int:
         """
         Gets the total line count of all the files in the list.
-        
-        There is no native way to get line counts of files without looping, so 
+
+        There is no native way to get line counts of files without looping, so
         this function gets the total size and estimates the line count based
         on a subset of N lines.
         """
@@ -158,9 +166,3 @@ class FileModel(QAbstractListModel):
                     if tested_lines >= N:
                         return int(total_size / (tested_size / tested_lines))
         return int(total_size / (tested_size / tested_lines))
-        
-
-            
-
-
-

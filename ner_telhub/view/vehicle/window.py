@@ -18,11 +18,12 @@ from ner_telhub.view.vehicle.data_view import DataView
 from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
 from ner_telhub.widgets.styled_widgets import NERButton, NERToolbar
 
+
 class ConnectionDialog(QDialog):
     """
     Connection dialog showing serial port connection information.
     """
-    
+
     def __init__(self, parent: QWidget):
         super().__init__(parent)
 
@@ -38,16 +39,18 @@ class ConnectionDialog(QDialog):
 
         self.com_options = []
         for i in range(len(self.ports)):
-            self.com_options.append(QRadioButton(f"{self.ports[i][0]} - {self.ports[i][1]}"))
+            self.com_options.append(
+                QRadioButton(f"{self.ports[i][0]} - {self.ports[i][1]}"))
             self.layout.addWidget(self.com_options[i])
 
-        self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        self.buttonBox = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         self.buttonBox.accepted.connect(self.onAccept)
         self.buttonBox.rejected.connect(self.reject)
 
         self.layout.addWidget(self.buttonBox)
         self.setLayout(self.layout)
-    
+
     def onAccept(self):
         for i in range(len(self.com_options)):
             if self.com_options[i].isChecked():
@@ -81,7 +84,8 @@ class FileDialog(QDialog):
         self.layout.addWidget(self.directory_input, 1, 1)
         self.layout.addWidget(self.directory_button, 1, 2)
 
-        self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        self.buttonBox = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         self.buttonBox.accepted.connect(self.on_accept)
         self.buttonBox.rejected.connect(self.reject)
 
@@ -95,16 +99,23 @@ class FileDialog(QDialog):
     def on_accept(self):
         try:
             filename = self.create_extension(self.filename_input.text())
-        except:
-            QMessageBox.critical(self, "Invalid File Name", "File must be either a .csv or contain no extension.")
+        except BaseException:
+            QMessageBox.critical(
+                self,
+                "Invalid File Name",
+                "File must be either a .csv or contain no extension.")
             return
 
         directory = self.directory_input.text()
         full_path = directory + "/" + filename
 
         worker = self.model.getCSVWorker(full_path)
-        worker.signals.error.connect(lambda error: QMessageBox.critical(self, "Export Error", error[1].__str__()))
-        worker.signals.message.connect(lambda msg: QMessageBox.about(self, "Export Status", msg))
+        worker.signals.error.connect(
+            lambda error: QMessageBox.critical(
+                self, "Export Error", error[1].__str__()))
+        worker.signals.message.connect(
+            lambda msg: QMessageBox.about(
+                self, "Export Status", msg))
         try:
             worker.start()
         except RuntimeError as e:
@@ -124,7 +135,12 @@ class FileDialog(QDialog):
 
 
 class LiveToolbar(NERToolbar):
-    def __init__(self, parent: QWidget, message_model: MessageModel, data_model: DataModelManager, input: LiveInput):
+    def __init__(
+            self,
+            parent: QWidget,
+            message_model: MessageModel,
+            data_model: DataModelManager,
+            input: LiveInput):
         super(LiveToolbar, self).__init__(parent)
 
         self.message_model = message_model
@@ -145,7 +161,7 @@ class LiveToolbar(NERToolbar):
         self.addLeft(self.start_button)
         self.addLeft(clear_button)
         self.addLeft(export_button)
-    
+
     def start(self):
         if not self.feed_started:
             try:
@@ -154,7 +170,8 @@ class LiveToolbar(NERToolbar):
                 self.start_button.changeStyle(NERButton.Styles.RED)
                 self.feed_started = not self.feed_started
             except LiveInputException as e:
-                QMessageBox.information(self, "Couldn't start input: ", e.message)
+                QMessageBox.information(
+                    self, "Couldn't start input: ", e.message)
         else:
             try:
                 self.input.stop()
@@ -162,7 +179,8 @@ class LiveToolbar(NERToolbar):
                 self.start_button.changeStyle(NERButton.Styles.GREEN)
                 self.feed_started = not self.feed_started
             except LiveInputException as e:
-                QMessageBox.information(self, "Couldn't stop input:", e.message)
+                QMessageBox.information(
+                    self, "Couldn't stop input:", e.message)
 
     def clear(self):
         self.model.deleteAllData()
@@ -172,7 +190,10 @@ class LiveToolbar(NERToolbar):
         if not self.feed_started:
             FileDialog(self, self.model).exec()
         else:
-            QMessageBox.information(self, "Export failed", "Cannot export to CSV while collecting data.")
+            QMessageBox.information(
+                self,
+                "Export failed",
+                "Cannot export to CSV while collecting data.")
 
 
 class VehicleWindow(QMainWindow):
@@ -185,7 +206,8 @@ class VehicleWindow(QMainWindow):
 
         self.data_model = DataModelManager(self)
         self.message_model = MessageModel(self, self.data_model)
-        self.receive_filter_model = ReceiveFilterModel(self, self.message_model)
+        self.receive_filter_model = ReceiveFilterModel(
+            self, self.message_model)
         self.connection = XBee(self.message_model)
         self.connection.addCallback("vehicle", self.message_model.addMessage)
         self.port_name = None
@@ -204,7 +226,12 @@ class VehicleWindow(QMainWindow):
         for view in self.views.values():
             self.stacked_layout.addWidget(view[1])
         self.main_layout = QVBoxLayout()
-        self.main_layout.addWidget(LiveToolbar(self, self.message_model, self.data_model, self.connection))
+        self.main_layout.addWidget(
+            LiveToolbar(
+                self,
+                self.message_model,
+                self.data_model,
+                self.connection))
         self.main_layout.addLayout(self.stacked_layout)
 
         widget = QWidget(self)
@@ -226,8 +253,8 @@ class VehicleWindow(QMainWindow):
 
         help_action_1 = help_menu.addAction("Message Info")
         help_action_2 = help_menu.addAction("Data Info")
-        help_action_1.triggered.connect(lambda : MessageIds(self).show())
-        help_action_2.triggered.connect(lambda : DataIds(self).show())
+        help_action_1.triggered.connect(lambda: MessageIds(self).show())
+        help_action_2.triggered.connect(lambda: DataIds(self).show())
 
         views_select_can = QAction(self.views.get(0)[0], self)
         views_select_data = QAction(self.views.get(1)[0], self)
@@ -236,9 +263,10 @@ class VehicleWindow(QMainWindow):
         views_menu.addAction(views_select_can)
         views_menu.addAction(views_select_data)
 
-        self.current_view_menu = menu.addMenu(self.views.get(self.stacked_layout.currentIndex())[0])
+        self.current_view_menu = menu.addMenu(
+            self.views.get(self.stacked_layout.currentIndex())[0])
         self.current_view_menu.setDisabled(True)
-    
+
     def selectCanView(self):
         self.stacked_layout.setCurrentIndex(0)
         self.current_view_menu.setTitle(self.views.get(0)[0])
@@ -270,4 +298,3 @@ class VehicleWindow(QMainWindow):
         except LiveInputException as e:
             msg = e.message
         QMessageBox.information(self, "Disconnection Status", msg)
-

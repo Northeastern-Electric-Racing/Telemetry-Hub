@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 from typing import List, Tuple, Any
 
+
 def generate_data() -> List[Tuple[str, str, str]]:
     """
     Returns a list of data, each formatted as a tuple of the form (timestamp, id, value).

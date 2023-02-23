@@ -29,7 +29,7 @@ class ReceiveFilterModel(QAbstractListModel):
         if role == Qt.ItemDataRole.DisplayRole:
             id, interval = self._filters[index.row()]
             return f"ID - {id}, Int - {interval} ms"
-    
+
     def rowCount(self, index=None) -> int:
         """
         Finds the number of data rows in the model.

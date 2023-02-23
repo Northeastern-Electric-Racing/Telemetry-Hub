@@ -3,11 +3,12 @@ import os
 
 from PyQt6.QtGui import QIcon, QMovie
 from PyQt6.QtWidgets import (
-    QHBoxLayout, QPushButton, QSizePolicy, 
+    QHBoxLayout, QPushButton, QSizePolicy,
     QToolBar, QWidget, QLabel
 )
 
 resources = os.path.dirname(__file__) + "/../../resources"
+
 
 class NERButton(QPushButton):
     """
@@ -71,7 +72,7 @@ class NERImageButton(NERButton):
     def __init__(self, icon_file: Icons, style=NERButton.Styles.DEFAULT):
         super().__init__("", style=style)
         self.resetIcon(icon_file)
-    
+
     def resetIcon(self, icon_file: Icons):
         self.setIcon(QIcon(os.path.join(resources, icon_file.value)))
 
@@ -80,7 +81,8 @@ class NERToolbar(QToolBar):
     """
     Creates a Toolbar that supports adding Widgets to either side.
     """
-    def __init__(self, parent = None):
+
+    def __init__(self, parent=None):
         super(NERToolbar, self).__init__(parent)
 
         # Setup left side of toolbar
@@ -92,7 +94,9 @@ class NERToolbar(QToolBar):
 
         # Setup middle spacer
         self.spacer = QWidget()
-        self.spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed) 
+        self.spacer.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed)
         self.addWidget(self.spacer)
 
         # Setup right side of toolbar
@@ -104,7 +108,7 @@ class NERToolbar(QToolBar):
 
     def addLeft(self, widget: QWidget):
         self.left_buttons.addWidget(widget)
-    
+
     def addRight(self, widget: QWidget):
         self.right_buttons.addWidget(widget)
 
@@ -113,6 +117,7 @@ class NERLoadingSpinner(QLabel):
     """
     Loading circle label to indicate long running tasks.
     """
+
     def __init__(self):
         super().__init__()
 
@@ -126,4 +131,3 @@ class NERLoadingSpinner(QLabel):
     def stopAnimation(self):
         self.movie.stop()
         self.setVisible(False)
-

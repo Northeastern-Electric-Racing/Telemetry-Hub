@@ -1,7 +1,7 @@
 import os
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QLabel, 
-    QVBoxLayout, QHBoxLayout, QWidget, 
+    QApplication, QMainWindow, QLabel,
+    QVBoxLayout, QHBoxLayout, QWidget,
     QPushButton
 )
 from PyQt6.QtCore import QSize, Qt
@@ -40,11 +40,13 @@ class MainWindow(QMainWindow):
         main_layout = QVBoxLayout()
         bottom_layout = QHBoxLayout()
 
-        id = QFontDatabase.addApplicationFont(os.path.join(resources, "MachineGunk.ttf"))
+        id = QFontDatabase.addApplicationFont(
+            os.path.join(resources, "MachineGunk.ttf"))
         families = QFontDatabase.applicationFontFamilies(id)
 
         title = QLabel("--- T E L E M E T R Y   H U B ---")
-        title.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+        title.setAlignment(Qt.AlignmentFlag.AlignHCenter |
+                           Qt.AlignmentFlag.AlignVCenter)
         title_font = QFont(families[0], 80)
         title_font.setBold(True)
         title_font.setItalic(True)
@@ -54,7 +56,8 @@ class MainWindow(QMainWindow):
 
         lbl = QLabel()
         lbl.setPixmap(QPixmap(os.path.join(resources, "aoun_racing2.png")))
-        lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignBottom)
+        lbl.setAlignment(Qt.AlignmentFlag.AlignRight |
+                         Qt.AlignmentFlag.AlignBottom)
         main_layout.addWidget(lbl)
 
         BUTTON_STYLE = """QPushButton {color: white; background-color: #EE3535; font-size: 20px; border-radius: 10px; padding: 10% 10%;}
@@ -70,9 +73,12 @@ class MainWindow(QMainWindow):
         self.vehicle_button.clicked.connect(self.openVehicleWindow)
         self.sd_card_button.clicked.connect(self.openSdCardWindow)
         self.database_button.clicked.connect(self.openDatabaseWindow)
-        self.vehicle_button.setToolTip("Open a live connection with the vehicle")
-        self.sd_card_button.setToolTip("Open a window for processing SD card log files")
-        self.database_button.setToolTip("Open a window for querying historical data")
+        self.vehicle_button.setToolTip(
+            "Open a live connection with the vehicle")
+        self.sd_card_button.setToolTip(
+            "Open a window for processing SD card log files")
+        self.database_button.setToolTip(
+            "Open a window for querying historical data")
         bottom_layout.addWidget(self.vehicle_button)
         bottom_layout.addWidget(self.sd_card_button)
         bottom_layout.addWidget(self.database_button)
@@ -85,28 +91,31 @@ class MainWindow(QMainWindow):
     def openVehicleWindow(self):
         self.vehicle_button.setDisabled(True)
         self.vehicle_window = VehicleWindow(self)
-        self.vehicle_window.destroyed.connect(lambda: self.vehicle_button.setDisabled(False))
+        self.vehicle_window.destroyed.connect(
+            lambda: self.vehicle_button.setDisabled(False))
         self.vehicle_window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.vehicle_window.show()
 
     def openSdCardWindow(self):
         self.sd_card_button.setDisabled(True)
         self.sd_card_window = SdCardWindow(self)
-        self.sd_card_window.destroyed.connect(lambda: self.sd_card_button.setDisabled(False))
+        self.sd_card_window.destroyed.connect(
+            lambda: self.sd_card_button.setDisabled(False))
         self.sd_card_window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.sd_card_window.show()
 
     def openDatabaseWindow(self):
         self.database_button.setDisabled(True)
         self.database_window = DatabaseWindow(self)
-        self.database_window.destroyed.connect(lambda: self.database_button.setDisabled(False))
+        self.database_window.destroyed.connect(
+            lambda: self.database_button.setDisabled(False))
         self.database_window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.database_window.show()
-    
+
 
 def run():
     """
-    Runs the app by creating and executing the main window. 
+    Runs the app by creating and executing the main window.
     """
     app = QApplication([])
     window = MainWindow()

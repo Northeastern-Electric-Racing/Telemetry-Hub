@@ -5,7 +5,7 @@ import sys
 from typing import List, Any, Tuple
 
 from PyQt6.QtCore import (
-    QAbstractTableModel, Qt, 
+    QAbstractTableModel, Qt,
     QReadWriteLock, QModelIndex,
     QReadLocker, QWriteLocker,
     pyqtBoundSignal, pyqtSignal,
@@ -40,7 +40,8 @@ class DataModel(QAbstractTableModel):
         self._data.clear()
         self.min_value = sys.maxsize
         self.max_value = -sys.maxsize
-        self.compressing = False # Stores whether we are currently removing duplicated data values
+        # Stores whether we are currently removing duplicated data values
+        self.compressing = False
 
     def data(self, index: QModelIndex, role: int) -> Any:
         """
@@ -87,9 +88,9 @@ class DataModel(QAbstractTableModel):
     def getDataAsArray(self) -> np.ndarray:
         """
         Gets a numpy array of the data currently in the model.
-        
+
         WARNING: May block application if data model is large enough
-        TODO: Add threading 
+        TODO: Add threading
         """
         QReadLocker(self._lock)
         return np.array(self._data, Tuple[datetime, Any])
@@ -102,7 +103,8 @@ class DataModel(QAbstractTableModel):
         try:
             return self._data[0][0]
         except IndexError:
-            return datetime.fromtimestamp(9999999999.999) # Give big min time when no data
+            # Give big min time when no data
+            return datetime.fromtimestamp(9999999999.999)
 
     def getMaxTime(self) -> datetime:
         """
@@ -112,7 +114,8 @@ class DataModel(QAbstractTableModel):
         try:
             return self._data[len(self._data) - 1][0]
         except IndexError:
-            return datetime.fromtimestamp(0) # Give small max time when no data
+            # Give small max time when no data
+            return datetime.fromtimestamp(0)
 
     def getMinValue(self) -> Any:
         """
@@ -135,7 +138,7 @@ class DataModel(QAbstractTableModel):
         value, and stoping when a new value is reached.
         """
         QWriteLocker(self._lock)
-        # TODO: Add filtering like the lines below here 
+        # TODO: Add filtering like the lines below here
         # if self._id == 45 and abs(value) > 2000:
         #     print(value)
         #     return
@@ -146,16 +149,18 @@ class DataModel(QAbstractTableModel):
             last_value = self._data[-1][1]
             if self.compressing:
                 if value == last_value:
-                    self._data[-1] = (timestamp, value) # Reset last value in list instead of adding on
+                    # Reset last value in list instead of adding on
+                    self._data[-1] = (timestamp, value)
                 else:
-                    self._data.append((timestamp, value)) # Add new distinct value and stop compressing
+                    # Add new distinct value and stop compressing
+                    self._data.append((timestamp, value))
                     self.compressing = False
             else:
                 self._data.append((timestamp, value))
                 if value == last_value:
-                    self.compressing = True # Start compressing if two consecutive values found
+                    self.compressing = True  # Start compressing if two consecutive values found
 
-        if type(value) == int or type(value) == float:
+        if isinstance(value, int) or isinstance(value, float):
             if value < self.min_value:
                 self.min_value = value
             if value > self.max_value:
@@ -180,7 +185,7 @@ class DataModelManager(QObject):
     """
 
     layoutChanged = pyqtSignal()
-    
+
     def __init__(self, parent: QObject) -> None:
         """
         Initializes the model manager.
@@ -209,7 +214,7 @@ class DataModelManager(QObject):
 
     def addData(self, data: Data) -> None:
         """
-        Adds a single data point to the model. Creates a new model if one 
+        Adds a single data point to the model. Creates a new model if one
         for the given data ID doesn't exist.
         """
         self._createModelIfNone(data.id)
@@ -228,16 +233,16 @@ class DataModelManager(QObject):
 
     def filter(self, ids: List[int], keep_ids: bool = True) -> None:
         """
-        Filters the model using the given list of IDs. 
-        
-        The keep_ids flag specifies whether the given IDs should be the ones 
+        Filters the model using the given list of IDs.
+
+        The keep_ids flag specifies whether the given IDs should be the ones
         that are kept or the ones that are removed from the model.
         TODO: Add support for filtering by timestamps
         """
         if keep_ids:
-            filter_func = lambda id : id not in ids
-        else: 
-            filter_func = lambda id : id in ids
+            def filter_func(id): return id not in ids
+        else:
+            def filter_func(id): return id in ids
 
         remove_ids = list(filter(filter_func, self._datamap.keys()))
         for id in remove_ids:
@@ -264,7 +269,7 @@ class DataModelManager(QObject):
             model.deleteAllData()
         self._datamap.clear()
         self.layoutChanged.emit()
-        
+
     def getAvailableIds(self) -> List[int]:
         """
         Gets a list of data IDs present in this manager.
@@ -299,12 +304,16 @@ class DataModelManager(QObject):
         """
         Returns a worker to export this model's data to a CSV file.
         """
-        return Worker(self.exportCSV, file_path=path, models=list(self._datamap.values()))
+        return Worker(
+            self.exportCSV,
+            file_path=path,
+            models=list(
+                self._datamap.values()))
 
     @staticmethod
     def exportCSV(*args, **kwargs) -> None:
         """Exports the data in this model as a csv to the specified path.
-        
+
         CAUTION
         -------
         This is a worker function meant to be called from a thread (see Worker).
@@ -315,10 +324,10 @@ class DataModelManager(QObject):
         try:
             path: str = kwargs["file_path"]
             models: List[DataModel] = kwargs["models"]
-            progress_signal: pyqtBoundSignal = kwargs["progress"]
             message_signal: pyqtBoundSignal = kwargs["message"]
-        except:
-            raise RuntimeError("Internal processing error - thread configuration invalid")
+        except BaseException:
+            raise RuntimeError(
+                "Internal processing error - thread configuration invalid")
 
         header = ["time", "data_id", "description", "value", "units"]
         with open(path, "w", encoding="UTF8", newline="") as f:
@@ -330,7 +339,6 @@ class DataModelManager(QObject):
                 desc = model.getDataType()
                 for data in model.getData():
                     str_time = data[0].strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-                    writer.writerow([str_time, id, desc, data[1], DATA_IDS[id]["units"]])
-        message_signal.emit(f"Finished CSV export")
-
-
+                    writer.writerow(
+                        [str_time, id, desc, data[1], DATA_IDS[id]["units"]])
+        message_signal.emit("Finished CSV export")

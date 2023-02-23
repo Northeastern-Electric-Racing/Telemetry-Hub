@@ -16,7 +16,10 @@ class MessageModel(QAbstractListModel):
     A model class to represent the list of messages in the application.
     """
 
-    def __init__(self, parent: QWidget, data_model: DataModelManager = None) -> None:
+    def __init__(
+            self,
+            parent: QWidget,
+            data_model: DataModelManager = None) -> None:
         """
         Initializes the list of messages and a potential data model to forward to.
         The filters store as a dictionary where:
@@ -50,9 +53,11 @@ class MessageModel(QAbstractListModel):
         if self._filters:
             # Check if msg is in the filter list and for a valid time interval
             if msg.id in self._filters.keys():
-                time_since_last_record = self._filters[msg.id][1].msecsTo(msg.timestamp)
+                time_since_last_record = self._filters[msg.id][1].msecsTo(
+                    msg.timestamp)
                 if time_since_last_record >= self._filters[msg.id][0]:
-                    self._filters[msg.id] = (self._filters[msg.id][0], QDateTime(msg.timestamp))
+                    self._filters[msg.id] = (
+                        self._filters[msg.id][0], QDateTime(msg.timestamp))
                     self._decodeAndRecordMessage(msg)
         else:
             # No filters set, so record all messages
@@ -67,8 +72,8 @@ class MessageModel(QAbstractListModel):
         try:
             data_list: List[Data] = msg.decode()
             self._model.addDataList(data_list)
-        except:
-            pass # TODO: Add error detection
+        except BaseException:
+            pass  # TODO: Add error detection
         self.layoutChanged.emit()
 
     def deleteMessage(self, index: QModelIndex) -> None:
@@ -87,7 +92,7 @@ class MessageModel(QAbstractListModel):
 
     def setRecordState(self, state: bool) -> None:
         """
-        Sets whether or not messages will be stored in the model (or data will just 
+        Sets whether or not messages will be stored in the model (or data will just
         be passed through to the data models).
         """
         self._record = state
@@ -109,4 +114,3 @@ class MessageModel(QAbstractListModel):
         Removes the filter with the given id.
         """
         self._filters.pop(id)
-
