@@ -17,6 +17,7 @@ from ner_telhub.model.message_models import MessageModel
 from ner_telhub.model.filter_models import ReceiveFilterModel
 from ner_telhub.view.vehicle.can_view import CanView
 from ner_telhub.view.vehicle.data_view import DataView
+from ner_telhub.view.vehicle.failure_view import ErrorView
 from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
 from ner_telhub.widgets.styled_widgets import NERButton, NERToolbar
 
@@ -263,14 +264,11 @@ class VehicleWindow(QMainWindow):
         self.receive_filter_model = ReceiveFilterModel(
             self, self.message_model)
 
-        self.views = {0: ("CAN",
-                          CanView(self,
-                                  self.message_model,
-                                  self.data_model,
-                                  self.receive_filter_model)),
-                      1: ("Data",
-                          DataView(self,
-                                   self.data_model))}
+        self.views = {
+            0: ("CAN", CanView(self, self.message_model, self.data_model, self.receive_filter_model)), 
+            1: ("Data", DataView(self, self.data_model)),
+            2: ("Fault", ErrorView(self))
+        }
 
         # Window config
         self.setWindowTitle("Telemetry Hub")
@@ -304,10 +302,13 @@ class VehicleWindow(QMainWindow):
 
         views_select_can = QAction(self.views.get(0)[0], self)
         views_select_data = QAction(self.views.get(1)[0], self)
+        views_select_error = QAction(self.views.get(2)[0], self)
         views_select_can.triggered.connect(self.selectCanView)
         views_select_data.triggered.connect(self.selectDataView)
+        views_select_error.triggered.connect(self.selectFailureView)
         views_menu.addAction(views_select_can)
         views_menu.addAction(views_select_data)
+        views_menu.addAction(views_select_error)
 
         self.current_view_menu = menu.addMenu(
             self.views.get(self.stacked_layout.currentIndex())[0])
@@ -320,3 +321,7 @@ class VehicleWindow(QMainWindow):
     def selectDataView(self):
         self.stacked_layout.setCurrentIndex(1)
         self.current_view_menu.setTitle(self.views.get(1)[0])
+
+    def selectFailureView(self):
+        self.stacked_layout.setCurrentIndex(2)
+        self.current_view_menu.setTitle(self.views.get(2)[0])
