@@ -12,8 +12,8 @@ from PyQt6.QtCore import (
     QObject
 )
 
-from Ner_Processing.master_mapping import DATA_IDS
-from Ner_Processing.data import Data
+from ner_processing.master_mapping import DATA_IDS
+from ner_processing.data import Data
 from ner_telhub.utils.threads import Worker
 
 

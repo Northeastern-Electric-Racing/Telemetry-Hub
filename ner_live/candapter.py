@@ -2,7 +2,7 @@ from datetime import datetime
 from PyQt6.QtSerialPort import QSerialPort, QSerialPortInfo
 from PyQt6.QtCore import QIODeviceBase, QByteArray
 
-from Ner_Processing.message import Message, MessageFormatException
+from ner_processing.message import Message, MessageFormatException
 from ner_live.live_input import LiveInput, LiveInputException, InputState
 
 

@@ -12,7 +12,7 @@ from PyQt6.QtCore import QSize, Qt
 
 from ner_telhub.model.file_models import FileModel
 from ner_telhub.model.data_models import DataModelManager
-from Ner_Processing.decode_files import LogFormat
+from ner_processing.decode_files import LogFormat
 from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
 from ner_telhub.widgets.graphing_widgets import GraphDashboardWidget
 from ner_telhub.widgets.styled_widgets import NERButton, NERToolbar, NERLoadingSpinner

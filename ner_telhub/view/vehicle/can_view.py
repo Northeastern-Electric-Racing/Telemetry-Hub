@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 
-from Ner_Processing.master_mapping import MESSAGE_IDS
+from ner_processing.master_mapping import MESSAGE_IDS
 from ner_telhub.widgets.styled_widgets import NERButton
 from ner_telhub.model.filter_models import ReceiveFilterModel
 from ner_telhub.model.message_models import MessageModel
