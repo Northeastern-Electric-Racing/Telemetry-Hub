@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QSize, Qt
 
+from ner_telhub import colors
 from ner_telhub.model.file_models import FileModel
 from ner_telhub.model.data_models import DataModelManager
 from ner_processing.decode_files import LogFormat
@@ -27,7 +28,10 @@ class GraphDialog(QDialog):
         self.setWindowTitle("Graph View")
 
         toolbar = NERToolbar()
-        toolbar.setStyleSheet("background-color: white; padding: 5%")
+        self.setStyleSheet(
+            "QToolBar { background-color: " +
+            colors.SECONDARY_BACKGROUND +
+            "; padding: 5%; border: none}")
         self.screen_button = NERButton("Full Screen", NERButton.Styles.GRAY)
         self.screen_button.pressed.connect(self.changeScreen)
         toolbar.addLeft(self.screen_button)
@@ -459,7 +463,7 @@ class SdCardWindow(QMainWindow):
         super().__init__(parent)
 
         self.setWindowTitle("Telemetry Hub")
-        self.setMinimumSize(QSize(800, 480))
+        self.setMinimumSize(QSize(960, 540))
 
         self.file_model = FileModel(self)
         data_model = DataModelManager(self)

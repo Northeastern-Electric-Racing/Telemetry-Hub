@@ -10,6 +10,7 @@ from PyQt6.QtCore import QSize
 from ner_live.xbee import XBee
 from ner_live.live_input import LiveInput, LiveInputException
 
+from ner_telhub import colors
 from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.model.message_models import MessageModel
 from ner_telhub.model.filter_models import ReceiveFilterModel
@@ -147,8 +148,11 @@ class LiveToolbar(NERToolbar):
         self.model = data_model
         self.input = input
         self.feed_started = False
+        self.setStyleSheet(
+            "QToolBar { background-color: " +
+            colors.SECONDARY_BACKGROUND +
+            "; padding: 5%; border: none}")
 
-        self.setStyleSheet("background-color: white; padding: 5%")
         self.start_button = NERButton("Start", NERButton.Styles.GREEN)
         self.start_button.pressed.connect(self.start)
         self.start_button.setToolTip("Start/stop the live data feed")
@@ -219,7 +223,7 @@ class VehicleWindow(QMainWindow):
 
         # Window config
         self.setWindowTitle("Telemetry Hub")
-        self.setMinimumSize(QSize(800, 480))
+        self.setMinimumSize(QSize(1200, 600))
 
         # Multi-view layout config
         self.stacked_layout = QStackedLayout()

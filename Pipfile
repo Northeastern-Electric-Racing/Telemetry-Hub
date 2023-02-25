@@ -10,6 +10,7 @@ numpy = "*"
 websockets = "*"
 boto3 = "*"
 python-dotenv = "*"
+darkdetect = "*"
 
 [dev-packages]
 pyinstaller = "*"
