@@ -1,6 +1,6 @@
 from typing import Dict
 from PyQt6.QtWidgets import (
-    QMainWindow, QLabel, QHBoxLayout, 
+    QMainWindow, QLabel, QHBoxLayout,
     QVBoxLayout, QWidget, QFileDialog,
     QListView, QTextEdit,
     QGridLayout, QProgressBar, QDialog,
@@ -45,11 +45,15 @@ class GraphDialog(QDialog):
             self.showNormal()
             self.screen_button.setText("Full Screen")
 
-    
+
 class ExportDialog(QDialog):
     """Dialog to export data to a CSV file."""
 
-    def __init__(self, parent: QWidget, model: DataModelManager, spinner: NERLoadingSpinner):
+    def __init__(
+            self,
+            parent: QWidget,
+            model: DataModelManager,
+            spinner: NERLoadingSpinner):
         super().__init__(parent)
 
         self.setWindowTitle("Export CSV")
@@ -70,8 +74,9 @@ class ExportDialog(QDialog):
         self.layout.addWidget(QLabel("Directory name: "), 1, 0)
         self.layout.addWidget(self.directory_input, 1, 1)
         self.layout.addWidget(self.directory_button, 1, 2)
-        
-        self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+
+        self.buttonBox = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         self.buttonBox.accepted.connect(self.on_accept)
         self.buttonBox.rejected.connect(self.reject)
 
@@ -81,12 +86,15 @@ class ExportDialog(QDialog):
     def choose_directory(self):
         dir = QFileDialog().getExistingDirectory(self)
         self.directory_input.setText(dir)
-    
+
     def on_accept(self):
         try:
             filename = self.create_extension(self.filename_input.text())
-        except:
-            QMessageBox.critical(self, "Invalid File Name", "File must be either a .csv or contain no extension.")
+        except BaseException:
+            QMessageBox.critical(
+                self,
+                "Invalid File Name",
+                "File must be either a .csv or contain no extension.")
             return
 
         directory = self.directory_input.text()
@@ -94,12 +102,16 @@ class ExportDialog(QDialog):
 
         worker = self.model.getCSVWorker(full_path)
         worker.signals.finished.connect(lambda: self.spinner.stopAnimation())
-        worker.signals.error.connect(lambda error : QMessageBox.critical(self, "Export Error", error[1].__str__()))
-        worker.signals.message.connect(lambda msg : QMessageBox.about(self, "Export Status", msg))
+        worker.signals.error.connect(
+            lambda error: QMessageBox.critical(
+                self, "Export Error", error[1].__str__()))
+        worker.signals.message.connect(
+            lambda msg: QMessageBox.about(
+                self, "Export Status", msg))
         try:
             worker.start()
             self.spinner.startAnimation()
-        except RuntimeError as e: 
+        except RuntimeError as e:
             QMessageBox.critical(self, "Internal Error", str(e))
         self.accept()
 
@@ -118,23 +130,29 @@ class ExportDialog(QDialog):
 class DatabaseDialog(QDialog):
     """Dialog to export data to a the database."""
 
-    def __init__(self, parent: QWidget, model: DataModelManager, spinner: NERLoadingSpinner):
+    def __init__(
+            self,
+            parent: QWidget,
+            model: DataModelManager,
+            spinner: NERLoadingSpinner):
         super().__init__(parent)
 
         self.setWindowTitle("Database Export")
         self.model = model
         self.spinner = spinner
 
-        self.testid_input = QLineEdit();
-        self.label = QLabel("""The test ID is a unique identifier that you can use to identify a testing session.
+        self.testid_input = QLineEdit()
+        self.label = QLabel(
+            """The test ID is a unique identifier that you can use to identify a testing session.
 Make sure the test ID is a meaningful name so you can reload previous sessions by their ID.""")
 
         self.layout = QVBoxLayout()
         self.layout.addWidget(QLabel("Test ID:"))
         self.layout.addWidget(self.testid_input)
         self.layout.addWidget(self.label)
-        
-        self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+
+        self.buttonBox = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         self.buttonBox.accepted.connect(self.on_accept)
         self.buttonBox.rejected.connect(self.reject)
 
@@ -143,28 +161,37 @@ Make sure the test ID is a meaningful name so you can reload previous sessions b
 
     def on_accept(self):
         if self.model.getDataCount() == 0:
-            QMessageBox.critical(self, "Error", "Cannot export data - data model is empty.")
-            return 
+            QMessageBox.critical(
+                self, "Error", "Cannot export data - data model is empty.")
+            return
 
         testid = self.testid_input.text()
         if testid == "":
             QMessageBox.critical(self, "Error", "You must specify a test ID")
-            return 
-        
-        button = QMessageBox.question(self, "Warning", "You cannot undo this action, so please make sure you are authorized to complete it." \
+            return
+
+        button = QMessageBox.question(
+            self,
+            "Warning",
+            "You cannot undo this action, so please make sure you are authorized to complete it."
             "\nWould you like to continue?")
         if button == QMessageBox.StandardButton.No:
             return
 
-        models = [self.model.getDataModel(id) for id in self.model.getAvailableIds()]
+        models = [self.model.getDataModel(id)
+                  for id in self.model.getAvailableIds()]
         worker = TimestreamIngestionService.getIngestionWorker(models, testid)
         worker.signals.finished.connect(lambda: self.spinner.stopAnimation())
-        worker.signals.error.connect(lambda error : QMessageBox.critical(self, "Export Error", error[1].__str__()))
-        worker.signals.message.connect(lambda msg : QMessageBox.about(self, "Export Status", msg))
+        worker.signals.error.connect(
+            lambda error: QMessageBox.critical(
+                self, "Export Error", error[1].__str__()))
+        worker.signals.message.connect(
+            lambda msg: QMessageBox.about(
+                self, "Export Status", msg))
         try:
             worker.start()
             self.spinner.startAnimation()
-        except RuntimeError as e: 
+        except RuntimeError as e:
             QMessageBox.critical(self, "Internal Error", str(e))
         self.accept()
 
@@ -212,13 +239,16 @@ class FileView(QWidget):
             self.view.clearSelection()
         else:
             self.file_model.deleteAll()
-        
 
 
 class ProcessView(QWidget):
     """View section with processing information an control."""
 
-    def __init__(self, parent: QWidget, file_model: FileModel, data_model: DataModelManager):
+    def __init__(
+            self,
+            parent: QWidget,
+            file_model: FileModel,
+            data_model: DataModelManager):
         super(ProcessView, self).__init__(parent)
 
         self.file_model = file_model
@@ -234,7 +264,8 @@ class ProcessView(QWidget):
 
         self.start_button = NERButton("Start", NERButton.Styles.GREEN)
         self.start_button.pressed.connect(self.start_process)
-        self.start_button.setToolTip("Start/stop processing the specified log files")
+        self.start_button.setToolTip(
+            "Start/stop processing the specified log files")
 
         # Setup Progress Bar
         self.progress_bar = QProgressBar()
@@ -251,7 +282,8 @@ class ProcessView(QWidget):
 
     def start_process(self):
         if not self.data_model.isEmpty():
-            button = QMessageBox.question(self, "Warning", "Current model data will be lost. \n" \
+            button = QMessageBox.question(
+                self, "Warning", "Current model data will be lost. \n"
                 "Would you like to continue?")
             if button == QMessageBox.StandardButton.No:
                 return
@@ -263,16 +295,19 @@ class ProcessView(QWidget):
 
         worker = self.file_model.getProcessWorker(self.data_model)
         worker.signals.finished.connect(self.stop_process)
-        worker.signals.error.connect(lambda error: QMessageBox.critical(self, "Processing Error", error[1].__str__()))
+        worker.signals.error.connect(
+            lambda error: QMessageBox.critical(
+                self, "Processing Error", error[1].__str__()))
         worker.signals.message.connect(self.update_view)
-        worker.signals.progress.connect(lambda val: self.progress_bar.setValue(val))
+        worker.signals.progress.connect(
+            lambda val: self.progress_bar.setValue(val))
 
         try:
             worker.start()
-        except RuntimeError as e: 
+        except RuntimeError as e:
             self.stop_process()
             QMessageBox.critical(self, "Internal Error", str(e))
-    
+
     def stop_process(self):
         self.start_button.setEnabled(True)
         self.progress_bar.setVisible(False)
@@ -288,7 +323,6 @@ class ProcessView(QWidget):
         self.view.setText("")
 
 
-
 class OptionsView(QWidget):
     """Menu for actions on the data processed from the SD log files."""
 
@@ -300,7 +334,8 @@ class OptionsView(QWidget):
 
         header = QLabel("Data Options")
         header.setStyleSheet("font-size: 24px; font-weight: 600")
-        header.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        header.setAlignment(Qt.AlignmentFlag.AlignHCenter |
+                            Qt.AlignmentFlag.AlignTop)
 
         # Setup layouts
         layout1: QVBoxLayout = self.generateLayout("Current Data")
@@ -319,7 +354,8 @@ class OptionsView(QWidget):
         self.id_input = QLineEdit()
         self.id_input.setToolTip("Space separated list of data IDs.")
         self.filter_method = QCheckBox()
-        self.filter_method.setToolTip("Whether to keep or delete the specified IDs")
+        self.filter_method.setToolTip(
+            "Whether to keep or delete the specified IDs")
         self.is_method_keep = True
         self.filter_method.setChecked(self.is_method_keep)
         self.setFilterMethod(self.is_method_keep)
@@ -338,13 +374,17 @@ class OptionsView(QWidget):
         # Populate layout 3
         self.graph_button = NERButton("Graph", NERButton.Styles.BLUE)
         self.graph_button.setFixedWidth(150)
-        self.graph_button.setToolTip("Open a graph dashboard with the loaded data")
-        self.graph_button.pressed.connect(lambda: GraphDialog(self, self.data_model).exec())
+        self.graph_button.setToolTip(
+            "Open a graph dashboard with the loaded data")
+        self.graph_button.pressed.connect(
+            lambda: GraphDialog(
+                self, self.data_model).exec())
         self.csv_button = NERButton("CSV", NERButton.Styles.BLUE)
         self.csv_button.setFixedWidth(150)
         self.csv_button.setToolTip("Export the data to a CSV file")
         self.csv_spinner = NERLoadingSpinner()
-        self.csv_button.pressed.connect(lambda: ExportDialog(self, self.data_model, self.csv_spinner).exec())
+        self.csv_button.pressed.connect(lambda: ExportDialog(
+            self, self.data_model, self.csv_spinner).exec())
         csv_layout = QHBoxLayout()
         csv_layout.addWidget(self.csv_button)
         csv_layout.addWidget(self.csv_spinner)
@@ -352,7 +392,8 @@ class OptionsView(QWidget):
         self.database_button.setFixedWidth(150)
         self.database_button.setToolTip("Export the data to the database")
         self.database_spinner = NERLoadingSpinner()
-        self.database_button.pressed.connect(lambda: DatabaseDialog(self, self.data_model, self.database_spinner).exec())
+        self.database_button.pressed.connect(lambda: DatabaseDialog(
+            self, self.data_model, self.database_spinner).exec())
         database_layout = QHBoxLayout()
         database_layout.addWidget(self.database_button)
         database_layout.addWidget(self.database_spinner)
@@ -375,13 +416,15 @@ class OptionsView(QWidget):
         self.setLayout(main_layout)
 
     def modelUpdated(self):
-        self.model_info.setText(f"{self.data_model.getDataCount()} data points")
+        self.model_info.setText(
+            f"{self.data_model.getDataCount()} data points")
 
     def generateLayout(self, label: str):
         layout = QVBoxLayout()
         layout_label = QLabel(label)
         layout_label.setStyleSheet("font-size: 16px; font-weight: 400")
-        layout_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        layout_label.setAlignment(
+            Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
         layout.addWidget(layout_label)
         return layout
 
@@ -393,15 +436,18 @@ class OptionsView(QWidget):
         self.is_method_keep = checked
         if self.is_method_keep:
             self.filter_method.setText("(keep ids)")
-        else: 
+        else:
             self.filter_method.setText("(remove ids)")
 
     def applyFilters(self):
         try:
             filter_list = [int(id) for id in self.id_input.text().split(" ")]
-        except:
-            QMessageBox.critical(self, "ID Format Error", "Expecting a list of IDs seperated by spaces.")
-            return 
+        except BaseException:
+            QMessageBox.critical(
+                self,
+                "ID Format Error",
+                "Expecting a list of IDs seperated by spaces.")
+            return
 
         self.data_model.filter(filter_list, self.is_method_keep)
 
@@ -447,16 +493,20 @@ class SdCardWindow(QMainWindow):
             act = QAction(format.name, self)
             format_submenu.addAction(act)
             act.setCheckable(True)
-            act.triggered.connect(lambda state, id=format.value : self.formatClicked(state, id))
+            act.triggered.connect(
+                lambda state,
+                id=format.value: self.formatClicked(
+                    state,
+                    id))
             self.options[format.value] = act
 
         self.options.get(self.enabled_id).setChecked(True)
-        
+
         help_action_1 = help_menu.addAction("Message Info")
         help_action_2 = help_menu.addAction("Data Info")
-        help_action_1.triggered.connect(lambda : MessageIds(self).show())
-        help_action_2.triggered.connect(lambda : DataIds(self).show())
-    
+        help_action_1.triggered.connect(lambda: MessageIds(self).show())
+        help_action_2.triggered.connect(lambda: DataIds(self).show())
+
     def formatClicked(self, state: bool, id: int):
         """
         Callback for format menu options to verify one and always one format is selected at a time.
@@ -468,9 +518,3 @@ class SdCardWindow(QMainWindow):
             self.options.get(self.enabled_id).setChecked(False)
             self.enabled_id = id
             self.file_model.setFormat(LogFormat(id))
-
-
-
-
-
-

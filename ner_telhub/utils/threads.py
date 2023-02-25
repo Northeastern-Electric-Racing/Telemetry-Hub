@@ -1,4 +1,5 @@
-import sys, traceback
+import sys
+import traceback
 from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal, QThread
 
 
@@ -25,13 +26,12 @@ class WorkerSignals(QObject):
     message = pyqtSignal(str)
 
 
-
 class Worker(QRunnable):
-    """Threaded worker which runs a process on a seperate thread. 
+    """Threaded worker which runs a process on a seperate thread.
 
-    Threads are deployed by the QThreadPool object, which creates and manages QThreads 
-    to get optimal system performance. 
-    
+    Threads are deployed by the QThreadPool object, which creates and manages QThreads
+    to get optimal system performance.
+
     Example Implementation
     ----------------------
     def work(*args, **kwargs) -> Any:
@@ -42,7 +42,7 @@ class Worker(QRunnable):
         worker.signals.finished.connect(...)
         worker.signals.error.connect(...)
         worker.start()
-    except Exception as e: 
+    except Exception as e:
         .... handle error ....
     """
 
@@ -52,7 +52,8 @@ class Worker(QRunnable):
         self.args = args
         self.kwargs = kwargs
         self.signals = WorkerSignals()
-        self.kwargs["progress"] = self.signals.progress # Give function access to progress/message signals
+        # Give function access to progress/message signals
+        self.kwargs["progress"] = self.signals.progress
         self.kwargs["message"] = self.signals.message
         self.runningThread = None
 
@@ -63,11 +64,10 @@ class Worker(QRunnable):
             result = self.fn(*self.args, **self.kwargs)
             self.signals.result.emit(result)
             self.signals.finished.emit()
-        except:
+        except BaseException:
             exctype, value = sys.exc_info()[:2]
             self.signals.error.emit((exctype, value, traceback.format_exc()))
             self.signals.finished.emit()
-
 
     def start(self) -> None:
         """Starts this QRunnable instance on the global threadpool.
@@ -76,11 +76,11 @@ class Worker(QRunnable):
         multiple threadpool instances may be necessary.
         """
 
-        if self.runningThread != None:
+        if self.runningThread is not None:
             raise RuntimeError("Thread is already running!")
 
         threadpool = QThreadPool.globalInstance()
         if threadpool.activeThreadCount() >= threadpool.maxThreadCount():
-            raise RuntimeError(f"Exceeded max system thread count of {threadpool.maxThreadCount()}")
+            raise RuntimeError(
+                f"Exceeded max system thread count of {threadpool.maxThreadCount()}")
         threadpool.start(self)
-

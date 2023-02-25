@@ -11,6 +11,7 @@ class LiveInputException(Exception):
     """
     Defines an exception related to live input issues.
     """
+
     def __init__(self, message):
         self.message = message
 
@@ -33,9 +34,12 @@ class LiveInput():
         self._model = model
         self._callbacks = {}
 
-    def addCallback(self, name: str, callback: Callable[[Message], None]) -> None:
+    def addCallback(self,
+                    name: str,
+                    callback: Callable[[Message],
+                                       None]) -> None:
         """
-        Adds a callback to the data source. The callback is a data consumer, taking 
+        Adds a callback to the data source. The callback is a data consumer, taking
         in the processed message with no return value.
         """
         if name in self._callbacks.keys():
@@ -80,7 +84,7 @@ class LiveInput():
 
     def parse(self, message: str) -> Message:
         """
-        Processes a string of received data. 
+        Processes a string of received data.
         NOTE: Implemented in subclasses.
         """
         raise NotImplementedError("'parse' is not implemented")
@@ -90,6 +94,5 @@ class LiveInput():
         """
         Gets information on the computers serial ports.
         """
-        return [(p.portName(), p.description()) for p in QSerialPortInfo.availablePorts()]
-
-
+        return [(p.portName(), p.description())
+                for p in QSerialPortInfo.availablePorts()]

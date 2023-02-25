@@ -39,7 +39,7 @@ class XBee(LiveInput):
         Validates states and throws appropriate error messages.
         """
         if desired_state == InputState.NONE and self.state != InputState.NONE:
-                raise LiveInputException("XBee is already connected.")
+            raise LiveInputException("XBee is already connected.")
         elif desired_state == InputState.CONNECTED:
             if self.state == InputState.NONE:
                 raise LiveInputException("XBee is not yet connected.")
@@ -62,7 +62,7 @@ class XBee(LiveInput):
         if not isinstance(args[0], str):
             raise TypeError("Invalid input type for port name.")
         port_name = args[0]
- 
+
         for port in QSerialPortInfo.availablePorts():
             if port.portName() == port_name:
                 try:
@@ -70,7 +70,8 @@ class XBee(LiveInput):
                     self.state = InputState.CONNECTED
                     return
                 except Exception as e:
-                    raise LiveInputException("Error while connecting to desired port")
+                    raise LiveInputException(
+                        "Error while connecting to desired port")
         raise LiveInputException("Invalid port name")
 
     def disconnect(self, *args, **kwargs) -> None:
@@ -106,9 +107,9 @@ class XBee(LiveInput):
             length = int(message[16])
             data = []
             for i in range(length):
-                data.append(int(message[(17 + 2*i):(19 + 2*i)], base=16))
+                data.append(int(message[(17 + 2 * i):(19 + 2 * i)], base=16))
             return Message(timestamp, id, data)
-        except:
+        except BaseException:
             raise MessageFormatException("Error with message fields")
 
     def _handle_read(self):
@@ -118,7 +119,7 @@ class XBee(LiveInput):
         try:
             buf = self.port.readAll()
             msgs = buf.data().decode()
-        except:
+        except BaseException:
             print("Error with receiving message")
             return
 
@@ -130,7 +131,8 @@ class XBee(LiveInput):
                 try:
                     msg = self.parse(self.current_message)
                     if msg is not None:
-                        self._model.addMessage(self.parse(self.current_message))
+                        self._model.addMessage(
+                            self.parse(self.current_message))
                 except MessageFormatException as e:
                     print(e.message)
                 except RuntimeError:
@@ -139,4 +141,3 @@ class XBee(LiveInput):
                 self.current_message = ""
             elif self.message_started:
                 self.current_message += char
-                

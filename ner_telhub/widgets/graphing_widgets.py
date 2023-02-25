@@ -70,11 +70,17 @@ class EditDialog(QDialog):
     Edit dialog window allowing the user to change graph state.
     """
 
-    def __init__(self, parent: QWidget, callback: Callable, model: DataModelManager, state: GraphState):
+    def __init__(
+            self,
+            parent: QWidget,
+            callback: Callable,
+            model: DataModelManager,
+            state: GraphState):
         super(EditDialog, self).__init__(parent)
         self.callback = callback
         self.model = model
-        self._data_list = ["None", *[self.dataToText(d) for d in model.getAvailableIds()]]
+        self._data_list = [
+            "None", *[self.dataToText(d) for d in model.getAvailableIds()]]
         self._format_list = [f.name for f in Format]
 
         self.setWindowTitle("Edit Graph")
@@ -102,8 +108,14 @@ class EditDialog(QDialog):
 
             label = QLabel("Data " + str(self.next_index + 1) + ":")
 
-            remove_button = NERImageButton(NERImageButton.Icons.TRASH, NERButton.Styles.RED)
-            remove_button.pressed.connect(partial(self.remove, label=label, entry=combo_box, button=remove_button))
+            remove_button = NERImageButton(
+                NERImageButton.Icons.TRASH, NERButton.Styles.RED)
+            remove_button.pressed.connect(
+                partial(
+                    self.remove,
+                    label=label,
+                    entry=combo_box,
+                    button=remove_button))
 
             self.layout.addWidget(label, self.next_index + 2, 0)
             self.layout.addWidget(combo_box, self.next_index + 2, 1)
@@ -111,7 +123,8 @@ class EditDialog(QDialog):
 
             self.next_index += 1
 
-        buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        buttonBox = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttonBox.accepted.connect(self.on_accept)
         buttonBox.rejected.connect(self.reject)
 
@@ -135,7 +148,7 @@ class EditDialog(QDialog):
         """
         try:
             return int(text.split(" ")[0])
-        except:
+        except BaseException:
             return None
 
     def on_accept(self):
@@ -147,7 +160,8 @@ class EditDialog(QDialog):
             ent = self.textToData(entry.currentText())
 
             if ent is None:
-                QMessageBox.critical(self, "Input Error", "Data values cannot be \"None\"")
+                QMessageBox.critical(
+                    self, "Input Error", "Data values cannot be \"None\"")
                 return
 
             data.append(ent)
@@ -155,7 +169,8 @@ class EditDialog(QDialog):
         # Check to make sure we're not adding the same data series twice
         for d in data:
             if d is not None and data.count(d) > 1:
-                QMessageBox.critical(self, "Input Error", "Each data value should be unique")
+                QMessageBox.critical(
+                    self, "Input Error", "Each data value should be unique")
                 return
 
         format = Format[self.format_entry.currentText()]
@@ -165,7 +180,10 @@ class EditDialog(QDialog):
 
     def add(self):
         if len(self._data_list) == 1:
-            QMessageBox.critical(self, "Error adding data", "There is no data to add")
+            QMessageBox.critical(
+                self,
+                "Error adding data",
+                "There is no data to add")
             return
 
         combo_box = QComboBox()
@@ -174,8 +192,15 @@ class EditDialog(QDialog):
 
         label = QLabel("Data " + str(self.next_index + 1) + ":")
 
-        remove_button = NERImageButton(NERImageButton.Icons.TRASH, NERButton.Styles.RED)
-        remove_button.pressed.connect(partial(self.remove, label=label, entry=combo_box, button=remove_button))
+        remove_button = NERImageButton(
+            NERImageButton.Icons.TRASH,
+            NERButton.Styles.RED)
+        remove_button.pressed.connect(
+            partial(
+                self.remove,
+                label=label,
+                entry=combo_box,
+                button=remove_button))
 
         self.layout.addWidget(label, self.next_index + 2, 0)
         self.layout.addWidget(combo_box, self.next_index + 2, 1)
@@ -201,7 +226,12 @@ class GraphWidget(QWidget):
     Main graph widget for displaying data in charts.
     """
 
-    def __init__(self, parent: GraphDashboard, model: DataModelManager, dynamic=False, format=Format.LINE):
+    def __init__(
+            self,
+            parent: GraphDashboard,
+            model: DataModelManager,
+            dynamic=False,
+            format=Format.LINE):
         """
         Initializes the chart and toolbar. To differentiate between live and static dashboards,
         use the the dynamic variable.
@@ -215,35 +245,51 @@ class GraphWidget(QWidget):
 
         # Tool Bar Config
         toolbar = NERToolbar()
-        config_button = NERImageButton(NERImageButton.Icons.EDIT, NERButton.Styles.BLUE)
-        config_button.pressed.connect(lambda: EditDialog(self, self.reset, self.model, self.state).exec())
+        config_button = NERImageButton(
+            NERImageButton.Icons.EDIT,
+            NERButton.Styles.BLUE)
+        config_button.pressed.connect(
+            lambda: EditDialog(
+                self,
+                self.reset,
+                self.model,
+                self.state).exec())
         config_button.setToolTip("Edit the configuration of this graph")
         toolbar.addLeft(config_button)
-        reset_button = NERImageButton(NERImageButton.Icons.TRASH, NERButton.Styles.RED)
+        reset_button = NERImageButton(
+            NERImageButton.Icons.TRASH,
+            NERButton.Styles.RED)
         reset_button.pressed.connect(self.reset)
         reset_button.setToolTip("Reset this to be a blank graph")
         toolbar.addLeft(reset_button)
-        show_button = NERImageButton(NERImageButton.Icons.EXPORT, NERButton.Styles.GRAY)
+        show_button = NERImageButton(
+            NERImageButton.Icons.EXPORT,
+            NERButton.Styles.GRAY)
         show_button.pressed.connect(self.showTables)
         show_button.setToolTip("Show the data in this graph in a tabular form")
         toolbar.addLeft(show_button)
 
         # Specific config for real time graphs
         if dynamic:
-            refresh_button = NERImageButton(NERImageButton.Icons.REFRESH, NERButton.Styles.GRAY)
+            refresh_button = NERImageButton(
+                NERImageButton.Icons.REFRESH, NERButton.Styles.GRAY)
             refresh_button.pressed.connect(self.updateChart)
             refresh_button.setToolTip("Refresh the live data")
             toolbar.addRight(refresh_button)
             self.live_data = False
-            self.live_button = NERImageButton(NERImageButton.Icons.START, NERButton.Styles.GREEN)
+            self.live_button = NERImageButton(
+                NERImageButton.Icons.START, NERButton.Styles.GREEN)
             self.live_button.pressed.connect(self.toggleLiveData)
-            self.live_button.setToolTip("Start/stop live updating automatically")
+            self.live_button.setToolTip(
+                "Start/stop live updating automatically")
             toolbar.addRight(self.live_button)
 
             self.timer = QTimer()
             self.timer.timeout.connect(self.updateChart)
 
-        remove_button = NERImageButton(NERImageButton.Icons.CLOSE, NERButton.Styles.RED)
+        remove_button = NERImageButton(
+            NERImageButton.Icons.CLOSE,
+            NERButton.Styles.RED)
         remove_button.pressed.connect(self.remove)
         remove_button.setToolTip("Delete this graph")
         toolbar.addRight(remove_button)
@@ -308,7 +354,7 @@ class GraphWidget(QWidget):
 
     def updateChart(self):
         """
-        Updates the axis of the chart by finding the max/min 
+        Updates the axis of the chart by finding the max/min
         """
         for data in self.state.data:
             if data is not None:
@@ -348,12 +394,20 @@ class GraphWidget(QWidget):
         mapper.setModel(self.model.getDataModel(data_id))
         self.chart.addSeries(series)
         # Configure axes
-        self.updateAxis(self.model.getDataModel(data_id).getMinTime(), self.model.getDataModel(data_id).getMaxTime(),
-                        self.model.getDataModel(data_id).getMinValue(), self.model.getDataModel(data_id).getMaxValue())
+        self.updateAxis(
+            self.model.getDataModel(data_id).getMinTime(),
+            self.model.getDataModel(data_id).getMaxTime(),
+            self.model.getDataModel(data_id).getMinValue(),
+            self.model.getDataModel(data_id).getMaxValue())
         series.attachAxis(self.axis_x)
         series.attachAxis(self.axis_y)
 
-    def updateAxis(self, xmin: datetime, xmax: datetime, ymin: float, ymax: float):
+    def updateAxis(
+            self,
+            xmin: datetime,
+            xmax: datetime,
+            ymin: float,
+            ymax: float):
         """
         Updates the axis to use the new data values if they expand the bounds of the graph.
         """
@@ -395,13 +449,17 @@ class GraphDashboardWidget(GraphDashboard):
     This is the widget to embed in other views to get a dashboard.
     """
 
-    def __init__(self, parent: QWidget, model: DataModelManager, dynamic=False):
+    def __init__(
+            self,
+            parent: QWidget,
+            model: DataModelManager,
+            dynamic=False):
         """
-        Creates a graph dashboard with the given model. If dynamic is true, this dashboard will 
+        Creates a graph dashboard with the given model. If dynamic is true, this dashboard will
         support real time plotting.
         """
         super(GraphDashboardWidget, self).__init__(parent)
-        self.setStyleSheet("""QSplitter { background-color: #f0f0f0} 
+        self.setStyleSheet("""QSplitter { background-color: #f0f0f0}
             QSplitterHandle { background-color: #999999 }""")
 
         self.model = model
@@ -418,9 +476,11 @@ class GraphDashboardWidget(GraphDashboard):
         add_button.pressed.connect(self.add)
         self.toolbar.addLeft(add_button)
 
-        default_graph_button = NERButton("Load Default Graphs", NERButton.Styles.GRAY)
+        default_graph_button = NERButton(
+            "Load Default Graphs", NERButton.Styles.GRAY)
         default_graph_button.pressed.connect(self.loadDefaultGraphs)
-        default_graph_button.setToolTip("Set the graphs to show important data points")
+        default_graph_button.setToolTip(
+            "Set the graphs to show important data points")
         self.toolbar.addRight(default_graph_button)
 
         self.row1 = QSplitter()
@@ -447,12 +507,19 @@ class GraphDashboardWidget(GraphDashboard):
         """
 
         if len(self.graphs1) + len(self.graphs2) + len(self.graphs3) == 6:
-            QMessageBox.critical(self, "Graph Error", "Cannot have more than 6 graphs on the dashboard")
+            QMessageBox.critical(
+                self,
+                "Graph Error",
+                "Cannot have more than 6 graphs on the dashboard")
             return
 
         gi = GraphWidget(self, self.model, self.dynamic)
 
-        if len(self.graphs1) <= len(self.graphs2) and len(self.graphs1) <= len(self.graphs3):
+        if len(
+            self.graphs1) <= len(
+            self.graphs2) and len(
+            self.graphs1) <= len(
+                self.graphs3):
             self.row1.addWidget(gi)
             self.graphs1.append(gi)
         elif len(self.graphs2) <= len(self.graphs3):
@@ -478,7 +545,10 @@ class GraphDashboardWidget(GraphDashboard):
         """
 
         if len(self.graphs1) + len(self.graphs2) + len(self.graphs3) == 1:
-            QMessageBox.critical(self, "Graph Error", "Must have at least 1 graph on the dashboard")
+            QMessageBox.critical(
+                self,
+                "Graph Error",
+                "Must have at least 1 graph on the dashboard")
             return
 
         if graph in self.graphs1:
@@ -501,12 +571,19 @@ class GraphDashboardWidget(GraphDashboard):
             self.row3.hide()
 
     def loadDefaultGraphs(self):
-        expected_default_ids = [[45], [101], [91, 92, 93], [2, 89, 51], [1], [10, 28]]
+        expected_default_ids = [
+            [45], [101], [
+                91, 92, 93], [
+                2, 89, 51], [1], [
+                10, 28]]
         actual_default_ids = [[], [], [], [], [], []]
         model_ids = self.model.getAvailableIds()
 
         if len(model_ids) == 0:
-            QMessageBox.critical(self, "Error adding graphs", "There is no data to add to graphs")
+            QMessageBox.critical(
+                self,
+                "Error adding graphs",
+                "There is no data to add to graphs")
             return
 
         for i in range(len(expected_default_ids)):
@@ -530,7 +607,7 @@ class GraphDashboardWidget(GraphDashboard):
                 rows[i].addWidget(graph)
 
             rows[i].show()
-        
+
         self.graphs1 = graphs[0]
         self.graphs2 = graphs[1]
         self.graphs3 = graphs[2]

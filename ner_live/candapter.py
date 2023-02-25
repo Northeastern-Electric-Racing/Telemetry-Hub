@@ -18,14 +18,12 @@ class Candapter(LiveInput):
     TIMEON_COMMAND = "A1"
     START_TOKEN = "T"
 
-
     def __init__(self):
         """
         Initialize the serial port and message handling variables.
         """
         super().__init__()
         self._reset()
-
 
     def _reset(self) -> None:
         """
@@ -37,13 +35,12 @@ class Candapter(LiveInput):
         self.current_message = ""
         self.state = InputState.NONE
 
-
     def _validateState(self, desired_state: InputState) -> None:
         """
         Validates states and throws appropriate error messages.
         """
         if desired_state == InputState.NONE and self.state != InputState.NONE:
-                raise LiveInputException("CANdapter is already connected.")
+            raise LiveInputException("CANdapter is already connected.")
         elif desired_state == InputState.CONNECTED:
             if self.state == InputState.NONE:
                 raise LiveInputException("CANdapter is not yet connected.")
@@ -54,7 +51,6 @@ class Candapter(LiveInput):
                 raise LiveInputException("CANdapter is not yet connected.")
             elif self.state == InputState.CONNECTED:
                 raise LiveInputException("CANdapter has not yet been started.")
-
 
     def connect(self, *args, **kwargs) -> None:
         """
@@ -67,7 +63,7 @@ class Candapter(LiveInput):
         if isinstance(args[0], str):
             raise TypeError("Invalid input type for port name.")
         port_name = args[0]
- 
+
         for port in QSerialPortInfo.availablePorts():
             if port.portName() == port_name:
                 try:
@@ -75,9 +71,9 @@ class Candapter(LiveInput):
                     self.state = InputState.CONNECTED
                     return
                 except Exception as e:
-                    raise LiveInputException("Error while connecting to desired port")
+                    raise LiveInputException(
+                        "Error while connecting to desired port")
         raise LiveInputException("Invalid port name")
-
 
     def disconnect(self, *args, **kwargs) -> None:
         """
@@ -85,7 +81,6 @@ class Candapter(LiveInput):
         """
         self._validateState(InputState.CONNECTED)
         self._reset()
-
 
     def start(self, *args, **kwargs) -> None:
         """
@@ -101,7 +96,6 @@ class Candapter(LiveInput):
         self.port.write(QByteArray(self.END_COMMAND))
         self.state = InputState.STARTED
 
-
     def stop(self) -> None:
         """
         Overrides LiveInput.stop()
@@ -111,7 +105,6 @@ class Candapter(LiveInput):
         self.port.write(QByteArray(self.END_COMMAND))
         self.port.close()
         self.state = InputState.CONNECTED
-
 
     def parse(self, message: str) -> Message:
         """
@@ -128,12 +121,12 @@ class Candapter(LiveInput):
             length = int(message[3])
             data = []
             for i in range(length):
-                data.append(int(message[(4 + 2*i):(6 + 2*i)], base=16))
-            timestamp = datetime.fromtimestamp(float(message[(length*2+4):]) / 1000)
+                data.append(int(message[(4 + 2 * i):(6 + 2 * i)], base=16))
+            timestamp = datetime.fromtimestamp(
+                float(message[(length * 2 + 4):]) / 1000)
             return Message(timestamp, id, data)
-        except:
+        except BaseException:
             raise MessageFormatException("Error with message fields")
-
 
     def _handle_read(self):
         """
@@ -142,7 +135,7 @@ class Candapter(LiveInput):
         try:
             buf = self.port.readAll()
             msgs = buf.data().decode()
-        except:
+        except BaseException:
             print("Error with receiving message")
             return
 
@@ -159,4 +152,3 @@ class Candapter(LiveInput):
                 self.current_message = ""
             elif self.message_started:
                 self.current_message += char
-                

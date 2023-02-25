@@ -10,7 +10,7 @@ class DataView(QWidget):
     """
     View for graphing data.
     """
-    
+
     def __init__(self, parent: QWidget, model: DataModelManager):
         super(DataView, self).__init__(parent)
         layout = QVBoxLayout()
