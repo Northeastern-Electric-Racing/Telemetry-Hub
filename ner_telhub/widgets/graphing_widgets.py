@@ -17,8 +17,9 @@ from PyQt6.QtCharts import (
     QValueAxis
 )
 from PyQt6.QtGui import QPainter
-from PyQt6.QtCore import QSize, Qt, QTimer
+from PyQt6.QtCore import QSize, Qt, QTimer, QMargins
 
+from ner_telhub import colors
 from ner_telhub.model.data_models import DataModelManager, DataModel
 from ner_telhub.widgets.styled_widgets import NERButton, NERImageButton, NERToolbar
 
@@ -245,6 +246,10 @@ class GraphWidget(QWidget):
 
         # Tool Bar Config
         toolbar = NERToolbar()
+        toolbar.setStyleSheet(
+            "QToolBar { background-color: " +
+            colors.LIGHT1 +
+            "; border: none }")
         config_button = NERImageButton(
             NERImageButton.Icons.EDIT,
             NERButton.Styles.BLUE)
@@ -298,11 +303,12 @@ class GraphWidget(QWidget):
         self.chart = QChart()
         self.chart.setTheme(QChart.ChartTheme.ChartThemeLight)
         self.chart.setAnimationOptions(QChart.AnimationOption.SeriesAnimations)
+        self.chart.setMargins(QMargins(0, 0, 0, 0))
 
         # View Config
         self.chart_view = QChartView(self.chart)
         self.chart_view.setRenderHint(QPainter.RenderHint.Antialiasing)
-        self.chart_view.setStyleSheet("background-color: #f0f0f0")
+        self.chart_view.setStyleSheet(f"background-color: {colors.LIGHT1}")
 
         # Reset graph state, axes, and series
         self.reset()
@@ -460,7 +466,7 @@ class GraphDashboardWidget(GraphDashboard):
         """
         super(GraphDashboardWidget, self).__init__(parent)
         self.setStyleSheet("""QSplitter { background-color: #f0f0f0}
-            QSplitterHandle { background-color: #999999 }""")
+            QSplitter::handle { background-color: #999999 }""")
 
         self.model = model
         self.dynamic = dynamic
@@ -471,6 +477,8 @@ class GraphDashboardWidget(GraphDashboard):
         self.graphs3 = []
 
         self.toolbar = NERToolbar()
+        self.toolbar.setStyleSheet(
+            f"background-color: {colors.PRIMARY_BACKGROUND}; border: none")
         add_button = NERButton("Add Graph", NERButton.Styles.GRAY)
         add_button.setToolTip("Add a graph to the dashboard")
         add_button.pressed.connect(self.add)

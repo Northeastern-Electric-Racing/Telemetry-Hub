@@ -2,9 +2,9 @@
 import os
 import sys
 
-sys.path.append(os.path.dirname(__file__) + "/Ner_Processing")
+sys.path.append(os.path.dirname(__file__) + "/ner_processing")
 
-# This must be after the above line for the Ner_Processing library to load correctly
+# This must be after the above line for the ner_processing library to load correctly
 from ner_telhub import app
 
 

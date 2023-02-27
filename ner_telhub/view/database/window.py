@@ -1,12 +1,13 @@
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QMessageBox,
     QVBoxLayout, QLabel, QProgressBar,
-    QSizePolicy, QLineEdit, QGridLayout,
     QDialogButtonBox, QDialog, QComboBox,
+    QLineEdit, QGridLayout
 )
 from PyQt6.QtCore import QSize
 from typing import Callable
 
+from ner_telhub import colors
 from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.widgets.menu_widgets import DataIds
 from ner_telhub.widgets.styled_widgets import NERButton, NERToolbar
@@ -169,7 +170,10 @@ class QueryToolbar(NERToolbar):
         self.data_model = data_model
         self.query_service = query_service
         self.data_model.layoutChanged.connect(self.modelUpdated)
-        self.setStyleSheet("background-color: white; padding: 5%")
+        self.setStyleSheet(
+            "QToolBar { background-color: " +
+            colors.SECONDARY_BACKGROUND +
+            "; padding: 5%; border: none}")
 
         self.progress_bar = progress_bar
         self.query_status_label = query_status_label
@@ -179,8 +183,6 @@ class QueryToolbar(NERToolbar):
         test_ids = self.findTestIds()
         self.testid_entry.addItems(test_ids)
         self.testid_entry.setMinimumWidth(150)
-        self.testid_entry.setStyleSheet(
-            "QComboBox {background-color: white; selection-background-color: white}")
         self.load_button = NERButton("Load Data", NERButton.Styles.GREEN)
         self.load_button.addStyle("margin-left: 5%; margin-right: 5%")
         self.load_button.pressed.connect(self.loadData)

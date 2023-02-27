@@ -1,0 +1,13 @@
+import darkdetect
+
+LIGHT1 = "#f0f0f0"
+LIGHT2 = "#ffffff"
+DARK1 = "#333333"
+DARK2 = "#222222"
+
+if darkdetect.isLight():
+    PRIMARY_BACKGROUND = LIGHT1
+    SECONDARY_BACKGROUND = LIGHT2
+else:
+    PRIMARY_BACKGROUND = DARK1
+    SECONDARY_BACKGROUND = DARK2

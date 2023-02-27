@@ -5,7 +5,7 @@ import os
 from typing import List, Tuple
 from PyQt6.QtCore import pyqtBoundSignal, QDateTime
 
-from Ner_Processing.data import Data
+from ner_processing.data import Data
 from ner_telhub.model.data_models import DataModel, DataModelManager
 from ner_telhub.utils.threads import Worker
 
