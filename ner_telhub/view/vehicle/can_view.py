@@ -2,59 +2,16 @@ from PyQt6.QtWidgets import (
     QLabel, QLineEdit, QHBoxLayout,
     QVBoxLayout, QWidget, QListView,
     QGridLayout, QCheckBox, QMessageBox,
-    QComboBox, QRadioButton, QDialogButtonBox,
-    QDialog
+    QComboBox
 )
 from PyQt6.QtCore import Qt
 
-from ner_live.live_input import LiveInput, LiveInputException
-from ner_live.xbee import XBee
+from ner_live.live_input import LiveInput
 from ner_processing.master_mapping import MESSAGE_IDS
 from ner_telhub.widgets.styled_widgets import NERButton
 from ner_telhub.model.filter_models import ReceiveFilterModel
 from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.model.message_models import MessageModel
-
-
-class ConnectionDialog(QDialog):
-    """
-    Connection dialog showing serial port connection information.
-    """
-
-    def __init__(self, parent: QWidget):
-        super().__init__(parent)
-
-        self.setWindowTitle("Wireless Connection")
-
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(QLabel("Choose from the available ports:"))
-
-        self.ports = XBee.serialPorts()
-
-        if len(self.ports) == 0:
-            self.layout.addWidget(QLabel("No connections found"))
-
-        self.com_options = []
-        for i in range(len(self.ports)):
-            self.com_options.append(
-                QRadioButton(f"{self.ports[i][0]} - {self.ports[i][1]}"))
-            self.layout.addWidget(self.com_options[i])
-
-        self.buttonBox = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        self.buttonBox.accepted.connect(self.onAccept)
-        self.buttonBox.rejected.connect(self.reject)
-
-        self.layout.addWidget(self.buttonBox)
-        self.setLayout(self.layout)
-
-    def onAccept(self):
-        for i in range(len(self.com_options)):
-            if self.com_options[i].isChecked():
-                self.parentWidget().port_name = self.ports[i][0]
-                self.accept()
-                return
-            self.reject()
 
 
 class ReceiveFilters(QWidget):
@@ -175,80 +132,43 @@ class LiveMonitoring(QWidget):
     def __init__(
             self,
             parent: QWidget,
+            message_model: MessageModel,
             data_model: DataModelManager,
             live_input: LiveInput):
         super(LiveMonitoring, self).__init__(parent)
 
         self.setMinimumWidth(300)
 
+        self.message_model = message_model
         self.data_model = data_model
         self.data_model.layoutChanged.connect(self.modelUpdated)
         self.live_input = live_input
-        self.connected = False
-        self.port_name = None
 
-        self.connect_button = NERButton(
-            "Setup Connection", NERButton.Styles.GREEN)
-        self.connect_button.setToolTip(
-            "Connect/Disconnect from a live input source")
-        self.connect_button.pressed.connect(self.connect)
-
-        self.connection_label = QLabel("None")
         self.datacount_label = QLabel("0")
         self.biterror_label = QLabel("0")
         self.valueerror_label = QLabel("0")
+        self.setStyleSheet("QLabel { font-size: 16px; }")
 
         label_layout = QGridLayout()
-        label_layout.addWidget(QLabel("Connection:"), 0, 0)
-        label_layout.addWidget(self.connection_label, 0, 1)
-        label_layout.addWidget(QLabel("Data Count:"), 1, 0)
-        label_layout.addWidget(self.datacount_label, 1, 1)
-        label_layout.addWidget(QLabel("Bit Errors:"), 2, 0)
-        label_layout.addWidget(self.biterror_label, 2, 1)
-        label_layout.addWidget(QLabel("Value Errors:"), 3, 0)
-        label_layout.addWidget(self.valueerror_label, 3, 1)
+        label_layout.addWidget(QLabel("Data Count:"), 0, 0)
+        label_layout.addWidget(self.datacount_label, 0, 1)
+        label_layout.addWidget(QLabel("Bit Errors:"), 1, 0)
+        label_layout.addWidget(self.biterror_label, 1, 1)
+        label_layout.addWidget(QLabel("Value Errors:"), 2, 0)
+        label_layout.addWidget(self.valueerror_label, 2, 1)
+
+        header = QLabel("Connection Info")
+        header.setStyleSheet("font-size: 30px; font-weight: bold")
+        header.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         layout = QVBoxLayout()
-        layout.addWidget(self.connect_button)
+        layout.addWidget(header)
         layout.addLayout(label_layout)
+        layout.addSpacing(150)
         self.setLayout(layout)
 
     def modelUpdated(self):
         self.datacount_label.setText(str(self.data_model.getDataCount()))
-
-    def connect(self):
-        if not self.connected:
-            # Try to connect
-            dlg = ConnectionDialog(self)
-            port_status = dlg.exec()
-
-            # If a proper port was selected
-            if port_status == 1:
-                try:
-                    self.live_input.connect(self.port_name)
-                    msg = "Successfully connected to " + self.port_name
-                    self.connect_button.setText("Disconnect")
-                    self.connect_button.changeStyle(NERButton.Styles.RED)
-                    self.connected = True
-                    self.connection_label.setText(self.port_name)
-                except LiveInputException as e:
-                    msg = e.message
-                except TypeError as e:
-                    msg = "Internal Error"
-            QMessageBox.information(self, "Connection Status", msg)
-        else:
-            # Try to disconnect
-            try:
-                self.live_input.disconnect()
-                msg = "Successfully disconnected from the serial port"
-                self.port_name = None
-                self.connect_button.setText("Setup Connection")
-                self.connect_button.changeStyle(NERButton.Styles.GREEN)
-                self.connection_label.setText("None")
-                self.connected = False
-            except LiveInputException as e:
-                msg = e.message
-            QMessageBox.information(self, "Disconnection Status", msg)
 
 
 class CanView(QWidget):
@@ -264,7 +184,12 @@ class CanView(QWidget):
         super(CanView, self).__init__(parent)
 
         sub_layout = QHBoxLayout()
-        sub_layout.addWidget(LiveMonitoring(self, data_model, live_input))
+        sub_layout.addWidget(
+            LiveMonitoring(
+                self,
+                message_model,
+                data_model,
+                live_input))
         sub_layout.addWidget(MessageFeed(self, message_model))
 
         layout = QVBoxLayout()

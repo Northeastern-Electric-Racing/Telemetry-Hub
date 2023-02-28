@@ -25,6 +25,14 @@ class InputState(Enum):
     STARTED = 2
 
 
+class InputType(Enum):
+    """
+    Type of Live Input connection
+    """
+    XBEE = 0
+    CANDAPTER = 1
+
+
 class LiveInput():
     """
     Parent class representing a live input that can be connected to.
