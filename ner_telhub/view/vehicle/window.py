@@ -1,8 +1,8 @@
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QStackedLayout,
     QMessageBox, QDialog, QDialogButtonBox,
-    QVBoxLayout, QLabel, QRadioButton,
-    QLineEdit, QGridLayout, QFileDialog
+    QVBoxLayout, QLabel, QLineEdit,
+    QGridLayout, QFileDialog
 )
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QSize
@@ -18,47 +18,6 @@ from ner_telhub.view.vehicle.can_view import CanView
 from ner_telhub.view.vehicle.data_view import DataView
 from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
 from ner_telhub.widgets.styled_widgets import NERButton, NERToolbar
-
-
-class ConnectionDialog(QDialog):
-    """
-    Connection dialog showing serial port connection information.
-    """
-
-    def __init__(self, parent: QWidget):
-        super().__init__(parent)
-
-        self.setWindowTitle("Wireless Connection")
-
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(QLabel("Choose from the available ports:"))
-
-        self.ports = XBee.serialPorts()
-
-        if len(self.ports) == 0:
-            self.layout.addWidget(QLabel("No connections found"))
-
-        self.com_options = []
-        for i in range(len(self.ports)):
-            self.com_options.append(
-                QRadioButton(f"{self.ports[i][0]} - {self.ports[i][1]}"))
-            self.layout.addWidget(self.com_options[i])
-
-        self.buttonBox = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        self.buttonBox.accepted.connect(self.onAccept)
-        self.buttonBox.rejected.connect(self.reject)
-
-        self.layout.addWidget(self.buttonBox)
-        self.setLayout(self.layout)
-
-    def onAccept(self):
-        for i in range(len(self.com_options)):
-            if self.com_options[i].isChecked():
-                self.parentWidget().port_name = self.ports[i][0]
-                self.accept()
-                return
-            self.reject()
 
 
 class FileDialog(QDialog):
@@ -213,17 +172,20 @@ class VehicleWindow(QMainWindow):
         self.receive_filter_model = ReceiveFilterModel(
             self, self.message_model)
         self.connection = XBee(self.message_model)
-        self.connection.addCallback("vehicle", self.message_model.addMessage)
-        self.port_name = None
 
-        self.views = {
-            0: ("CAN", CanView(self, self.message_model, self.receive_filter_model)),
-            1: ("Data", DataView(self, self.data_model))
-        }
+        self.views = {0: ("CAN",
+                          CanView(self,
+                                  self.message_model,
+                                  self.data_model,
+                                  self.receive_filter_model,
+                                  self.connection)),
+                      1: ("Data",
+                          DataView(self,
+                                   self.data_model))}
 
         # Window config
         self.setWindowTitle("Telemetry Hub")
-        self.setMinimumSize(QSize(1200, 600))
+        self.setMinimumSize(QSize(960, 720))
 
         # Multi-view layout config
         self.stacked_layout = QStackedLayout()
@@ -244,16 +206,8 @@ class VehicleWindow(QMainWindow):
 
         # Menu bar
         menu = self.menuBar()
-        file_menu = menu.addMenu("File")
         help_menu = menu.addMenu("Help")
         views_menu = menu.addMenu("View")
-
-        file_action_1 = QAction("connect", self)
-        file_action_2 = QAction("disconnect", self)
-        file_action_1.triggered.connect(self.connect)
-        file_action_2.triggered.connect(self.disconnect)
-        file_menu.addAction(file_action_1)
-        file_menu.addAction(file_action_2)
 
         help_action_1 = help_menu.addAction("Message Info")
         help_action_2 = help_menu.addAction("Data Info")
@@ -278,27 +232,3 @@ class VehicleWindow(QMainWindow):
     def selectDataView(self):
         self.stacked_layout.setCurrentIndex(1)
         self.current_view_menu.setTitle(self.views.get(1)[0])
-
-    def connect(self):
-        dlg = ConnectionDialog(self)
-        port_status = dlg.exec()
-
-        # If a proper port was selected
-        if port_status == 1:
-            try:
-                self.connection.connect(self.port_name)
-                msg = "Successfully connected to " + self.port_name
-            except LiveInputException as e:
-                msg = e.message
-            except TypeError as e:
-                msg = "Internal Error"
-            QMessageBox.information(self, "Connection Status", msg)
-
-    def disconnect(self):
-        try:
-            self.connection.disconnect()
-            msg = "Successfully disconnected from the serial port"
-            self.port_name = None
-        except LiveInputException as e:
-            msg = e.message
-        QMessageBox.information(self, "Disconnection Status", msg)

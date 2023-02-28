@@ -4,6 +4,7 @@ from PyQt6.QtCore import QIODeviceBase, QByteArray
 
 from ner_processing.message import Message, MessageFormatException
 from ner_live.live_input import LiveInput, LiveInputException, InputState
+from ner_telhub.model.message_models import MessageModel
 
 
 class Candapter(LiveInput):
@@ -18,11 +19,11 @@ class Candapter(LiveInput):
     TIMEON_COMMAND = "A1"
     START_TOKEN = "T"
 
-    def __init__(self):
+    def __init__(self, model: MessageModel):
         """
         Initialize the serial port and message handling variables.
         """
-        super().__init__()
+        super().__init__(model)
         self._reset()
 
     def _reset(self) -> None:

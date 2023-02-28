@@ -31,8 +31,15 @@ class LiveInput():
     """
 
     def __init__(self, model: MessageModel):
+        self.state = InputState.NONE
         self._model = model
         self._callbacks = {}
+
+    def getState(self) -> InputState:
+        """
+        Gets the state of the live input.
+        """
+        return self.state
 
     def addCallback(self,
                     name: str,

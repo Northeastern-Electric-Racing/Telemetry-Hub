@@ -463,7 +463,7 @@ class SdCardWindow(QMainWindow):
         super().__init__(parent)
 
         self.setWindowTitle("Telemetry Hub")
-        self.setMinimumSize(QSize(960, 540))
+        self.setMinimumSize(QSize(960, 720))
 
         self.file_model = FileModel(self)
         data_model = DataModelManager(self)

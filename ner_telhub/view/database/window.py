@@ -290,7 +290,7 @@ class DatabaseWindow(QMainWindow):
 
         # Window config
         self.setWindowTitle("Telemetry Hub")
-        self.setMinimumSize(QSize(800, 480))
+        self.setMinimumSize(QSize(960, 720))
 
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
