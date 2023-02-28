@@ -32,12 +32,14 @@ class DataModel(QAbstractTableModel):
         else:
             raise ValueError("Invalid data id.")
         self._data: List[Tuple[datetime, Any]] = []
+        self.error_count = 0
         self._lock = QReadWriteLock()
         self._reset_state()
 
     def _reset_state(self):
         QWriteLocker(self._lock)
         self._data.clear()
+        self.error_count = 0
         self.min_value = sys.maxsize
         self.max_value = -sys.maxsize
         # Stores whether we are currently removing duplicated data values
@@ -77,6 +79,12 @@ class DataModel(QAbstractTableModel):
         Returns the fixed data type of this model.
         """
         return DATA_IDS[self._id]["name"]
+
+    def getErrorCount(self) -> int:
+        """
+        Returns the error count of this model.
+        """
+        return self.error_count
 
     def getData(self) -> List[Tuple[datetime, Any]]:
         """
@@ -133,16 +141,32 @@ class DataModel(QAbstractTableModel):
         """
         Adds the given piece of data to the model.
 
+        Performs filtering of numeric data values by checking for sudden spikes. A spike is
+        recognized as a sudden change in value of both more than 1000 and greater than 100%
+        of the previous value.
+
         Performs compression of consecutive data points with the same values to reduce storage.
         This is done by starting to 'compress' once two consecutive data points have the same
         value, and stoping when a new value is reached.
         """
         QWriteLocker(self._lock)
-        # TODO: Add filtering like the lines below here
-        # if self._id == 45 and abs(value) > 2000:
-        #     print(value)
-        #     return
+        # If the value is numeric, perform filtering (from wireless errors) and
+        # bounds checking
+        if isinstance(value, int) or isinstance(value, float):
+            # Filter out erroneous data values
+            if (len(self._data) != 0) and (DATA_IDS[self._id]["units"] != ""):
+                last_value = self._data[-1][1]
+                difference = abs(value - last_value)
+                if (difference > last_value) and (difference > 1000):
+                    self.error_count += 1
+                    return
+            # Check/update bounds
+            if value < self.min_value:
+                self.min_value = value
+            if value > self.max_value:
+                self.max_value = value
 
+        # Add data point if it is distinct
         if len(self._data) == 0:
             self._data.append((timestamp, value))
         else:
@@ -160,11 +184,6 @@ class DataModel(QAbstractTableModel):
                 if value == last_value:
                     self.compressing = True  # Start compressing if two consecutive values found
 
-        if isinstance(value, int) or isinstance(value, float):
-            if value < self.min_value:
-                self.min_value = value
-            if value > self.max_value:
-                self.max_value = value
         self.layoutChanged.emit()
 
     def deleteAllData(self) -> None:
@@ -289,6 +308,15 @@ class DataModelManager(QObject):
         count = 0
         for model in self._datamap.values():
             count += model.rowCount()
+        return count
+
+    def getErrorCount(self) -> int:
+        """
+        Gets the current number of data value errors.
+        """
+        count = 0
+        for model in self._datamap.values():
+            count += model.getErrorCount()
         return count
 
     def getDataModel(self, id: int) -> DataModel:

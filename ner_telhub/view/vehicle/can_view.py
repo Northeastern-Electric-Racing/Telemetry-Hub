@@ -140,7 +140,6 @@ class LiveMonitoring(QWidget):
 
         self.message_model = message_model
         self.data_model = data_model
-        self.data_model.layoutChanged.connect(self.modelUpdated)
 
         self.datacount_label = QLabel("0")
         self.biterror_label = QLabel("0")
@@ -172,9 +171,6 @@ class LiveMonitoring(QWidget):
         self.timer.timeout.connect(self.updateErrorCounts)
         self.timer.start(100)
 
-    def modelUpdated(self):
-        self.datacount_label.setText(str(self.data_model.getDataCount()))
-
     def updateErrorCounts(self):
         connection = getConnection()
         if connection is not None:
@@ -188,7 +184,8 @@ class LiveMonitoring(QWidget):
             self.biterror_label.setText(str(error_count))
             self.errorrate_label.setText(f"{error_rate} %")
 
-        self.valueerror_label.setText("0")
+        self.datacount_label.setText(str(self.data_model.getDataCount()))
+        self.valueerror_label.setText(str(self.data_model.getErrorCount()))
 
 
 class CanView(QWidget):
