@@ -38,8 +38,12 @@ class LiveInput():
     Parent class representing a live input that can be connected to.
     """
 
+    instance = None
+
     def __init__(self, model: MessageModel):
         self.state = InputState.NONE
+        self.error_count = 0
+        self.success_count = 0
         self._model = model
         self._callbacks = {}
 
@@ -48,6 +52,18 @@ class LiveInput():
         Gets the state of the live input.
         """
         return self.state
+
+    def getErrorCount(self) -> int:
+        """
+        Gets the error count of the live input.
+        """
+        return self.error_count
+
+    def getSuccessCount(self) -> int:
+        """
+        Gets the success count of the live input.
+        """
+        return self.success_count
 
     def addCallback(self,
                     name: str,

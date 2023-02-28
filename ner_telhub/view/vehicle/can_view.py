@@ -4,9 +4,9 @@ from PyQt6.QtWidgets import (
     QGridLayout, QCheckBox, QMessageBox,
     QComboBox
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 
-from ner_live.live_input import LiveInput
+from ner_live.utils import getConnection
 from ner_processing.master_mapping import MESSAGE_IDS
 from ner_telhub.widgets.styled_widgets import NERButton
 from ner_telhub.model.filter_models import ReceiveFilterModel
@@ -133,8 +133,7 @@ class LiveMonitoring(QWidget):
             self,
             parent: QWidget,
             message_model: MessageModel,
-            data_model: DataModelManager,
-            live_input: LiveInput):
+            data_model: DataModelManager):
         super(LiveMonitoring, self).__init__(parent)
 
         self.setMinimumWidth(300)
@@ -142,11 +141,11 @@ class LiveMonitoring(QWidget):
         self.message_model = message_model
         self.data_model = data_model
         self.data_model.layoutChanged.connect(self.modelUpdated)
-        self.live_input = live_input
 
         self.datacount_label = QLabel("0")
         self.biterror_label = QLabel("0")
         self.valueerror_label = QLabel("0")
+        self.errorrate_label = QLabel("0.0 %")
         self.setStyleSheet("QLabel { font-size: 16px; }")
 
         label_layout = QGridLayout()
@@ -156,6 +155,8 @@ class LiveMonitoring(QWidget):
         label_layout.addWidget(self.biterror_label, 1, 1)
         label_layout.addWidget(QLabel("Value Errors:"), 2, 0)
         label_layout.addWidget(self.valueerror_label, 2, 1)
+        label_layout.addWidget(QLabel("Error Rate:"), 3, 0)
+        label_layout.addWidget(self.errorrate_label, 3, 1)
 
         header = QLabel("Connection Info")
         header.setStyleSheet("font-size: 30px; font-weight: bold")
@@ -167,8 +168,27 @@ class LiveMonitoring(QWidget):
         layout.addSpacing(150)
         self.setLayout(layout)
 
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.updateErrorCounts)
+        self.timer.start(100)
+
     def modelUpdated(self):
         self.datacount_label.setText(str(self.data_model.getDataCount()))
+
+    def updateErrorCounts(self):
+        connection = getConnection()
+        if connection is not None:
+            error_count = connection.getErrorCount()
+            success_count = connection.getSuccessCount()
+            if error_count + success_count == 0:
+                error_rate = 0.0
+            else:
+                error_rate = round(100 * error_count /
+                                   (error_count + success_count), 2)
+            self.biterror_label.setText(str(error_count))
+            self.errorrate_label.setText(f"{error_rate} %")
+
+        self.valueerror_label.setText("0")
 
 
 class CanView(QWidget):
@@ -179,8 +199,7 @@ class CanView(QWidget):
     def __init__(self, parent: QWidget,
                  message_model: MessageModel,
                  data_model: DataModelManager,
-                 receive_filter_model: ReceiveFilterModel,
-                 live_input: LiveInput):
+                 receive_filter_model: ReceiveFilterModel):
         super(CanView, self).__init__(parent)
 
         sub_layout = QHBoxLayout()
@@ -188,8 +207,7 @@ class CanView(QWidget):
             LiveMonitoring(
                 self,
                 message_model,
-                data_model,
-                live_input))
+                data_model))
         sub_layout.addWidget(MessageFeed(self, message_model))
 
         layout = QVBoxLayout()

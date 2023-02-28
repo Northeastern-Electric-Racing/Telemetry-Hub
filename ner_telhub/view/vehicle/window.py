@@ -10,7 +10,7 @@ from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QSize
 
 from ner_live.live_input import LiveInput, LiveInputException, InputType
-from ner_live.utils import getConnection
+from ner_live.utils import getConnection, createConnection, deleteConnection
 from ner_telhub import colors
 from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.model.message_models import MessageModel
@@ -145,13 +145,11 @@ class LiveToolbar(NERToolbar):
             self,
             parent: QWidget,
             message_model: MessageModel,
-            data_model: DataModelManager,
-            live_input: LiveInput):
+            data_model: DataModelManager):
         super(LiveToolbar, self).__init__(parent)
 
         self.message_model = message_model
         self.model = data_model
-        self.live_input = live_input
         self.connected = False
         self.started = False
         self.setStyleSheet(
@@ -167,10 +165,10 @@ class LiveToolbar(NERToolbar):
         self.start_button = NERButton("Start", NERButton.Styles.GREEN)
         self.start_button.pressed.connect(self.start)
         self.start_button.setToolTip("Start/stop the live data feed")
-        clear_button = NERButton("Clear", NERButton.Styles.RED)
+        clear_button = NERButton("Clear Data", NERButton.Styles.RED)
         clear_button.pressed.connect(self.clear)
         clear_button.setToolTip("Clear all data currently received")
-        export_button = NERButton("Export", NERButton.Styles.BLUE)
+        export_button = NERButton("Export Data", NERButton.Styles.BLUE)
         export_button.pressed.connect(self.export)
         export_button.setToolTip("Export received data to a CSV file")
         self.addLeft(self.connect_button)
@@ -189,8 +187,8 @@ class LiveToolbar(NERToolbar):
         else:
             # Try to disconnect
             try:
-                self.live_input.disconnect()
-                self.live_input = None
+                getConnection().disconnect()
+                deleteConnection()
                 msg = "Successfully disconnected from the serial port"
                 self.connect_button.setText("Setup Connection")
                 self.connect_button.changeStyle(NERButton.Styles.GREEN)
@@ -201,8 +199,8 @@ class LiveToolbar(NERToolbar):
 
     def _connect(self, port_name: str, input_type: InputType):
         try:
-            self.live_input = getConnection(input_type, self.message_model)
-            self.live_input.connect(port_name)
+            connection = createConnection(input_type, self.message_model)
+            connection.connect(port_name)
             msg = "Successfully connected to " + port_name
             self.connect_button.setText("Disconnect")
             self.connect_button.changeStyle(NERButton.Styles.RED)
@@ -221,7 +219,7 @@ class LiveToolbar(NERToolbar):
 
         if not self.started:
             try:
-                self.live_input.start()
+                getConnection().start()
                 self.start_button.setText("Stop")
                 self.start_button.changeStyle(NERButton.Styles.RED)
                 self.started = True
@@ -230,7 +228,7 @@ class LiveToolbar(NERToolbar):
                     self, "Couldn't start input: ", e.message)
         else:
             try:
-                self.live_input.stop()
+                getConnection().stop()
                 self.start_button.setText("Start")
                 self.start_button.changeStyle(NERButton.Styles.GREEN)
                 self.started = False
@@ -264,14 +262,12 @@ class VehicleWindow(QMainWindow):
         self.message_model = MessageModel(self, self.data_model)
         self.receive_filter_model = ReceiveFilterModel(
             self, self.message_model)
-        self.live_input = None
 
         self.views = {0: ("CAN",
                           CanView(self,
                                   self.message_model,
                                   self.data_model,
-                                  self.receive_filter_model,
-                                  self.live_input)),
+                                  self.receive_filter_model)),
                       1: ("Data",
                           DataView(self,
                                    self.data_model))}
@@ -289,8 +285,7 @@ class VehicleWindow(QMainWindow):
             LiveToolbar(
                 self,
                 self.message_model,
-                self.data_model,
-                self.live_input))
+                self.data_model))
         self.main_layout.addLayout(self.stacked_layout)
 
         widget = QWidget(self)

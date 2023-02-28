@@ -1,6 +1,6 @@
 from datetime import datetime
 from PyQt6.QtSerialPort import QSerialPort, QSerialPortInfo
-from PyQt6.QtCore import QIODeviceBase, QByteArray
+from PyQt6.QtCore import QIODeviceBase
 
 from ner_processing.message import Message, MessageFormatException
 from ner_live.live_input import LiveInput, LiveInputException, InputState
@@ -12,12 +12,12 @@ class Candapter(LiveInput):
     A class to represent a Candapter connection as a live input.
     """
 
-    END_COMMAND = "\r"
-    SETUP_COMMAND = "S8"
-    OPEN_COMMAND = "O"
-    CLOSE_COMMAND = "C"
-    TIMEON_COMMAND = "A1"
-    START_TOKEN = "T"
+    END_COMMAND = "\r".encode()
+    SETUP_COMMAND = "S8".encode()
+    OPEN_COMMAND = "O".encode()
+    CLOSE_COMMAND = "C".encode()
+    TIMEON_COMMAND = "A1".encode()
+    START_TOKEN = "T".encode()
 
     def __init__(self, model: MessageModel):
         """
@@ -31,10 +31,14 @@ class Candapter(LiveInput):
         Resets this Candapter.
         """
         self.port = QSerialPort()
+        self.port.setBaudRate(QSerialPort.BaudRate.Baud115200.value)
+        self.port.setFlowControl(QSerialPort.FlowControl.HardwareControl)
         self.port.readyRead.connect(self._handle_read)
         self.message_started = False
         self.current_message = ""
         self.state = InputState.NONE
+        self.error_count = 0
+        self.success_count = 0
 
     def _validateState(self, desired_state: InputState) -> None:
         """
@@ -61,7 +65,7 @@ class Candapter(LiveInput):
 
         if len(args) != 1:
             raise TypeError("Missing port name argument.")
-        if isinstance(args[0], str):
+        if not isinstance(args[0], str):
             raise TypeError("Invalid input type for port name.")
         port_name = args[0]
 
@@ -89,12 +93,12 @@ class Candapter(LiveInput):
         """
         self._validateState(InputState.CONNECTED)
         self.port.open(QIODeviceBase.OpenModeFlag.ReadWrite)
-        self.port.write(QByteArray(self.SETUP_COMMAND))
-        self.port.write(QByteArray(self.END_COMMAND))
-        self.port.write(QByteArray(self.TIMEON_COMMAND))
-        self.port.write(QByteArray(self.END_COMMAND))
-        self.port.write(QByteArray(self.OPEN_COMMAND))
-        self.port.write(QByteArray(self.END_COMMAND))
+        self.port.write(self.SETUP_COMMAND)
+        self.port.write(self.END_COMMAND)
+        self.port.write(self.TIMEON_COMMAND)
+        self.port.write(self.END_COMMAND)
+        self.port.write(self.OPEN_COMMAND)
+        self.port.write(self.END_COMMAND)
         self.state = InputState.STARTED
 
     def stop(self) -> None:
@@ -102,8 +106,8 @@ class Candapter(LiveInput):
         Overrides LiveInput.stop()
         """
         self._validateState(InputState.STARTED)
-        self.port.write(QByteArray(self.CLOSE_COMMAND))
-        self.port.write(QByteArray(self.END_COMMAND))
+        self.port.write(self.CLOSE_COMMAND)
+        self.port.write(self.END_COMMAND)
         self.port.close()
         self.state = InputState.CONNECTED
 
@@ -141,14 +145,15 @@ class Candapter(LiveInput):
             return
 
         for char in msgs:
-            if char == self.START_TOKEN:
+            if char == self.START_TOKEN.decode():
                 self.message_started = True
                 self.current_message = ""
-            elif char == self.END_COMMAND:
+            elif char == self.END_COMMAND.decode():
                 try:
                     self.parse(self.current_message)
-                except MessageFormatException as e:
-                    print(e.message)
+                    self.success_count += 1
+                except MessageFormatException:
+                    self.error_count += 1
                 self.message_started = False
                 self.current_message = ""
             elif self.message_started:
