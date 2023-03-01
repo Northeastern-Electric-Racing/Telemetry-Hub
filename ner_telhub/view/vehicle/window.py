@@ -1,15 +1,16 @@
+from typing import Callable
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QStackedLayout,
     QMessageBox, QDialog, QDialogButtonBox,
-    QVBoxLayout, QLabel, QRadioButton,
-    QLineEdit, QGridLayout, QFileDialog
+    QVBoxLayout, QLabel, QLineEdit,
+    QGridLayout, QFileDialog, QRadioButton,
+    QComboBox
 )
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QSize
 
-from ner_live.xbee import XBee
-from ner_live.live_input import LiveInput, LiveInputException
-
+from ner_live.live_input import LiveInput, LiveInputException, InputType
+from ner_live.utils import getConnection, createConnection, deleteConnection
 from ner_telhub import colors
 from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.model.message_models import MessageModel
@@ -25,24 +26,27 @@ class ConnectionDialog(QDialog):
     Connection dialog showing serial port connection information.
     """
 
-    def __init__(self, parent: QWidget):
+    def __init__(self, parent: QWidget, callback: Callable):
         super().__init__(parent)
 
         self.setWindowTitle("Wireless Connection")
-
+        self.callback = callback
         self.layout = QVBoxLayout()
+
         self.layout.addWidget(QLabel("Choose from the available ports:"))
-
-        self.ports = XBee.serialPorts()
-
+        self.ports = LiveInput.serialPorts()
         if len(self.ports) == 0:
             self.layout.addWidget(QLabel("No connections found"))
-
         self.com_options = []
         for i in range(len(self.ports)):
             self.com_options.append(
                 QRadioButton(f"{self.ports[i][0]} - {self.ports[i][1]}"))
             self.layout.addWidget(self.com_options[i])
+
+        self.layout.addWidget(QLabel("Choose an input source:"))
+        self.input_entry = QComboBox()
+        self.input_entry.addItems([it.name for it in InputType])
+        self.layout.addWidget(self.input_entry)
 
         self.buttonBox = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
@@ -55,8 +59,9 @@ class ConnectionDialog(QDialog):
     def onAccept(self):
         for i in range(len(self.com_options)):
             if self.com_options[i].isChecked():
-                self.parentWidget().port_name = self.ports[i][0]
                 self.accept()
+                self.callback(self.ports[i][0],
+                              InputType[self.input_entry.currentText()])
                 return
             self.reject()
 
@@ -140,48 +145,93 @@ class LiveToolbar(NERToolbar):
             self,
             parent: QWidget,
             message_model: MessageModel,
-            data_model: DataModelManager,
-            input: LiveInput):
+            data_model: DataModelManager):
         super(LiveToolbar, self).__init__(parent)
 
         self.message_model = message_model
         self.model = data_model
-        self.input = input
-        self.feed_started = False
+        self.connected = False
+        self.started = False
         self.setStyleSheet(
             "QToolBar { background-color: " +
             colors.SECONDARY_BACKGROUND +
             "; padding: 5%; border: none}")
 
+        self.connect_button = NERButton(
+            "Setup Connection", NERButton.Styles.GREEN)
+        self.connect_button.pressed.connect(self.changeConnection)
+        self.connect_button.setToolTip(
+            "Connect/disconnect from the live data feed")
         self.start_button = NERButton("Start", NERButton.Styles.GREEN)
         self.start_button.pressed.connect(self.start)
         self.start_button.setToolTip("Start/stop the live data feed")
-        clear_button = NERButton("Clear", NERButton.Styles.RED)
+        clear_button = NERButton("Clear Data", NERButton.Styles.RED)
         clear_button.pressed.connect(self.clear)
         clear_button.setToolTip("Clear all data currently received")
-        export_button = NERButton("Export", NERButton.Styles.BLUE)
+        export_button = NERButton("Export Data", NERButton.Styles.BLUE)
         export_button.pressed.connect(self.export)
         export_button.setToolTip("Export received data to a CSV file")
+        self.addLeft(self.connect_button)
         self.addLeft(self.start_button)
-        self.addLeft(clear_button)
-        self.addLeft(export_button)
+        self.addRight(clear_button)
+        self.addRight(export_button)
+
+    def changeConnection(self):
+        if not self.connected:
+            # Try to connect
+            dlg = ConnectionDialog(self, self._connect)
+            status = dlg.exec()
+            if status == 0:
+                QMessageBox.critical(
+                    self, "Error", "Invalid entries, please try again")
+        else:
+            # Try to disconnect
+            try:
+                getConnection().disconnect()
+                deleteConnection()
+                msg = "Successfully disconnected from the serial port"
+                self.connect_button.setText("Setup Connection")
+                self.connect_button.changeStyle(NERButton.Styles.GREEN)
+                self.connected = False
+            except LiveInputException as e:
+                msg = e.message
+            QMessageBox.information(self, "Disconnection Status", msg)
+
+    def _connect(self, port_name: str, input_type: InputType):
+        try:
+            connection = createConnection(input_type, self.message_model)
+            connection.connect(port_name)
+            msg = "Successfully connected to " + port_name
+            self.connect_button.setText("Disconnect")
+            self.connect_button.changeStyle(NERButton.Styles.RED)
+            self.connected = True
+        except LiveInputException as e:
+            msg = e.message
+        except TypeError as e:
+            msg = "Internal Error"
+        QMessageBox.information(self, "Connection Status", msg)
 
     def start(self):
-        if not self.feed_started:
+        if not self.connected:
+            QMessageBox.critical(
+                self, "Error", "Live input connection not set")
+            return
+
+        if not self.started:
             try:
-                self.input.start()
+                getConnection().start()
                 self.start_button.setText("Stop")
                 self.start_button.changeStyle(NERButton.Styles.RED)
-                self.feed_started = not self.feed_started
+                self.started = True
             except LiveInputException as e:
                 QMessageBox.information(
                     self, "Couldn't start input: ", e.message)
         else:
             try:
-                self.input.stop()
+                getConnection().stop()
                 self.start_button.setText("Start")
                 self.start_button.changeStyle(NERButton.Styles.GREEN)
-                self.feed_started = not self.feed_started
+                self.started = False
             except LiveInputException as e:
                 QMessageBox.information(
                     self, "Couldn't stop input:", e.message)
@@ -212,18 +262,19 @@ class VehicleWindow(QMainWindow):
         self.message_model = MessageModel(self, self.data_model)
         self.receive_filter_model = ReceiveFilterModel(
             self, self.message_model)
-        self.connection = XBee(self.message_model)
-        self.connection.addCallback("vehicle", self.message_model.addMessage)
-        self.port_name = None
 
-        self.views = {
-            0: ("CAN", CanView(self, self.message_model, self.receive_filter_model)),
-            1: ("Data", DataView(self, self.data_model))
-        }
+        self.views = {0: ("CAN",
+                          CanView(self,
+                                  self.message_model,
+                                  self.data_model,
+                                  self.receive_filter_model)),
+                      1: ("Data",
+                          DataView(self,
+                                   self.data_model))}
 
         # Window config
         self.setWindowTitle("Telemetry Hub")
-        self.setMinimumSize(QSize(1200, 600))
+        self.setMinimumSize(QSize(960, 720))
 
         # Multi-view layout config
         self.stacked_layout = QStackedLayout()
@@ -234,8 +285,7 @@ class VehicleWindow(QMainWindow):
             LiveToolbar(
                 self,
                 self.message_model,
-                self.data_model,
-                self.connection))
+                self.data_model))
         self.main_layout.addLayout(self.stacked_layout)
 
         widget = QWidget(self)
@@ -244,16 +294,8 @@ class VehicleWindow(QMainWindow):
 
         # Menu bar
         menu = self.menuBar()
-        file_menu = menu.addMenu("File")
         help_menu = menu.addMenu("Help")
         views_menu = menu.addMenu("View")
-
-        file_action_1 = QAction("connect", self)
-        file_action_2 = QAction("disconnect", self)
-        file_action_1.triggered.connect(self.connect)
-        file_action_2.triggered.connect(self.disconnect)
-        file_menu.addAction(file_action_1)
-        file_menu.addAction(file_action_2)
 
         help_action_1 = help_menu.addAction("Message Info")
         help_action_2 = help_menu.addAction("Data Info")
@@ -278,27 +320,3 @@ class VehicleWindow(QMainWindow):
     def selectDataView(self):
         self.stacked_layout.setCurrentIndex(1)
         self.current_view_menu.setTitle(self.views.get(1)[0])
-
-    def connect(self):
-        dlg = ConnectionDialog(self)
-        port_status = dlg.exec()
-
-        # If a proper port was selected
-        if port_status == 1:
-            try:
-                self.connection.connect(self.port_name)
-                msg = "Successfully connected to " + self.port_name
-            except LiveInputException as e:
-                msg = e.message
-            except TypeError as e:
-                msg = "Internal Error"
-            QMessageBox.information(self, "Connection Status", msg)
-
-    def disconnect(self):
-        try:
-            self.connection.disconnect()
-            msg = "Successfully disconnected from the serial port"
-            self.port_name = None
-        except LiveInputException as e:
-            msg = e.message
-        QMessageBox.information(self, "Disconnection Status", msg)

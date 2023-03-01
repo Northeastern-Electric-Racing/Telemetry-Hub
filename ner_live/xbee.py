@@ -33,6 +33,8 @@ class XBee(LiveInput):
         self.message_started = False
         self.current_message = ""
         self.state = InputState.NONE
+        self.error_count = 0
+        self.success_count = 0
 
     def _validateState(self, desired_state: InputState) -> None:
         """
@@ -133,8 +135,9 @@ class XBee(LiveInput):
                     if msg is not None:
                         self._model.addMessage(
                             self.parse(self.current_message))
-                except MessageFormatException as e:
-                    print(e.message)
+                    self.success_count += 1
+                except MessageFormatException:
+                    self.error_count += 1
                 except RuntimeError:
                     self.stop()
                 self.message_started = False
