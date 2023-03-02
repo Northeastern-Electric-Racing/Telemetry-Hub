@@ -12,8 +12,9 @@ from PyQt6.QtCore import (
     QObject
 )
 
-from ner_processing.master_mapping import DATA_IDS
 from ner_processing.data import Data
+from ner_processing.decode_statuses import getStatus, getStatuses
+from ner_processing.master_mapping import DATA_IDS
 from ner_telhub.utils.threads import Worker
 
 
@@ -230,6 +231,20 @@ class DataModelManager(QObject):
             return DATA_IDS[id]["name"]
         else:
             raise ValueError("Invalid data ID")
+        
+    @staticmethod
+    def getDecodedStatuses(data: Data) -> dict[str, int]:
+        """
+        Gets the decoded status of the data value. Throws a KeyError if an error occurs.
+        """
+        return getStatuses(data)
+
+    @staticmethod
+    def getDecodedStatus(data: Data, status_name: str) -> int:
+        """
+        Gets the specific decoded status of the data value. Throws a KeyError if an error occurs.
+        """
+        return getStatus(data, status_name)
 
     def addData(self, data: Data) -> None:
         """
