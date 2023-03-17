@@ -4,7 +4,7 @@ import os
 from PyQt6.QtGui import QIcon, QMovie
 from PyQt6.QtWidgets import (
     QHBoxLayout, QPushButton, QSizePolicy,
-    QToolBar, QWidget, QLabel
+    QToolBar, QWidget, QLabel, QMessageBox
 )
 
 resources = os.path.dirname(__file__) + "/../../resources"
@@ -64,6 +64,7 @@ class NERImageButton(NERButton):
         STOP = "stop_icon.png"
         TRASH = "trash_icon.png"
         CLOSE = "close_icon.png"
+        INFO = "info_icon.png"
 
     def __init__(self, icon_file: Icons, style=NERButton.Styles.DEFAULT):
         super().__init__("", style=style)
@@ -127,3 +128,20 @@ class NERLoadingSpinner(QLabel):
     def stopAnimation(self):
         self.movie.stop()
         self.setVisible(False)
+
+
+class NERInfoButton(NERImageButton):
+    """
+    Info button that opens a popup window with a description
+    """
+
+    def __init__(self, text: str):
+        super(
+            NERInfoButton,
+            self).__init__(
+            NERImageButton.Icons.INFO,
+            NERButton.Styles.BLUE)
+        self.setFixedSize(20, 20)
+        self.pressed.connect(
+            lambda: QMessageBox.information(
+                self, "Information", text))
