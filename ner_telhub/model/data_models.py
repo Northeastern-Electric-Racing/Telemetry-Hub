@@ -231,7 +231,7 @@ class DataModelManager(QObject):
             return DATA_IDS[id]["name"]
         else:
             raise ValueError("Invalid data ID")
-        
+
     @staticmethod
     def getDecodedStatuses(data: Data) -> dict[str, int]:
         """

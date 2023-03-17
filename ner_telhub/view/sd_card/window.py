@@ -16,8 +16,12 @@ from ner_telhub.model.data_models import DataModelManager
 from ner_processing.decode_files import LogFormat
 from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
 from ner_telhub.widgets.graphing_widgets import GraphDashboardWidget
-from ner_telhub.widgets.styled_widgets import NERButton, NERToolbar, NERLoadingSpinner
+from ner_telhub.widgets.styled_widgets import (
+    NERButton, NERToolbar,
+    NERLoadingSpinner, NERInfoButton
+)
 from ner_telhub.utils.timestream import TimestreamIngestionService
+from ner_telhub.descriptions import SD_OPTIONS_DESC
 
 
 class GraphDialog(QDialog):
@@ -336,10 +340,14 @@ class OptionsView(QWidget):
         self.data_model = data_model
         self.data_model.layoutChanged.connect(self.modelUpdated)
 
-        header = QLabel("Data Options")
-        header.setStyleSheet("font-size: 24px; font-weight: 600")
-        header.setAlignment(Qt.AlignmentFlag.AlignHCenter |
-                            Qt.AlignmentFlag.AlignTop)
+        header = QHBoxLayout()
+        header_label = QLabel("Data Options")
+        header_label.setStyleSheet("font-size: 24px; font-weight: 600")
+        header_info = NERInfoButton(SD_OPTIONS_DESC)
+        header.addStretch()
+        header.addWidget(header_label)
+        header.addWidget(header_info)
+        header.addStretch()
 
         # Setup layouts
         layout1: QVBoxLayout = self.generateLayout("Current Data")
@@ -415,7 +423,7 @@ class OptionsView(QWidget):
         sub_layout.addLayout(layout3)
         sub_layout.addStretch()
         main_layout = QVBoxLayout()
-        main_layout.addWidget(header)
+        main_layout.addLayout(header)
         main_layout.addLayout(sub_layout)
         self.setLayout(main_layout)
 
