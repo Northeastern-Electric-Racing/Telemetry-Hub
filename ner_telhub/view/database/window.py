@@ -12,7 +12,8 @@ from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.widgets.menu_widgets import DataIds
 from ner_telhub.widgets.styled_widgets import NERButton, NERToolbar
 from ner_telhub.widgets.graphing_widgets import GraphDashboardWidget
-from ner_telhub.utils.timestream import TimestreamQueryService, DATE_TIME_FORMAT
+from ner_telhub.utils.timestream import TimestreamQueryService
+from ner_telhub.utils.timestream_constants import DATE_TIME_FORMAT
 
 
 class QueryDialog(QDialog):

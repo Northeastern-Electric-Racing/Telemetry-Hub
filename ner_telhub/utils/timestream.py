@@ -1,29 +1,35 @@
+import multiprocessing
+
 import boto3
 from botocore.config import Config
-from dotenv import load_dotenv
-import os
 from typing import List, Tuple
 from PyQt6.QtCore import pyqtBoundSignal, QDateTime
 
-from ner_processing.data import Data
 from ner_telhub.model.data_models import DataModel, DataModelManager
+from ner_telhub.utils.thread_timestream import thread_timestream
 from ner_telhub.utils.threads import Worker
+from ner_telhub.utils.timestream_constants import *
 
-load_dotenv()
-
-DATABASE_NAME = os.getenv("TIMESTREAM_DATABASE")
-TABLE_NAME = os.getenv("TIMESTREAM_TABLE")
-REGION_NAME = os.getenv("TIMESTREAM_REGION")
-ACCESS_KEY = os.getenv("TIMESTREAM_ACCESS_KEY")
-SECRET_ACCESS_KEY = os.getenv("TIMESTREAM_SECRET_ACCESS_KEY")
 # WARNING: Do not change to more than 100 (max allowed by timestream)
-BATCH_SIZE = 100
+WRITE_BATCH_SIZE = 100
 
-MAX_QUERY_SIZE = 1000000  # In data points (used to prevent overflowing user)
-ONE_GB_IN_BYTES = 1073741824
-QUERY_COST_PER_GB_IN_DOLLARS = 0.01
+PROCESSORS = 8
+THREAD_LINES = 300000
 
-DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss.zzz"
+
+def process_rows(rows, manager, progress_signal, current_row, total_data_count):
+    with multiprocessing.Pool(PROCESSORS) as p:
+        out = p.map(thread_timestream, rows)
+
+    current_row += len(out)
+    progress_pct = int(100 * current_row / total_data_count)
+
+    manager.addDataList(out)
+    out.clear()
+
+    progress_signal.emit(progress_pct)
+
+    return current_row
 
 
 class TimestreamIngestionService:
@@ -95,7 +101,7 @@ class TimestreamIngestionService:
                 }
                 records.append(record)
                 total_counter += 1
-                if len(records) == BATCH_SIZE:
+                if len(records) == WRITE_BATCH_SIZE:
                     success_counter += TimestreamIngestionService._submit_batch(
                         client, records)
                     records = []
@@ -140,65 +146,6 @@ class TimestreamQueryService:
                 "Could not connect to the database. Credentials may be invalid.")
         self._paginator = self._client.get_paginator('query')
 
-    SELECT_AVAILABLE_TEST_IDS = F"""
-        SELECT DISTINCT TestId FROM {DATABASE_NAME}.{TABLE_NAME}
-    """
-
-    SELECT_MIN_TIME_FOR_SESSION = F"""
-        SELECT time FROM {DATABASE_NAME}.{TABLE_NAME}
-        WHERE TestId = '?'
-        ORDER BY time ASC
-        LIMIT 1
-    """
-
-    SELECT_MAX_TIME_FOR_SESSION = F"""
-        SELECT time FROM {DATABASE_NAME}.{TABLE_NAME}
-        WHERE TestId = '?'
-        ORDER BY time DESC
-        LIMIT 1
-    """
-
-    SELECT_DATA_COUNT = F"""
-        SELECT COUNT(*) FROM {DATABASE_NAME}.{TABLE_NAME}
-        WHERE TestId = '?'
-        AND time >= '?'
-        AND time <= '?'
-    """
-
-    SELECT_DATA_COUNT_WITH_DATA_ID = F"""
-        SELECT COUNT(*) FROM {DATABASE_NAME}.{TABLE_NAME}
-        WHERE TestId = '?'
-        AND measure_name = '?'
-        AND time >= '?'
-        AND time <= '?'
-    """
-
-    SELECT_ALL_FOR_SESSION = f"""
-        SELECT * FROM {DATABASE_NAME}.{TABLE_NAME}
-        WHERE TestId = '?'
-    """
-
-    SELECT_ALL_WITH_DATA_ID_FOR_SESSION = f"""
-        SELECT * FROM {DATABASE_NAME}.{TABLE_NAME}
-        WHERE TestId = '?'
-        AND measure_name = '?'
-    """
-
-    SELECT_ALL_WITHIN_TIME_RANGE_FOR_SESSION = F"""
-        SELECT * FROM {DATABASE_NAME}.{TABLE_NAME}
-        WHERE TestId = '?'
-        AND time >= '?'
-        AND time <= '?'
-    """
-
-    SELECT_ALL_WITH_ID_AND_WITHIN_TIME_RANGE_FOR_SESSION = f"""
-        SELECT * FROM {DATABASE_NAME}.{TABLE_NAME}
-        WHERE TestId = '?'
-        AND measure_name = '?'
-        AND time >= '?'
-        AND time <= '?'
-    """
-
     def run_query(self, query_string: str, *args):
         """
         Example formats of results are as follows:
@@ -220,14 +167,44 @@ class TimestreamQueryService:
         except Exception as err:
             raise RuntimeError("Exception while running query:", err)
 
+    def thread_query(self, query_string: str, progress_signal: pyqtBoundSignal, manager: DataModelManager, total_data_count, *args):
+        """
+        Example formats of results are as follows:
+        - Get all test IDs = [{'TestId': 'test1'}, {'TestId': 'test2'}, {'TestId': 'test3'}]
+        - Get sessions start time = [{'time': '2022-08-01 00:04:07.004000000'}]
+        - Get data = [{'TestId': 'test1', 'measure_name': '1', 'time': '2022-08-01 00:04:07.005000000',
+            'measure_value::double': '2931.0'}, {...}]
+        """
+
+        current_row = 0
+
+        for arg in args:
+            query_string = query_string.replace("?", arg, 1)
+        try:
+            page_iterator = self._paginator.paginate(QueryString=query_string)
+            data = []
+            for page in page_iterator:
+                for row in page['Rows']:
+                    data.append(row)
+
+                    if len(data) >= THREAD_LINES:
+                        current_row = process_rows(data, manager, progress_signal, current_row, total_data_count)
+                        data.clear()
+
+            if len(data) > 0:
+                process_rows(data, manager, progress_signal, current_row, total_data_count)
+                data.clear()
+        except Exception as err:
+            raise RuntimeError("Exception while querying datapoint: ", err)
+
     def getTestIds(self) -> List[str]:
-        data = self.run_query(TimestreamQueryService.SELECT_AVAILABLE_TEST_IDS)
+        data = self.run_query(SELECT_AVAILABLE_TEST_IDS)
         test_ids = [d['TestId'] for d in data]
         return test_ids
 
     def getStartTimeForSession(self, session_id: str) -> QDateTime:
         data = self.run_query(
-            TimestreamQueryService.SELECT_MIN_TIME_FOR_SESSION,
+            SELECT_MIN_TIME_FOR_SESSION,
             session_id)
         time = data[0]['time']
         time = time[:-6]  # Get rid of precision after milliseconds
@@ -235,7 +212,7 @@ class TimestreamQueryService:
 
     def getEndTimeForSession(self, session_id: str) -> QDateTime:
         data = self.run_query(
-            TimestreamQueryService.SELECT_MAX_TIME_FOR_SESSION,
+            SELECT_MAX_TIME_FOR_SESSION,
             session_id)
         time = data[0]['time']
         time = time[:-6]  # Get rid of precision after milliseconds
@@ -254,13 +231,13 @@ class TimestreamQueryService:
 
         if data_id is None:
             result = self.run_query(
-                TimestreamQueryService.SELECT_DATA_COUNT,
+                SELECT_DATA_COUNT,
                 session_id,
                 min_time,
                 max_time)
         else:
             result = self.run_query(
-                TimestreamQueryService.SELECT_DATA_COUNT_WITH_DATA_ID,
+                SELECT_DATA_COUNT_WITH_DATA_ID,
                 session_id,
                 data_id,
                 min_time,
@@ -321,59 +298,39 @@ class TimestreamQueryService:
                 test_id, data_id, time_range)
         except BaseException:
             raise RuntimeError("Invalid test ID")
-        running_data_count = 0
-        current_progress_pct = 0
 
-        message_signal.emit("Fetching data from database...")
+        message_signal.emit("Fetching data from database and entering it into the model...")
 
         if (time_range is None) and (data_id is None):
-            data = service.run_query(
-                TimestreamQueryService.SELECT_ALL_FOR_SESSION, test_id)
+            service.thread_query(
+                SELECT_ALL_FOR_SESSION, progress_signal, manager, test_id)
         elif time_range is None:
-            data = service.run_query(
-                TimestreamQueryService.SELECT_ALL_WITH_DATA_ID_FOR_SESSION,
+            service.thread_query(
+                SELECT_ALL_WITH_DATA_ID_FOR_SESSION,
+                progress_signal,
+                manager,
+                total_data_count,
                 test_id,
                 data_id)
         elif data_id is None:
-            data = service.run_query(
-                TimestreamQueryService.SELECT_ALL_WITHIN_TIME_RANGE_FOR_SESSION,
+            service.thread_query(
+                SELECT_ALL_WITHIN_TIME_RANGE_FOR_SESSION,
+                progress_signal,
+                manager,
+                total_data_count,
                 test_id,
                 time_range[0],
                 time_range[1])
         else:
-            data = service.run_query(
-                TimestreamQueryService.SELECT_ALL_WITH_ID_AND_WITHIN_TIME_RANGE_FOR_SESSION,
+            service.thread_query(
+                SELECT_ALL_WITH_ID_AND_WITHIN_TIME_RANGE_FOR_SESSION,
+                progress_signal,
+                manager,
+                total_data_count,
                 test_id,
                 data_id,
                 time_range[0],
                 time_range[1])
-
-        message_signal.emit("Entering data into the model...")
-
-        data_list = []
-        for d in data:
-            try:
-                test_id = d['TestId']
-                data_id = int(d['measure_name'])
-                time = QDateTime.fromString(
-                    d['time'][:-6], DATE_TIME_FORMAT).toPyDateTime()
-                if 'measure_value::double' in d:
-                    value = float(d['measure_value::double'])
-                else:
-                    value = d['measure_value::varchar']
-                data_list.append(Data(time, data_id, value))
-                running_data_count += 1
-            except BaseException:
-                raise RuntimeError("Error while querying data point: ", d)
-            progress_pct = int(100 * running_data_count / total_data_count)
-            if progress_pct != current_progress_pct:
-                current_progress_pct = progress_pct
-                progress_signal.emit(progress_pct)
-            if len(data_list) >= 10000:
-                manager.addDataList(data_list)
-                data_list.clear()
-        if len(data_list) > 0:
-            manager.addDataList(data_list)
 
     def _parse_row(self, column_info, row) -> List[Tuple[str, str]]:
         data = row['Data']
