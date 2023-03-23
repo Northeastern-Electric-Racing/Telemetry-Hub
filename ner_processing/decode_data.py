@@ -15,7 +15,7 @@ def decodeMock(data: List[int]) -> Dict[int, Any]:
         0: 0
     }
 
-def decode1(data: List[int]) -> Dict[int, Any]:
+def decodeAccumulatorStatus(data: List[int]) -> Dict[int, Any]:
     return {
         1: pd.bigEndian(data[0:2]),
         2: pd.twosComp(pd.bigEndian(data[2:4])),
@@ -24,14 +24,12 @@ def decode1(data: List[int]) -> Dict[int, Any]:
         5: data[7]
     }
 
-def decode2(data: List[int]) -> Dict[int, Any]:
+def decodeBMSStatus(data: List[int]) -> Dict[int, Any]:
     return {
-        6: data[0],
-        7: data[1],
-        8: pd.bigEndian(data[2:4]),
-        9: pd.bigEndian(data[4:6]),
-        10: pd.twosComp(data[6], 8),
-        11: pd.twosComp(data[7], 8)
+        106: data[0],
+        107: pd.littleEndian(data[1:5]),
+        10: pd.twosComp(data[5], 8),
+        11: pd.twosComp(data[6], 8)
     }
 
 def decode3(data: List[int]) -> Dict[int, Any]:
@@ -252,4 +250,28 @@ def decode35(data: List[int]) -> Dict[int, Any]:
         102: pd.bigEndian(data[0:2]),
         103: pd.bigEndian(data[2:4]),
         104: data[4]
+    }
+
+def decodeMPUDashboardInfo(data: List[int]) -> Dict[int, Any]:
+    return {
+        105: data[0]
+    }
+
+
+def decodeGPS1(data: List[int]) -> Dict[int, Any]:
+    return {
+        108: pd.twosComp(pd.littleEndian(data[0:4]), 32) / 10000000, # Longitude in degrees * 1e-7 (Get rid of multiplier)
+        109: pd.twosComp(pd.littleEndian(data[4:8]), 32) / 10000000 # Latitude in degrees * 1e-7 (Get rid of multiplier)
+    }
+
+def decodeGPS2(data: List[int]) -> Dict[int, Any]:
+    return {
+        110: pd.twosComp(pd.littleEndian(data[0:4]), 32),
+        111: pd.twosComp(pd.littleEndian(data[4:8]), 32) / 1000 # Altitude in mm (transform to m)
+    }
+
+def decodeGPS3(data: List[int]) -> Dict[int, Any]:
+    return {
+        112: pd.twosComp(pd.littleEndian(data[0:4]), 32) / 1000, # Ground speed in mm/sec (transform to m/s)
+        113: pd.twosComp(pd.littleEndian(data[4:8]), 32) / 100000 # Heading in degrees * 1e-5 (Get rid of multiplier)
     }

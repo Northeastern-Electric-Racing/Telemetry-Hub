@@ -10,11 +10,11 @@ from decode_data import *
 MESSAGE_IDS = {
     1: {
         "description": "accumulator status",
-        "decoder": decode1
+        "decoder": decodeAccumulatorStatus
     },
     2: {
         "description": "BMS status",
-        "decoder": decode2
+        "decoder": decodeBMSStatus
     },
     3: {
         "description": "shutdown control",
@@ -136,10 +136,6 @@ MESSAGE_IDS = {
         "description": "unknown 2019",
         "decoder": decodeMock,
     },
-    5: {
-        "description": "Is-Charging",
-        "decoder": decodeMock,
-    },
     771: {
         "description": "strain gauge",
         "decoder": decode34,
@@ -148,6 +144,22 @@ MESSAGE_IDS = {
         "description": "wheel state",
         "decoder": decode35,
     },
+    10: {
+        "description": "MPU States",
+        "decoder": decodeMPUDashboardInfo,
+    },
+    772: {
+        "description": "GPS Data 1",
+        "decoder": decodeGPS1,
+    },
+    773: {
+        "description": "GPS Data 2",
+        "decoder": decodeGPS2,
+    },
+    774: {
+        "description": "GPS Data 3",
+        "decoder": decodeGPS3,
+    }
 }
 
 # Mapping from data ids to their description (potentially add format information)
@@ -572,5 +584,40 @@ DATA_IDS = {
         "name": "Wheel Buttons",
         "units": "",
     },
+    105: {
+        "name": "MPU Mode State",
+        "units": ""
+    },
+    106: {
+        "name": "BMS State",
+        "units": ""
+    },
+    107: {
+        "name": "BMS Faults",
+        "units": ""
+    },
+    108: {
+        "name": "Latitude",
+        "units": "Deg"
+    },
+    109: {
+        "name": "Longitude",
+        "units": "Deg"
+    },
+    110: {
+        "name": "GPS Fix Status",
+        "units": ""
+    },
+    111: {
+        "name": "Altitude",
+        "units": "M"
+    },
+    112: {
+        "name": "Ground Speed",
+        "units": "M/S"
+    },
+    113: {
+        "name": "Heading Direction",
+        "units": "Deg"
+    },
 }
-
