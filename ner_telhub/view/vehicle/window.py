@@ -260,6 +260,7 @@ class VehicleWindow(QMainWindow):
         super().__init__(parent)
 
         self.data_model = DataModelManager(self)
+        self.data_model.setDataLimiting(True)
         self.message_model = MessageModel(self, self.data_model)
         self.receive_filter_model = ReceiveFilterModel(
             self, self.message_model)

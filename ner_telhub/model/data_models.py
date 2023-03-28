@@ -17,6 +17,8 @@ from ner_processing.decode_statuses import getStatus, getStatuses
 from ner_processing.master_mapping import DATA_IDS
 from ner_telhub.utils.threads import Worker
 
+MAX_LIVE_GRAPH_POINTS = 200
+
 
 class DataModel(QAbstractTableModel):
     """
@@ -45,6 +47,8 @@ class DataModel(QAbstractTableModel):
         self.max_value = -sys.maxsize
         # Stores whether we are currently removing duplicated data values
         self.compressing = False
+        # Are we limiting the max data count
+        self.isDataLimited = False
 
     def data(self, index: QModelIndex, role: int) -> Any:
         """
@@ -185,7 +189,13 @@ class DataModel(QAbstractTableModel):
                 if value == last_value:
                     self.compressing = True  # Start compressing if two consecutive values found
 
+        while self.isDataLimited and len(self._data) > MAX_LIVE_GRAPH_POINTS:
+            self.deleteFirstData()
+
         self.layoutChanged.emit()
+
+    def setDataLimiting(self, isLimiting: bool):
+        self.isDataLimited = isLimiting
 
     def deleteAllData(self) -> None:
         """
@@ -202,6 +212,12 @@ class DataModel(QAbstractTableModel):
         """
         QReadLocker(self._lock)
         return self._data[-1][1]
+    
+    def deleteFirstData(self) -> None:
+        """
+        Deletes the first datapoint from the model.
+        """
+        self._data.pop(0)
 
 
 class DataModelManager(QObject):
@@ -220,6 +236,7 @@ class DataModelManager(QObject):
         """
         super(DataModelManager, self).__init__(parent)
         self._datamap: dict[int, DataModel] = {}
+        self.isDataLimiting = False
 
     def _createModelIfNone(self, id: int) -> None:
         """
@@ -227,6 +244,7 @@ class DataModelManager(QObject):
         """
         if id not in self._datamap:
             self._datamap[id] = DataModel(id)
+            self._datamap[id].setDataLimiting(self.isDataLimiting)
             self._datamap[id].moveToThread(self.thread())
             self._datamap[id].setParent(self)
 
@@ -393,3 +411,11 @@ class DataModelManager(QObject):
                     writer.writerow(
                         [str_time, id, desc, data[1], DATA_IDS[id]["units"]])
         message_signal.emit("Finished CSV export")
+
+    def setDataLimiting(self, isLimiting: bool) -> None:
+        """
+        Sets whether or not the model has a limited data count
+        """
+        self.isDataLimiting = isLimiting
+        for model in self._datamap.values():
+            model.setDataLimiting(isLimiting)

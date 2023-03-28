@@ -281,16 +281,10 @@ class GraphWidget(QWidget):
             refresh_button.pressed.connect(self.updateChart)
             refresh_button.setToolTip("Refresh the live data")
             toolbar.addRight(refresh_button)
-            self.live_data = False
-            self.live_button = NERImageButton(
-                NERImageButton.Icons.START, NERButton.Styles.GREEN)
-            self.live_button.pressed.connect(self.toggleLiveData)
-            self.live_button.setToolTip(
-                "Start/stop live updating automatically")
-            toolbar.addRight(self.live_button)
 
             self.timer = QTimer()
             self.timer.timeout.connect(self.updateChart)
+            self.timer.start()
 
         remove_button = NERImageButton(
             NERImageButton.Icons.CLOSE,
@@ -362,28 +356,19 @@ class GraphWidget(QWidget):
         """
         Updates the axis of the chart by finding the max/min
         """
+
         for data in self.state.data:
             if data is not None:
-                self.updateAxis(self.model.getDataModel(data).getMinTime(),
-                                self.model.getDataModel(data).getMaxTime(),
-                                self.model.getDataModel(data).getMinValue(),
-                                self.model.getDataModel(data).getMaxValue())
+                try:
+                    self.updateAxis(
+                        self.model.getDataModel(data).getMinTime(),
+                        self.model.getDataModel(data).getMaxTime(),
+                        self.model.getDataModel(data).getMinValue(),
+                        self.model.getDataModel(data).getMaxValue())
+                except ValueError:  # for invalid data IDs
+                    self.reset()
 
         self.chart_view.update()
-
-    def toggleLiveData(self):
-        """
-        Starts of stops the live data button/timer.
-        """
-        if self.live_data:
-            self.live_button.changeStyle(NERButton.Styles.GREEN)
-            self.live_button.resetIcon(NERImageButton.Icons.START)
-            self.timer.stop()
-        else:
-            self.live_button.changeStyle(NERButton.Styles.RED)
-            self.live_button.resetIcon(NERImageButton.Icons.STOP)
-            self.timer.start(1000)
-        self.live_data = not self.live_data
 
     def addSeries(self, name: str, data_id: int):
         """
@@ -424,10 +409,8 @@ class GraphWidget(QWidget):
         if self.range_x is None:
             self.range_x = [xmin, xmax]
         else:
-            if xmin < self.range_x[0]:
-                self.range_x[0] = xmin
-            if xmax > self.range_x[1]:
-                self.range_x[1] = xmax
+            self.range_x[0] = xmin
+            self.range_x[1] = xmax
 
         if self.range_y is None:
             self.range_y = [ymin, ymax]
