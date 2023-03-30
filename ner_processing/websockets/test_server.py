@@ -1,6 +1,7 @@
 
 import asyncio
 import websockets
+from websockets.server import WebSocketServerProtocol
 from threading import Thread
 
 from timeit import default_timer
@@ -48,7 +49,7 @@ class Message:
         return out
 
 
-connections = []
+connections: WebSocketServerProtocol = []
 
 
 class MessageThread(Thread):
@@ -70,22 +71,33 @@ class MessageThread(Thread):
                 m.update_message()
                 last_time = default_timer()
 
+async def ping_clients():
+    while True:
+        for connection in connections:
+            await connection.send("Hello there")
+            print("Said high to connections")
+        await asyncio.sleep(2)
 
-async def handle(websocket):
-    name = await websocket.recv()
-    print(f"Received from {name}")
+
+async def handle(websocket: WebSocketServerProtocol):
     connections.append(websocket)
+    async for message in websocket:
+        print(f"Local: f{websocket.local_address}")
+        print(f"Remote: f{websocket.remote_address}")
+        print(f"Received from {message}")
 
 
-if __name__ == "__main__":
+# create handler for each connection
+async def main():
     # message_thread = MessageThread()
     # message_thread.start()
     # message_thread.join()
 
-    start_server = websockets.serve(handle, '127.0.0.1', 8765)
-    asyncio.get_event_loop().run_until_complete(start_server)
-    asyncio.get_event_loop().run_forever()
-    
+    async with websockets.serve(handle, '127.0.0.1', 8765):
+        task = asyncio.create_task(ping_clients())
+        await asyncio.Future()
+
     print("Exit")
 
-
+if __name__ == "__main__":
+    asyncio.run(main())
