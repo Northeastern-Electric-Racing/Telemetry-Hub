@@ -11,6 +11,7 @@ websockets = "*"
 boto3 = "*"
 python-dotenv = "*"
 darkdetect = "*"
+pyqt6-webengine = "*"
 
 [dev-packages]
 pyinstaller = "*"
