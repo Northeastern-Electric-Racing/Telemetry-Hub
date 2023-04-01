@@ -4,3 +4,4 @@ __pycache__/
 logs/
 .idea/
 Pipfile.lock
+.DS_Store

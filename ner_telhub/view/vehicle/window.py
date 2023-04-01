@@ -4,10 +4,11 @@ from PyQt6.QtWidgets import (
     QMessageBox, QDialog, QDialogButtonBox,
     QVBoxLayout, QLabel, QLineEdit,
     QGridLayout, QFileDialog, QRadioButton,
-    QComboBox
+    QComboBox, QTabWidget, QApplication
 )
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import QSize
+from .fault_view import FaultView
 
 from ner_live.live_input import LiveInput, LiveInputException, InputType
 from ner_live.utils import getConnection, createConnection, deleteConnection
@@ -265,32 +266,39 @@ class VehicleWindow(QMainWindow):
             self, self.message_model)
 
         self.views = {0: ("CAN",
-                          CanView(self,
-                                  self.message_model,
-                                  self.data_model,
-                                  self.receive_filter_model)),
-                      1: ("Data",
-                          DataView(self,
-                                   self.data_model)),
-                      2: ("Map",
-                          MapView(self,
-                                  self.data_model))}
+                  CanView(self,
+                          self.message_model,
+                          self.data_model,
+                          self.receive_filter_model)),
+              1: ("Data",
+                  DataView(self,
+                           self.data_model)),
+              2: ("Map",
+                  MapView(self,
+                          self.data_model)),
+              3: ("Fault",
+                  FaultView(self))}
+
 
         # Window config
         self.setWindowTitle("Telemetry Hub")
         self.setMinimumSize(QSize(960, 720))
 
-        # Multi-view layout config
-        self.stacked_layout = QStackedLayout()
+        # Create a QTabWidget
+        self.tab_widget = QTabWidget(self)
+
+        # Add the views as tabs to the QTabWidget
         for view in self.views.values():
-            self.stacked_layout.addWidget(view[1])
+            self.tab_widget.addTab(view[1], view[0])
+
+        # Modify the QVBoxLayout to include the QTabWidget instead of the QStackedLayout
         self.main_layout = QVBoxLayout()
         self.main_layout.addWidget(
             LiveToolbar(
                 self,
                 self.message_model,
                 self.data_model))
-        self.main_layout.addLayout(self.stacked_layout)
+        self.main_layout.addWidget(self.tab_widget)
 
         widget = QWidget(self)
         widget.setLayout(self.main_layout)
@@ -299,26 +307,31 @@ class VehicleWindow(QMainWindow):
         # Menu bar
         menu = self.menuBar()
         help_menu = menu.addMenu("Help")
-        views_menu = menu.addMenu("View")
+        # views_menu = menu.addMenu("View")
 
         help_action_1 = help_menu.addAction("Message Info")
         help_action_2 = help_menu.addAction("Data Info")
         help_action_1.triggered.connect(lambda: MessageIds(self).show())
         help_action_2.triggered.connect(lambda: DataIds(self).show())
 
-        views_select_can = QAction(self.views.get(0)[0], self)
-        views_select_data = QAction(self.views.get(1)[0], self)
-        views_select_map = QAction(self.views.get(2)[0], self)
-        views_select_can.triggered.connect(self.selectCanView)
-        views_select_data.triggered.connect(self.selectDataView)
-        views_select_map.triggered.connect(self.selectMapView)
-        views_menu.addAction(views_select_can)
-        views_menu.addAction(views_select_data)
-        views_menu.addAction(views_select_map)
+        # views_select_can = QAction(self.views.get(0)[0], self)
+        # views_select_data = QAction(self.views.get(1)[0], self)
+        # views_select_map = QAction(self.views.get(2)[0], self)
+        # views_menu.addAction(views_select_can)
+        # views_menu.addAction(views_select_data)
+        # views_menu.addAction(views_select_map)
 
-        self.current_view_menu = menu.addMenu(
-            self.views.get(self.stacked_layout.currentIndex())[0])
-        self.current_view_menu.setDisabled(True)
+        # Define current_view_menu attribute here
+        # self.current_view_menu = menu.addMenu(
+        #     self.views.get(self.tab_widget.currentIndex())[0])
+        # self.current_view_menu.setDisabled(True)
+
+        # Connect the currentChanged signal after initializing current_view_menu
+        # self.tab_widget.currentChanged.connect(self.update_current_view_menu_title)
+
+    def update_current_view_menu_title(self, index: int):
+         view_title = self.views.get(index, ("Unknown",))[0]
+         self.current_view_menu.setTitle(view_title)
 
     def selectCanView(self):
         self.stacked_layout.setCurrentIndex(0)
@@ -331,3 +344,5 @@ class VehicleWindow(QMainWindow):
     def selectMapView(self):
         self.stacked_layout.setCurrentIndex(2)
         self.current_view_menu.setTitle(self.views.get(2)[0])
+
+    
