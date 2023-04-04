@@ -195,6 +195,14 @@ class DataModel(QAbstractTableModel):
         self._reset_state()
         self.layoutChanged.emit()
 
+    def getLastestValue(self) -> Any:
+        """
+        Gets the latest value of datamodel. Will throw an index error if there is not
+        at least one element.
+        """
+        QReadLocker(self._lock)
+        return self._data[-1][1]
+
 
 class DataModelManager(QObject):
     """

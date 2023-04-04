@@ -35,95 +35,12 @@ Note that I have a $200 limit per month on my account for requests so use them w
         let map;
         let polyline;
 
-        function initMap() {
-          const nightModeStyles = [
-              { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
-              { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
-              { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
-              {
-                  featureType: "administrative.locality",
-                  elementType: "labels.text.fill",
-                  stylers: [{ color: "#d59563" }],
-              },
-              {
-                  featureType: "poi",
-                  elementType: "labels.text.fill",
-                  stylers: [{ color: "#d59563" }],
-              },
-              {
-                  featureType: "poi.park",
-                  elementType: "geometry",
-                  stylers: [{ color: "#263c3f" }],
-              },
-              {
-                  featureType: "poi.park",
-                  elementType: "labels.text.fill",
-                  stylers: [{ color: "#6b9a76" }],
-              },
-              {
-                  featureType: "road",
-                  elementType: "geometry",
-                  stylers: [{ color: "#38414e" }],
-              },
-              {
-                  featureType: "road",
-                  elementType: "geometry.stroke",
-                  stylers: [{ color: "#212a37" }],
-              },
-              {
-                  featureType: "road",
-                  elementType: "labels.text.fill",
-                  stylers: [{ color: "#9ca5b3" }],
-              },
-              {
-                  featureType: "road.highway",
-                  elementType: "geometry",
-                  stylers: [{ color: "#746855" }],
-              },
-              {
-                  featureType: "road.highway",
-                  elementType: "geometry.stroke",
-                  stylers: [{ color: "#1f2835" }],
-              },
-              {
-                  featureType: "road.highway",
-                  elementType: "labels.text.fill",
-                  stylers: [{ color: "#f3d19c" }],
-              },
-              {
-                  featureType: "transit",
-                  elementType: "geometry",
-                  stylers: [{ color: "#2f3948" }],
-              },
-              {
-                  featureType: "transit.station",
-                  elementType: "labels.text.fill",
-                  stylers: [{ color: "#d59563" }],
-              },
-              {
-                  featureType: "water",
-                  elementType: "geometry",
-                  stylers: [{ color: "#17263c" }],
-              },
-              {
-                  featureType: "water",
-                  elementType: "labels.text.fill",
-                  stylers: [{ color: "#515c6d" }],
-              },
-              {
-                  featureType: "water",
-                  elementType: "labels.text.stroke",
-                  stylers: [{ color: "#17263c" }],
-              },
-          ];  
-          
+        function initMap() {      
           map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: 42.7749, lng: -71.4194 },
+                center: { lat: 42.339855, lng: -71.088706 },
                 zoom: 20,
                 heading: 65,
-                tilt: 65,
-                //styles: nightModeStyles,
-                //mapId: "90f87356969d889c",
+                tilt: 50,
                 mapTypeId: 'satellite',
             });
 
@@ -148,25 +65,19 @@ Note that I have a $200 limit per month on my account for requests so use them w
                         break;
                 }
             }
+        }
 
-            const buttons = [
-                ["Rotate Left", "rotate", 20, google.maps.ControlPosition.LEFT_CENTER],
-                ["Rotate Right", "rotate", -20, google.maps.ControlPosition.RIGHT_CENTER],
-                ["Tilt Down", "tilt", 20, google.maps.ControlPosition.TOP_CENTER],
-                ["Tilt Up", "tilt", -20, google.maps.ControlPosition.BOTTOM_CENTER],
-            ];
-
-            buttons.forEach(([text, mode, amount, position]) => {
-                const controlDiv = document.createElement("div");
-                const controlUI = document.createElement("button");
-
-                controlUI.classList.add("ui-button");
-                controlUI.innerText = `${text}`;
-                controlUI.addEventListener("click", () => {
-                    adjustMap(mode, amount);
-                });
-                controlDiv.appendChild(controlUI);
-                map.controls[position].push(controlDiv);
+        function clearPath() {
+            if (polyline) {
+                polyline.setMap(null);
+            }
+            polyline = new google.maps.Polyline({
+                map: map,
+                path: [],
+                geodesic: true,
+                strokeColor: "#FF0000",
+                strokeOpacity: 1.0,
+                strokeWeight: 2,
             });
         }
 
@@ -178,7 +89,7 @@ Note that I have a $200 limit per month on my account for requests so use them w
                 };
             });
             polyline.setPath(lat_lon_data);
-            map.setCenter(lat_lon_data[0]);
+            map.setCenter(lat_lon_data[lat_lon_data.length - 1]);
             map.setZoom(19); 
             map.setHeading(heading); 
         }
