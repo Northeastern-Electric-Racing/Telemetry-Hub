@@ -18,7 +18,7 @@ def decodeMock(data: List[int]) -> Dict[int, Any]:
 def decodeAccumulatorStatus(data: List[int]) -> Dict[int, Any]:
     return {
         1: pd.bigEndian(data[0:2]),
-        2: pd.twosComp(pd.bigEndian(data[2:4])),
+        2: pd.twosComp(pd.bigEndian(data[2:4])) / 10,
         3: pd.bigEndian(data[4:6]),
         4: data[6],
         5: data[7]
@@ -37,12 +37,18 @@ def decode3(data: List[int]) -> Dict[int, Any]:
         12: data[0]
     }
 
-def decode4(data: List[int]) -> Dict[int, Any]:
+def decodeCellVoltages(data: List[int]) -> Dict[int, Any]:
+    high_cell_volt_chip_number = (data[2] >> 0) & 15
+    high_cell_volt_cell_number = (data[2] >> 4) & 15
+    low_cell_volt_chip_number = (data[5] >> 0) & 15
+    low_cell_volt_cell_number = (data[5] >> 4) & 15
     return {
         13: pd.bigEndian(data[0:2]),
-        14: data[2],
+        121: high_cell_volt_chip_number,
+        122: high_cell_volt_cell_number,
         15: pd.bigEndian(data[3:5]),
-        16: data[5],
+        123: low_cell_volt_chip_number,
+        124: low_cell_volt_cell_number,
         17: pd.bigEndian(data[6:8])
     }
 
@@ -274,4 +280,33 @@ def decodeGPS3(data: List[int]) -> Dict[int, Any]:
     return {
         112: pd.twosComp(pd.littleEndian(data[0:4]), 32) / 1000, # Ground speed in mm/sec (transform to m/s)
         113: pd.twosComp(pd.littleEndian(data[4:8]), 32) / 100000 # Heading in degrees * 1e-5 (Get rid of multiplier)
+    }
+
+def decodeCellTemps(data: List[int]) -> Dict[int, Any]:
+    high_cell_temp_chip_number = (data[2] >> 0) & 15
+    high_cell_temp_cell_number = (data[2] >> 4) & 15
+    low_cell_temp_chip_number = (data[5] >> 0) & 15
+    low_cell_temp_cell_number = (data[5] >> 4) & 15
+
+    return {
+        114: pd.bigEndian(data[0:2]),
+        115: high_cell_temp_chip_number,
+        116: high_cell_temp_cell_number,
+        117: pd.bigEndian(data[3:5]),
+        118: low_cell_temp_chip_number,
+        119: low_cell_temp_cell_number,
+        120: pd.bigEndian(data[6:8]),
+    }
+
+def decodeSegmentTemps(data: List[int]) -> Dict[int, Any]:
+    return {
+        125: pd.twosComp(data[0], 8),
+        126: pd.twosComp(data[1], 8),
+        127: pd.twosComp(data[2], 8),
+        128: pd.twosComp(data[3], 8),
+    }
+
+def decodeLoggingStatus(data: List[int]) -> Dict[int, Any]:
+    return {
+        129: data[0]
     }
