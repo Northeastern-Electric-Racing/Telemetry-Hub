@@ -17,7 +17,12 @@ PROCESSORS = 8
 THREAD_LINES = 300000
 
 
-def process_rows(rows, manager, progress_signal, current_row, total_data_count):
+def process_rows(
+        rows,
+        manager,
+        progress_signal,
+        current_row,
+        total_data_count):
     with multiprocessing.Pool(PROCESSORS) as p:
         out = p.map(thread_timestream, rows)
 
@@ -167,7 +172,13 @@ class TimestreamQueryService:
         except Exception as err:
             raise RuntimeError("Exception while running query:", err)
 
-    def thread_query(self, query_string: str, progress_signal: pyqtBoundSignal, manager: DataModelManager, total_data_count, *args):
+    def thread_query(
+            self,
+            query_string: str,
+            progress_signal: pyqtBoundSignal,
+            manager: DataModelManager,
+            total_data_count,
+            *args):
         """
         Example formats of results are as follows:
         - Get all test IDs = [{'TestId': 'test1'}, {'TestId': 'test2'}, {'TestId': 'test3'}]
@@ -188,11 +199,17 @@ class TimestreamQueryService:
                     data.append(row)
 
                     if len(data) >= THREAD_LINES:
-                        current_row = process_rows(data, manager, progress_signal, current_row, total_data_count)
+                        current_row = process_rows(
+                            data, manager, progress_signal, current_row, total_data_count)
                         data.clear()
 
             if len(data) > 0:
-                process_rows(data, manager, progress_signal, current_row, total_data_count)
+                process_rows(
+                    data,
+                    manager,
+                    progress_signal,
+                    current_row,
+                    total_data_count)
                 data.clear()
         except Exception as err:
             raise RuntimeError("Exception while querying datapoint: ", err)
@@ -299,7 +316,8 @@ class TimestreamQueryService:
         except BaseException:
             raise RuntimeError("Invalid test ID")
 
-        message_signal.emit("Fetching data from database and entering it into the model...")
+        message_signal.emit(
+            "Fetching data from database and entering it into the model...")
 
         if (time_range is None) and (data_id is None):
             service.thread_query(
