@@ -310,7 +310,3 @@ def decodeLoggingStatus(data: List[int]) -> Dict[int, Any]:
     return {
         129: data[0]
     }
-def decodeLoggingStatus(data: List[int]) -> Dict[int, Any]:
-    return {
-        114: data[0]
-    }
