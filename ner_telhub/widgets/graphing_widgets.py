@@ -276,12 +276,6 @@ class GraphWidget(QWidget):
 
         # Specific config for real time graphs
         if dynamic:
-            refresh_button = NERImageButton(
-                NERImageButton.Icons.REFRESH, NERButton.Styles.GRAY)
-            refresh_button.pressed.connect(self.updateChart)
-            refresh_button.setToolTip("Refresh the live data")
-            toolbar.addRight(refresh_button)
-
             self.timer = QTimer()
             self.timer.timeout.connect(self.updateChart)
             self.timer.start()
