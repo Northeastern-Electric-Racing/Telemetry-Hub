@@ -125,6 +125,8 @@ class MapView(QWidget):
         self.twelvev_data = 0
         self.packsoc_data = 0
         self.logging_data = 0
+        self.previous_lat=42.339855
+        self.previous_lon=-71.088706
 
         # Load in maps
         self.load_map1()
@@ -188,8 +190,11 @@ class MapView(QWidget):
         # Convert lat_data and lon_data to JSON
         lat_data_json = json.dumps(self.lat_data, cls=DateTimeEncoder)
         lon_data_json = json.dumps(self.lon_data, cls=DateTimeEncoder)
-        self.map_view.page().runJavaScript(
-            f"loadPath({lat_data_json}, {lon_data_json});")
+        if abs(self.previous_lat - self.lat_data[-1][1]) <= 1 and abs(self.previous_lon - self.lon_data[-1][1]) <= 1:
+            self.previous_lat=self.lat_data[-1][1]
+            self.previous_lon=self.lon_data[-1][1]
+            self.map_view.page().runJavaScript(
+                f"loadPath({lat_data_json}, {lon_data_json});")
 
     def update_map2(self):
         # Check if we need to update
@@ -199,8 +204,11 @@ class MapView(QWidget):
         lat_data_json = json.dumps(self.lat_data, cls=DateTimeEncoder)
         lon_data_json = json.dumps(self.lon_data, cls=DateTimeEncoder)
         heading_data_json = json.dumps(self.heading_data)
-        self.perspective_view.page().runJavaScript(
-            f"loadPath({lat_data_json}, {lon_data_json}, {heading_data_json});")
+        if abs(self.previous_lat - self.lat_data[-1][1]) <= 1 and abs(self.previous_lon - self.lon_data[-1][1]) <= 1:
+            self.previous_lat=self.lat_data[-1][1]
+            self.previous_lon=self.lon_data[-1][1]
+            self.perspective_view.page().runJavaScript(
+                f"loadPath({lat_data_json}, {lon_data_json}, {heading_data_json});")
 
     def update_models(self):
         """
