@@ -15,7 +15,7 @@ from ner_telhub.widgets.styled_widgets import NERButton
 
 MAP_SELECT_1 = "map_google.html"
 MAP_SELECT_2 = 'map_car_perspective.html'
-USE_TEST_DATA = 0  # Automatically generates model data in generate_test_data function
+USE_TEST_DATA = 1  # Automatically generates model data in generate_test_data function
 UPDATE_TIME_MS = 250
 
 
@@ -42,13 +42,13 @@ class MapView(QWidget):
         # Telemetry data labels
         self.speed_label = QLabel("Speed: 0 Mph")
         self.heading_label = QLabel("Heading: 0 °")
-        self.voltage_label = QLabel("12V System Voltage: 0 V")
+        self.current_label = QLabel("12V System Voltage: 0 V")
         self.pack_soc_label = QLabel("Pack SOC: 0 %")
 
         # Top telemetry data layout
         top_telemetry_layout = QHBoxLayout()
         top_telemetry_layout.addWidget(self.speed_label, stretch=1)
-        top_telemetry_layout.addWidget(self.voltage_label, stretch=1)
+        top_telemetry_layout.addWidget(self.current_label, stretch=1)
 
         # Bottom telemetry data layout
         bottom_telemetry_layout = QHBoxLayout()
@@ -122,11 +122,9 @@ class MapView(QWidget):
         self.gpsfix_data = 0
         self.gpsspeed_data = 0
         self.heading_data = 0
-        self.twelvev_data = 0
+        self.pack_dcl = 0
         self.packsoc_data = 0
         self.logging_data = 0
-        self.previous_lat=42.339855
-        self.previous_lon=-71.088706
 
         # Load in maps
         self.load_map1()
@@ -138,12 +136,12 @@ class MapView(QWidget):
         self.timer.start(UPDATE_TIME_MS)
 
         # Update all data every UPDATE_TIME_MS
-        self.timer.timeout.connect(self.update_map1)
-        self.timer.timeout.connect(self.update_map2)
         if USE_TEST_DATA:
             self.timer.timeout.connect(self.generate_test_data)
         else:
             self.timer.timeout.connect(self.update_models)
+        self.timer.timeout.connect(self.update_map1)
+        self.timer.timeout.connect(self.update_map2)
 
     def load_map1(self):
         """
@@ -172,7 +170,6 @@ class MapView(QWidget):
             page = self.perspective_view.page()
             channel = QWebChannel(page)
             page.setWebChannel(channel)
-
             lat_data_json = json.dumps(self.lat_data, cls=DateTimeEncoder)
             lon_data_json = json.dumps(self.lon_data, cls=DateTimeEncoder)
             heading_data_json = json.dumps(self.heading_data)
@@ -190,9 +187,7 @@ class MapView(QWidget):
         # Convert lat_data and lon_data to JSON
         lat_data_json = json.dumps(self.lat_data, cls=DateTimeEncoder)
         lon_data_json = json.dumps(self.lon_data, cls=DateTimeEncoder)
-        if abs(self.previous_lat - self.lat_data[-1][1]) <= 1 and abs(self.previous_lon - self.lon_data[-1][1]) <= 1:
-            self.previous_lat=self.lat_data[-1][1]
-            self.previous_lon=self.lon_data[-1][1]
+        if abs(self.previous_lat - self.lat_data[-1][1]) <= .001 and abs(self.previous_lon - self.lon_data[-1][1]) <= .001:
             self.map_view.page().runJavaScript(
                 f"loadPath({lat_data_json}, {lon_data_json});")
 
@@ -204,9 +199,7 @@ class MapView(QWidget):
         lat_data_json = json.dumps(self.lat_data, cls=DateTimeEncoder)
         lon_data_json = json.dumps(self.lon_data, cls=DateTimeEncoder)
         heading_data_json = json.dumps(self.heading_data)
-        if abs(self.previous_lat - self.lat_data[-1][1]) <= 1 and abs(self.previous_lon - self.lon_data[-1][1]) <= 1:
-            self.previous_lat=self.lat_data[-1][1]
-            self.previous_lon=self.lon_data[-1][1]
+        if abs(self.previous_lat - self.lat_data[-1][1]) <= .001 and abs(self.previous_lon - self.lon_data[-1][1]) <= .001:
             self.perspective_view.page().runJavaScript(
                 f"loadPath({lat_data_json}, {lon_data_json}, {heading_data_json});")
 
@@ -219,19 +212,23 @@ class MapView(QWidget):
 
         # Update latitude data model for map
         try:
+            self.previous_lat=self.lat_data[-1][1]
             self.lat_data = self.model.getDataModel(108).getData()
         except Exception:
             self.lat_data = [
                 (datetime.now(), 42.339855),
             ]
+            self.previous_lat=42.339855
 
         # Update longitude data model for map
         try:
+            self.previous_lon=self.lon_data[-1][1]
             self.lon_data = self.model.getDataModel(109).getData()
         except Exception:
             self.lon_data = [
                 (datetime.now(), -71.088706),
             ]
+            self.previous_lon=-71.088706
 
         # Update heading data model for map
         try:
@@ -262,10 +259,10 @@ class MapView(QWidget):
         self.speed_label.setText(f"Speed: {mphspeed} Mph")
 
         try:
-            self.twelvev_data = self.model.getDataModel(63).getLastestValue()
+            self.pack_dcl = self.model.getDataModel(89).getLastestValue()
         except Exception:
-            self.twelvev_data = 0
-        self.voltage_label.setText(f"12V System: {self.twelvev_data} V")
+            self.pack_dcl = 0
+        self.current_label.setText(f"12V System: {self.pack_dcl} V")
 
         try:
             self.packsoc_data = self.model.getDataModel(4).getLastestValue()
@@ -302,19 +299,24 @@ class MapView(QWidget):
         self.needupdate = len(
             self.lat_data)  # used to compare to new length of data model to see if new data was generated as a condition to update the map
 
-        new_lat = self.lat_data[-1][1] + random.uniform(-0.000100, 0.000100)
+        self.previous_lat=self.lat_data[-1][1]
+        new_lat = self.lat_data[-1][1] + random.uniform(-.000100, .000100) #change back to .0001 after filter verification
         test_lat = (datetime.now(), new_lat)
         self.lat_data.append(test_lat)
+        
 
-        new_lon = self.lon_data[-1][1] + random.uniform(-0.000100, 0.000100)
+        self.previous_lon=self.lon_data[-1][1]
+        new_lon = self.lon_data[-1][1] + random.uniform(-.00100, .000100) #change back to .0001 after filter verification
         test_lon = (datetime.now(), new_lon)
         self.lon_data.append(test_lon)
+        
 
         self.heading_data = self.heading_data + random.uniform(-10, 10)
         # Updates UI based on status
-        self.heading_label.setText(f"Heading: {self.heading_data} °")
+        self.heading_label.setText(f"Heading: {self.heading_data:.2f} °")
 
-        self.gpsfix_data = random.choice([True, False])
+        #self.gpsfix_data = random.choice([True, False])
+        self.gpsfix_data = True
         # Updates UI based on status
         self.gps_status_label.setText(
             f"GPS Status: {'Connected' if self.gpsfix_data else 'Disconnected'}")
@@ -322,12 +324,12 @@ class MapView(QWidget):
         self.gpsspeed_data = self.gpsspeed_data + random.uniform(-20, 20)
         mphspeed = self.gpsspeed_data * 2.237
         # Updates UI based on status
-        self.speed_label.setText(f"Speed: {mphspeed} Mph")
+        self.speed_label.setText(f"Speed: {mphspeed:.2f} Mph")
 
-        self.twelvev_data = self.twelvev_data + random.uniform(-1, 1)
+        self.pack_dcl = self.pack_dcl + random.uniform(-1, 1)
         # Updates UI based on status
-        self.voltage_label.setText(f"12V System: {self.twelvev_data} V")
+        self.current_label.setText(f"Pack DCL: {self.pack_dcl:.2f} A")
 
         self.packsoc_data = self.packsoc_data + random.uniform(-1, 1)
         # Updates UI based on status
-        self.pack_soc_label.setText(f"Pack SOC: {self.packsoc_data} %")
+        self.pack_soc_label.setText(f"Pack SOC: {self.packsoc_data:.2f} %")
