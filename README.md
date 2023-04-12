@@ -20,6 +20,11 @@ After the inital run, only steps 4/5 will be needed to run the app again (enter 
 
 NOTE: If any of the commands in steps 2-5 fail, prepend them with `python -m` and try again.
 
+### Drivers
+If data is not being received from the XBee via the serial port, install the correct driver found [here](https://ftdichip.com/drivers/vcp-drivers/). This should only be an issue on Mac computers. [Here](https://learn.sparkfun.com/tutorials/how-to-install-ftdi-drivers/mac) is a guide with more information on installing the required drivers on a Mac.
+
+NOTE: There is no current driver for Apple Silicon Macs, so these cannot be used to view live XBee data.
+
 ## Tech Resources
 The application is written in python using the PyQt GUI toolkit. The following resources are good for an introduction to PyQt:
 - [General Qt description](https://wiki.qt.io/About_Qt)
