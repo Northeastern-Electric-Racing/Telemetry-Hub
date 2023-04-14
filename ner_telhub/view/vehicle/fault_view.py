@@ -67,7 +67,7 @@ class FaultView(QWidget):
         self.setLayout(layout)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_table)
-        self.timer.start(1000)
+        self.timer.start(250)
 
     def update_table(self):
         """
