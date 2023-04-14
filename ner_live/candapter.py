@@ -150,10 +150,14 @@ class Candapter(LiveInput):
                 self.current_message = ""
             elif char == self.END_COMMAND.decode():
                 try:
-                    self.parse(self.current_message)
+                    msg = self.parse(self.current_message)
+                    if msg is not None:
+                        self._model.addMessage(msg)
                     self.success_count += 1
                 except MessageFormatException:
                     self.error_count += 1
+                except RuntimeError:
+                    self.stop()
                 self.message_started = False
                 self.current_message = ""
             elif self.message_started:
