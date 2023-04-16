@@ -9,7 +9,9 @@ from PyQt6.QtWidgets import (
     QWidget, QComboBox,
     QDialog, QGridLayout,
     QDialogButtonBox, QSplitter,
-    QTableView, QMessageBox
+    QTableView, QMessageBox,
+    QSizePolicy, QLineEdit,
+    QCheckBox
 )
 from PyQt6.QtCharts import (
     QLineSeries, QChart, QChartView,
@@ -36,13 +38,15 @@ class GraphState():
     Data class holding the current state of a graph.
     """
 
-    def __init__(self, data: List = None, format: Format = Format.LINE):
+    def __init__(self, data: List = None, format: Format = Format.LINE, y_min: int = None, y_max: int = None):
         if data is not None:
             self.data = data
         else:
             self.data = []
 
         self.format = format
+        self.y_min = y_min
+        self.y_max = y_max
 
 
 class DataTable(QDialog):
@@ -89,16 +93,38 @@ class EditDialog(QDialog):
         self.data_entry = []
         self.layout = QGridLayout()
 
+        # Format combo box section
         self.format_entry = QComboBox()
         self.format_entry.addItems(self._format_list)
         self.format_entry.setCurrentText(state.format.name)
         self.layout.addWidget(QLabel("Format:"), 0, 0)
         self.layout.addWidget(self.format_entry, 0, 1, 1, 2)
 
+        # Axis section
+        self.auto_scale = QCheckBox()
+        self.auto_scale.pressed.connect(self.changeAutoScale)
+        self.axis_min_entry = QLineEdit()
+        self.axis_max_entry = QLineEdit()
+        if state.y_min is not None:
+            self.auto_scale.setChecked(False)
+            self.axis_min_entry.setText(str(state.y_min))
+            self.axis_max_entry.setText(str(state.y_max))
+        else:
+            self.auto_scale.setChecked(True)
+            self.axis_min_entry.setEnabled(False)
+            self.axis_max_entry.setEnabled(False)
+        self.layout.addWidget(QLabel("Use auto scaling y-axis:"), 1, 0)
+        self.layout.addWidget(self.auto_scale, 1, 1)
+        self.layout.addWidget(QLabel("Min y-axis"), 2, 0)
+        self.layout.addWidget(self.axis_min_entry, 2, 1)
+        self.layout.addWidget(QLabel("Max y-axis"), 3, 0)
+        self.layout.addWidget(self.axis_max_entry, 3, 1)
+
+        # Data input sections
         add_button = NERButton("Add Data Input", NERButton.Styles.GRAY)
         add_button.setToolTip("Add an input to specify data")
         add_button.pressed.connect(self.add)
-        self.layout.addWidget(add_button, 1, 0, 1, -1)
+        self.layout.addWidget(add_button, 4, 0, 1, -1)
 
         self.next_index = 0
         for data in state.data:
@@ -118,9 +144,9 @@ class EditDialog(QDialog):
                     entry=combo_box,
                     button=remove_button))
 
-            self.layout.addWidget(label, self.next_index + 2, 0)
-            self.layout.addWidget(combo_box, self.next_index + 2, 1)
-            self.layout.addWidget(remove_button, self.next_index + 2, 2)
+            self.layout.addWidget(label, self.next_index + 5, 0)
+            self.layout.addWidget(combo_box, self.next_index + 5, 1)
+            self.layout.addWidget(remove_button, self.next_index + 5, 2)
 
             self.next_index += 1
 
@@ -133,6 +159,13 @@ class EditDialog(QDialog):
         main_layout.addLayout(self.layout)
         main_layout.addWidget(buttonBox)
         self.setLayout(main_layout)
+
+    def changeAutoScale(self):
+        auto_scale = self.auto_scale.isChecked()
+        self.axis_min_entry.clear()
+        self.axis_min_entry.setEnabled(auto_scale)
+        self.axis_max_entry.clear()
+        self.axis_max_entry.setEnabled(auto_scale)
 
     def dataToText(self, data: int) -> str:
         """
@@ -173,9 +206,21 @@ class EditDialog(QDialog):
                 QMessageBox.critical(
                     self, "Input Error", "Each data value should be unique")
                 return
+            
+        y_min = None
+        y_max = None
+        if not self.auto_scale.isChecked():
+            try:
+                y_min = int(self.axis_min_entry.text())
+                y_max = int(self.axis_max_entry.text())
+            except ValueError:
+                QMessageBox.critical(
+                    self, "Input Error", "Invalid y-axis arguments")
+                return
+
 
         format = Format[self.format_entry.currentText()]
-        state = GraphState(data, format)
+        state = GraphState(data, format, y_min, y_max)
         self.callback(state)
         self.accept()
 
@@ -203,9 +248,9 @@ class EditDialog(QDialog):
                 entry=combo_box,
                 button=remove_button))
 
-        self.layout.addWidget(label, self.next_index + 2, 0)
-        self.layout.addWidget(combo_box, self.next_index + 2, 1)
-        self.layout.addWidget(remove_button, self.next_index + 2, 2)
+        self.layout.addWidget(label, self.next_index + 5, 0)
+        self.layout.addWidget(combo_box, self.next_index + 5, 1)
+        self.layout.addWidget(remove_button, self.next_index + 5, 2)
 
         self.next_index += 1
 
@@ -267,25 +312,26 @@ class GraphWidget(QWidget):
         reset_button.pressed.connect(self.reset)
         reset_button.setToolTip("Reset this to be a blank graph")
         toolbar.addLeft(reset_button)
+
+        # Configure buttons on the right
         show_button = NERImageButton(
             NERImageButton.Icons.EXPORT,
             NERButton.Styles.GRAY)
         show_button.pressed.connect(self.showTables)
         show_button.setToolTip("Show the data in this graph in a tabular form")
-        toolbar.addLeft(show_button)
-
-        # Specific config for real time graphs
-        if dynamic:
-            self.timer = QTimer()
-            self.timer.timeout.connect(self.updateChart)
-            self.timer.start()
-
+        toolbar.addRight(show_button)
         remove_button = NERImageButton(
             NERImageButton.Icons.CLOSE,
             NERButton.Styles.RED)
         remove_button.pressed.connect(self.remove)
         remove_button.setToolTip("Delete this graph")
         toolbar.addRight(remove_button)
+
+        # Specific config for real time graphs
+        if dynamic:
+            self.timer = QTimer()
+            self.timer.timeout.connect(self.updateChart)
+            self.timer.start()
 
         # Chart Config
         self.chart = QChart()
@@ -295,6 +341,7 @@ class GraphWidget(QWidget):
 
         # View Config
         self.chart_view = QChartView(self.chart)
+        self.chart_view.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.chart_view.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.chart_view.setStyleSheet(f"background-color: {colors.LIGHT1}")
 
@@ -332,6 +379,11 @@ class GraphWidget(QWidget):
         self.axis_y = QValueAxis()
         self.axis_y.setTitleText("Data")
         self.chart.addAxis(self.axis_y, Qt.AlignmentFlag.AlignLeft)
+
+        # Set y-axis if user specified
+        if self.state.y_min is not None:
+            self.range_y = [self.state.y_min, self.state.y_max]
+            self.axis_y.setRange(self.range_y[0], self.range_y[1])
 
         # Add data if provided
         for data in self.state.data:
@@ -406,13 +458,14 @@ class GraphWidget(QWidget):
             self.range_x[0] = xmin
             self.range_x[1] = xmax
 
-        if self.range_y is None:
-            self.range_y = [ymin, ymax]
-        else:
-            if ymin < self.range_y[0]:
-                self.range_y[0] = ymin
-            if ymax > self.range_y[1]:
-                self.range_y[1] = ymax
+        if self.state.y_min is None: # only dynamically update y-axis if user did not hard code values
+            if self.range_y is None:
+                self.range_y = [ymin, ymax]
+            else:
+                if ymin < self.range_y[0]:
+                    self.range_y[0] = ymin
+                if ymax > self.range_y[1]:
+                    self.range_y[1] = ymax
 
         self.axis_x.setRange(self.range_x[0], self.range_x[1])
         self.axis_y.setRange(self.range_y[0], self.range_y[1])

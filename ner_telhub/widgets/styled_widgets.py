@@ -89,12 +89,26 @@ class NERToolbar(QToolBar):
         left.setLayout(self.left_buttons)
         self.addWidget(left)
 
-        # Setup middle spacer
-        self.spacer = QWidget()
-        self.spacer.setSizePolicy(
+        # Setup left spacer
+        self.spacer1 = QWidget()
+        self.spacer1.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed)
-        self.addWidget(self.spacer)
+        self.addWidget(self.spacer1)
+
+        # Setup middle of toolbar
+        middle = QWidget()
+        self.middle_buttons = QHBoxLayout()
+        self.middle_buttons.setContentsMargins(0, 0, 0, 0)
+        middle.setLayout(self.middle_buttons)
+        self.addWidget(middle)
+
+        # Setup right spacer
+        self.spacer2 = QWidget()
+        self.spacer2.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed)
+        self.addWidget(self.spacer2)
 
         # Setup right side of toolbar
         right = QWidget()
@@ -106,6 +120,9 @@ class NERToolbar(QToolBar):
     def addLeft(self, widget: QWidget):
         self.left_buttons.addWidget(widget)
 
+    def addMiddle(self, widget: QWidget):
+        self.middle_buttons.addWidget(widget)
+    
     def addRight(self, widget: QWidget):
         self.right_buttons.addWidget(widget)
 

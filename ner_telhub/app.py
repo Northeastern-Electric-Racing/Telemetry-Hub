@@ -91,6 +91,7 @@ class MainWindow(QMainWindow):
     def openVehicleWindow(self):
         self.vehicle_button.setDisabled(True)
         self.vehicle_window = VehicleWindow(self)
+        self.vehicle_window.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.vehicle_window.destroyed.connect(
             lambda: self.vehicle_button.setDisabled(False))
         self.vehicle_window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -99,6 +100,7 @@ class MainWindow(QMainWindow):
     def openSdCardWindow(self):
         self.sd_card_button.setDisabled(True)
         self.sd_card_window = SdCardWindow(self)
+        self.sd_card_window.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.sd_card_window.destroyed.connect(
             lambda: self.sd_card_button.setDisabled(False))
         self.sd_card_window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -107,6 +109,7 @@ class MainWindow(QMainWindow):
     def openDatabaseWindow(self):
         self.database_button.setDisabled(True)
         self.database_window = DatabaseWindow(self)
+        self.database_window.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.database_window.destroyed.connect(
             lambda: self.database_button.setDisabled(False))
         self.database_window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
