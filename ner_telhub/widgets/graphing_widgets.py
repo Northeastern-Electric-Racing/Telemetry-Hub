@@ -200,12 +200,20 @@ class EditDialog(QDialog):
 
             data.append(ent)
 
-        # Check to make sure we're not adding the same data series twice
+        # Check to make sure we're not adding the same data series twice and that all units match
+        units = None
         for d in data:
             if d is not None and data.count(d) > 1:
                 QMessageBox.critical(
                     self, "Input Error", "Each data value should be unique")
                 return
+            if units is None:
+                units = self.model.getDataUnit(d)
+            else:
+                if units != self.model.getDataUnit(d):
+                    QMessageBox.critical(
+                        self, "Input Error", "Each data value should have matching units")
+                    return
             
         y_min = None
         y_max = None
@@ -377,7 +385,10 @@ class GraphWidget(QWidget):
         self.axis_x.setTitleText("Time")
         self.chart.addAxis(self.axis_x, Qt.AlignmentFlag.AlignBottom)
         self.axis_y = QValueAxis()
-        self.axis_y.setTitleText("Data")
+        if len(self.state.data) > 0:
+            self.axis_y.setTitleText(self.model.getDataUnit(self.state.data[0]))
+        else:
+            self.axis_y.setTitleText("Data")
         self.chart.addAxis(self.axis_y, Qt.AlignmentFlag.AlignLeft)
 
         # Set y-axis if user specified

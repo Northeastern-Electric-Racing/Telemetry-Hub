@@ -265,6 +265,16 @@ class DataModelManager(QObject):
             return DATA_IDS[id]["name"]
         else:
             raise ValueError("Invalid data ID")
+        
+    @staticmethod
+    def getDataUnit(id: int) -> str:
+        """
+        Gets the unit for the data of the given ID.
+        """
+        if id in DATA_IDS:
+            return DATA_IDS[id]["units"]
+        else:
+            raise ValueError("Invalid data ID")
 
     @staticmethod
     def getDecodedStatuses(data: Data) -> dict[str, int]:
