@@ -133,8 +133,7 @@ class XBee(LiveInput):
                 try:
                     msg = self.parse(self.current_message)
                     if msg is not None:
-                        self._model.addMessage(
-                            self.parse(self.current_message))
+                        self._model.addMessage(msg)
                     self.success_count += 1
                 except MessageFormatException:
                     self.error_count += 1
