@@ -100,9 +100,6 @@ class MapView(QWidget):
         self.map_tabs.addTab(self.map_view, "Line")
         self.map_tabs.addTab(self.perspective_view, "POV")
 
-        self.button_clear = NERButton("Clear", NERButton.Styles.BLUE)
-        self.button_clear.pressed.connect(self.callback_clear)
-
         # Main layout
         layout = QVBoxLayout()
         layout.setContentsMargins(10, 10, 10, 10)
@@ -111,7 +108,6 @@ class MapView(QWidget):
         layout.addWidget(telemetry_frame, stretch=0)
         # Use the map_tabs widget instead of map_stack
         layout.addWidget(self.map_tabs, stretch=1)
-        layout.addWidget(self.button_clear, stretch=0)
         layout.addLayout(self.status_layout, stretch=0)
 
         # Initialize default data models
@@ -271,12 +267,12 @@ class MapView(QWidget):
     #     """
     #     self.timer.stop()
 
-    def callback_clear(self):
-        """
-        Called when the clear button is clicked AND stops updating the models by stopping UPDATETIME
-        """
-        self.map_view.page().runJavaScript("clearPath();")
-        self.perspective_view.page().runJavaScript("clearPath();")
+    # def callback_clear(self):
+    #     """
+    #     Called when the clear button is clicked AND stops updating the models by stopping UPDATETIME
+    #     """
+    #     self.map_view.page().runJavaScript("clearPath();")
+    #     self.perspective_view.page().runJavaScript("clearPath();")
 
     # def callback_plot(self):
     #     """
