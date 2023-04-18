@@ -6,7 +6,8 @@ from PyQt6.QtWidgets import (
     QGridLayout, QFileDialog, QRadioButton,
     QComboBox
 )
-from PyQt6.QtCore import QSize
+from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtGui import QCursor
 
 from ner_live.live_input import LiveInput, LiveInputException, InputType
 from ner_live.utils import getConnection, createConnection, deleteConnection
@@ -242,7 +243,7 @@ class LiveToolbar(NERToolbar):
         self.message_model.deleteAllMessages()
 
     def export(self):
-        if not self.feed_started:
+        if not self.started:
             FileDialog(self, self.model).exec()
         else:
             QMessageBox.information(
@@ -277,7 +278,7 @@ class VehicleWindow(QMainWindow):
                           MapView(self,
                                   self.data_model)),
                       3: ("Fault",
-                          FaultView(self, 
+                          FaultView(self,
                                     self.data_model))}
 
         # Window config
