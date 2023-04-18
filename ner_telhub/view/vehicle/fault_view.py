@@ -23,7 +23,8 @@ class FaultEntry():
 
     def update(self):
         try:
-            self.value = self.model.getDataModel(self.data_id).getLastestValue()
+            self.value = self.model.getDataModel(
+                self.data_id).getLastestValue()
             self.time = self.model.getDataModel(self.data_id).getLastestTime()
             if self.value == 1:
                 self.last_time_high = self.time
@@ -41,13 +42,16 @@ class FaultView(QWidget):
     def __init__(self, parent: QWidget, model: DataModelManager):
         super(FaultView, self).__init__(parent)
         self.model = model
-        self.faults: Dict[int, List[FaultEntry]] = {} # Stores the faults used to populate the table
+        # Stores the faults used to populate the table
+        self.faults: Dict[int, List[FaultEntry]] = {}
 
         self.table = QTableWidget()
         self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels(["Last Time Updated", "Fault ID", "Fault Statuses", "Status Value", "Last Time Faulted"])
+        self.table.setHorizontalHeaderLabels(
+            ["Last Time Updated", "Fault ID", "Fault Statuses", "Status Value", "Last Time Faulted"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table.setSelectionBehavior(
+            QTableWidget.SelectionBehavior.SelectRows)
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
 
         # Add the Add and Remove buttons
@@ -80,7 +84,8 @@ class FaultView(QWidget):
             for fault_index, fault in enumerate(self.faults[data_id]):
                 row_position = self.table.rowCount()
                 self.table.insertRow(row_position)
-                self.table.setRowHeight(row_position, 30)  # Adjust row height for sub-rows
+                # Adjust row height for sub-rows
+                self.table.setRowHeight(row_position, 30)
 
                 # Set alternating row colors
                 if row_position % 2 == 0:
@@ -116,17 +121,20 @@ class FaultView(QWidget):
                 value_item.setFont(font)
 
                 self.table.setItem(row_position, 3, value_item)
-                
-                last_time_faulted_item = QTableWidgetItem(str(last_time_faulted))
+
+                last_time_faulted_item = QTableWidgetItem(
+                    str(last_time_faulted))
                 last_time_faulted_item.setBackground(background_color)
                 last_time_faulted_item.setFont(font)
-                    
+
                 self.table.setItem(row_position, 4, last_time_faulted_item)
 
-                # Create QTableWidgetItem for Time and Fault ID only for the first status
+                # Create QTableWidgetItem for Time and Fault ID only for the
+                # first status
                 if fault_index == 0:
                     time_item = QTableWidgetItem(str(data_time))
-                    data_item = QTableWidgetItem(self.model.getDataType(data_id))
+                    data_item = QTableWidgetItem(
+                        self.model.getDataType(data_id))
 
                     time_item.setBackground(background_color)
                     data_item.setBackground(background_color)
@@ -136,12 +144,15 @@ class FaultView(QWidget):
 
                     self.table.setItem(row_position, 0, time_item)
                     self.table.setItem(row_position, 1, data_item)
-                
-            # Merge cells in the Time and Fault ID columns after all associated statuses have been processed
+
+            # Merge cells in the Time and Fault ID columns after all associated
+            # statuses have been processed
             num_statuses = len(self.faults[data_id])
             if num_statuses > 1:
-                self.table.setSpan(row_position - num_statuses + 1, 0, num_statuses, 1)
-                self.table.setSpan(row_position - num_statuses + 1, 1, num_statuses, 1)
+                self.table.setSpan(
+                    row_position - num_statuses + 1, 0, num_statuses, 1)
+                self.table.setSpan(
+                    row_position - num_statuses + 1, 1, num_statuses, 1)
 
     def add_fault(self):
         """
@@ -154,7 +165,11 @@ class FaultView(QWidget):
             added_ids = dialog.get_selected_fault_ids()
             added_statuses = dialog.get_selected_statuses()
             for index, fault_id in enumerate(added_ids):
-                self.faults[fault_id] = [FaultEntry(fault_id, status, self.model) for status in added_statuses[index]]
+                self.faults[fault_id] = [
+                    FaultEntry(
+                        fault_id,
+                        status,
+                        self.model) for status in added_statuses[index]]
 
     def remove_fault(self):
         """
@@ -198,7 +213,11 @@ class RemoveDialog(QDialog):
     Dialog box to specify what faults to load in each row.
     """
 
-    def __init__(self, parent: QWidget, model: DataModelManager, fault_ids: List[int]):
+    def __init__(
+            self,
+            parent: QWidget,
+            model: DataModelManager,
+            fault_ids: List[int]):
         super(RemoveDialog, self).__init__(parent)
         self.model = model
 
@@ -208,12 +227,12 @@ class RemoveDialog(QDialog):
         layout.addWidget(QLabel("Select Fault ID:"))
 
         self.fault_id_combo = QComboBox()
-        self.fault_id_combo.addItems([DataUtils.data_to_text(f) for f in fault_ids])
+        self.fault_id_combo.addItems(
+            [DataUtils.data_to_text(f) for f in fault_ids])
         layout.addWidget(self.fault_id_combo)
 
         button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         button_box.accepted.connect(self.accept)
         button_box.rejected.connect(self.reject)
 
@@ -223,7 +242,8 @@ class RemoveDialog(QDialog):
         self.removed_fault = None
 
     def accept(self):
-        self.removed_fault = DataUtils.text_to_data(self.fault_id_combo.currentText())
+        self.removed_fault = DataUtils.text_to_data(
+            self.fault_id_combo.currentText())
         super().accept()
 
 
@@ -250,16 +270,15 @@ class AddDialog(QDialog):
         fault_button_layout = QHBoxLayout()
         fault_button_layout.addWidget(add_fault_button)
         fault_button_layout.addWidget(remove_fault_button)
-        
+
         layout.addLayout(fault_button_layout)
 
         self.fault_layouts = []
         self.main_fault_layout = QVBoxLayout()
         layout.addLayout(self.main_fault_layout)
-        
+
         button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         button_box.accepted.connect(self.accept)
         button_box.rejected.connect(self.reject)
 
@@ -280,12 +299,13 @@ class AddDialog(QDialog):
         #     for layout in self.status_layouts
         # ]
         super().accept()
-    
+
     def get_selected_fault_ids(self) -> List[int]:
         return [fl.get_data_id() for fl in self.fault_layouts]
 
     def get_selected_statuses(self) -> List[List[str]]:
         return [fl.get_statuses() for fl in self.fault_layouts]
+
 
 class FaultLayout(QWidget):
     """
@@ -294,7 +314,7 @@ class FaultLayout(QWidget):
 
     def __init__(self, parent: QWidget):
         super(FaultLayout, self).__init__(parent)
-    
+
         # Create data ID entry layout
         self.data_layout = QHBoxLayout()
         self.data_layout.addWidget(QLabel("Select Fault ID:"))
@@ -310,7 +330,7 @@ class FaultLayout(QWidget):
         # Create status entry layout
         self.status_layout = QHBoxLayout()
         self.status_layout.addWidget(QLabel("Select Status:"))
-        
+
         self.status_combos = []
         status_combo = QComboBox()
         self.status_combos.append(status_combo)
@@ -320,7 +340,7 @@ class FaultLayout(QWidget):
         self.remove_status_button.setEnabled(False)
         self.add_status_button.clicked.connect(self.add_status)
         self.remove_status_button.clicked.connect(self.remove_status)
-        
+
         self.status_layout.addWidget(status_combo)
         self.status_layout.addWidget(self.add_status_button)
         self.status_layout.addWidget(self.remove_status_button)
@@ -351,7 +371,8 @@ class FaultLayout(QWidget):
         data_id = DataUtils.text_to_data(self.data_combo.currentText())
         status_list = list(STATUS_MAP[data_id].keys())
         status_combo.addItems(status_list)
-        self.status_layout.insertWidget(len(self.status_combos) + 1, status_combo)
+        self.status_layout.insertWidget(
+            len(self.status_combos) + 1, status_combo)
         self.status_combos.append(status_combo)
         self.remove_status_button.setEnabled(True)
 
@@ -363,7 +384,7 @@ class FaultLayout(QWidget):
             self.status_layout.removeWidget(self.status_combos.pop())
         if len(self.status_combos) == 1:
             self.remove_status_button.setEnabled(False)
-    
+
     def get_data_id(self) -> int:
         """
         Gets the data ID of this widget.

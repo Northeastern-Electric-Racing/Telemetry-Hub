@@ -122,7 +122,7 @@ class NERToolbar(QToolBar):
 
     def addMiddle(self, widget: QWidget):
         self.middle_buttons.addWidget(widget)
-    
+
     def addRight(self, widget: QWidget):
         self.right_buttons.addWidget(widget)
 

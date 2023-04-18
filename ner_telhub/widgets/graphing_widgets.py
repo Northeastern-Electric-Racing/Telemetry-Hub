@@ -38,7 +38,12 @@ class GraphState():
     Data class holding the current state of a graph.
     """
 
-    def __init__(self, data: List = None, format: Format = Format.LINE, y_min: int = None, y_max: int = None):
+    def __init__(
+            self,
+            data: List = None,
+            format: Format = Format.LINE,
+            y_min: int = None,
+            y_max: int = None):
         if data is not None:
             self.data = data
         else:
@@ -200,7 +205,8 @@ class EditDialog(QDialog):
 
             data.append(ent)
 
-        # Check to make sure we're not adding the same data series twice and that all units match
+        # Check to make sure we're not adding the same data series twice and
+        # that all units match
         units = None
         for d in data:
             if d is not None and data.count(d) > 1:
@@ -214,7 +220,7 @@ class EditDialog(QDialog):
                     QMessageBox.critical(
                         self, "Input Error", "Each data value should have matching units")
                     return
-            
+
         y_min = None
         y_max = None
         if not self.auto_scale.isChecked():
@@ -225,7 +231,6 @@ class EditDialog(QDialog):
                 QMessageBox.critical(
                     self, "Input Error", "Invalid y-axis arguments")
                 return
-
 
         format = Format[self.format_entry.currentText()]
         state = GraphState(data, format, y_min, y_max)
@@ -349,7 +354,9 @@ class GraphWidget(QWidget):
 
         # View Config
         self.chart_view = QChartView(self.chart)
-        self.chart_view.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.chart_view.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding)
         self.chart_view.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.chart_view.setStyleSheet(f"background-color: {colors.LIGHT1}")
 
@@ -386,7 +393,9 @@ class GraphWidget(QWidget):
         self.chart.addAxis(self.axis_x, Qt.AlignmentFlag.AlignBottom)
         self.axis_y = QValueAxis()
         if len(self.state.data) > 0:
-            self.axis_y.setTitleText(self.model.getDataUnit(self.state.data[0]))
+            self.axis_y.setTitleText(
+                self.model.getDataUnit(
+                    self.state.data[0]))
         else:
             self.axis_y.setTitleText("Data")
         self.chart.addAxis(self.axis_y, Qt.AlignmentFlag.AlignLeft)
@@ -469,7 +478,7 @@ class GraphWidget(QWidget):
             self.range_x[0] = xmin
             self.range_x[1] = xmax
 
-        if self.state.y_min is None: # only dynamically update y-axis if user did not hard code values
+        if self.state.y_min is None:  # only dynamically update y-axis if user did not hard code values
             if self.range_y is None:
                 self.range_y = [ymin, ymax]
             else:

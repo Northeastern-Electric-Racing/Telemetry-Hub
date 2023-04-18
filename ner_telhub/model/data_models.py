@@ -212,7 +212,7 @@ class DataModel(QAbstractTableModel):
         """
         QReadLocker(self._lock)
         return self._data[-1][1]
-    
+
     def getLastestTime(self) -> Any:
         """
         Gets the latest value of datamodel. Will throw an index error if there is not
@@ -220,7 +220,7 @@ class DataModel(QAbstractTableModel):
         """
         QReadLocker(self._lock)
         return self._data[-1][0]
-    
+
     def deleteFirstData(self) -> None:
         """
         Deletes the first datapoint from the model.
@@ -265,7 +265,7 @@ class DataModelManager(QObject):
             return DATA_IDS[id]["name"]
         else:
             raise ValueError("Invalid data ID")
-        
+
     @staticmethod
     def getDataUnit(id: int) -> str:
         """

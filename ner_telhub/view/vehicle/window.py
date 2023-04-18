@@ -278,7 +278,7 @@ class VehicleWindow(QMainWindow):
                           MapView(self,
                                   self.data_model)),
                       3: ("Fault",
-                          FaultView(self, 
+                          FaultView(self,
                                     self.data_model))}
 
         # Window config
