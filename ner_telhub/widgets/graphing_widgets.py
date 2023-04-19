@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
     QDialogButtonBox, QSplitter,
     QTableView, QMessageBox,
     QSizePolicy, QLineEdit,
-    QCheckBox
+    QCheckBox, QDateTimeEdit
 )
 from PyQt6.QtCharts import (
     QLineSeries, QChart, QChartView,
@@ -42,16 +42,20 @@ class GraphState():
             self,
             data: List = None,
             format: Format = Format.LINE,
-            y_min: int = None,
-            y_max: int = None):
+            auto_y: bool = True,
+            auto_x: bool = True,
+            y_range: List[float] = None,
+            x_range: List[datetime] = None):
         if data is not None:
             self.data = data
         else:
             self.data = []
 
         self.format = format
-        self.y_min = y_min
-        self.y_max = y_max
+        self.auto_y = auto_y # says whether or not we use automatic y axis scaling
+        self.auto_x = auto_x
+        self.y_range = y_range # current y range
+        self.x_range = x_range
 
 
 class DataTable(QDialog):
@@ -85,7 +89,8 @@ class EditDialog(QDialog):
             parent: QWidget,
             callback: Callable,
             model: DataModelManager,
-            state: GraphState):
+            state: GraphState,
+            live: bool):
         super(EditDialog, self).__init__(parent)
         self.callback = callback
         self.model = model
@@ -105,55 +110,71 @@ class EditDialog(QDialog):
         self.layout.addWidget(QLabel("Format:"), 0, 0)
         self.layout.addWidget(self.format_entry, 0, 1, 1, 2)
 
-        # Axis section
-        self.auto_scale = QCheckBox()
-        self.auto_scale.pressed.connect(self.changeAutoScale)
-        self.axis_min_entry = QLineEdit()
-        self.axis_max_entry = QLineEdit()
-        if state.y_min is not None:
-            self.auto_scale.setChecked(False)
-            self.axis_min_entry.setText(str(state.y_min))
-            self.axis_max_entry.setText(str(state.y_max))
-        else:
-            self.auto_scale.setChecked(True)
-            self.axis_min_entry.setEnabled(False)
-            self.axis_max_entry.setEnabled(False)
-        self.layout.addWidget(QLabel("Use auto scaling y-axis:"), 1, 0)
-        self.layout.addWidget(self.auto_scale, 1, 1)
+        # Y-Axis section
+        self.y_scale = QCheckBox()
+        self.y_scale.pressed.connect(self.changeYScale)
+        self.y_scale.setChecked(state.auto_y)
+        self.ymin_entry = QLineEdit()
+        self.ymax_entry = QLineEdit()
+        if state.auto_y:
+            self.ymin_entry.setEnabled(False)
+            self.ymax_entry.setEnabled(False)
+        if state.y_range is not None:
+            self.ymin_entry.setText(str(state.y_range[0]))
+            self.ymax_entry.setText(str(state.y_range[1]))
+        self.layout.addWidget(QLabel("Auto scale y-axis:"), 1, 0)
+        self.layout.addWidget(self.y_scale, 1, 1)
         self.layout.addWidget(QLabel("Min y-axis"), 2, 0)
-        self.layout.addWidget(self.axis_min_entry, 2, 1)
+        self.layout.addWidget(self.ymin_entry, 2, 1)
         self.layout.addWidget(QLabel("Max y-axis"), 3, 0)
-        self.layout.addWidget(self.axis_max_entry, 3, 1)
+        self.layout.addWidget(self.ymax_entry, 3, 1)
+
+        # X-Axis section (only show on non-live plots)
+        self.layout_index = 4 # Next index for rows in the layout
+        if not live:
+            self.x_scale = QCheckBox()
+            self.x_scale.pressed.connect(self.changeXScale)
+            self.x_scale.setChecked(state.auto_x)
+            self.xmin_entry = QDateTimeEdit()
+            self.xmax_entry = QDateTimeEdit()
+            if state.auto_x:
+                self.xmin_entry.setEnabled(False)
+                self.xmax_entry.setEnabled(False)
+            if state.x_range is not None:
+                self.xmin_entry.setDateTime(state.x_range[0])
+                self.xmax_entry.setDateTime(state.x_range[1])
+            self.layout.addWidget(QLabel("Auto scale x-axis:"), 4, 0)
+            self.layout.addWidget(self.x_scale, 4, 1)
+            self.layout.addWidget(QLabel("Min x-axis"), 5, 0)
+            self.layout.addWidget(self.xmin_entry, 5, 1)
+            self.layout.addWidget(QLabel("Max x-axis"), 6, 0)
+            self.layout.addWidget(self.xmax_entry, 6, 1)
+            self.layout_index = 7
 
         # Data input sections
         add_button = NERButton("Add Data Input", NERButton.Styles.GRAY)
         add_button.setToolTip("Add an input to specify data")
         add_button.pressed.connect(self.add)
-        self.layout.addWidget(add_button, 4, 0, 1, -1)
+        self.layout.addWidget(add_button, self.layout_index, 0, 1, -1)
+        self.layout_index += 1
 
-        self.next_index = 0
         for data in state.data:
             combo_box = QComboBox()
             combo_box.addItems(self._data_list)
             combo_box.setCurrentText(self.dataToText(data))
             self.data_entry.append(combo_box)
 
-            label = QLabel("Data " + str(self.next_index + 1) + ":")
-
             remove_button = NERImageButton(
                 NERImageButton.Icons.TRASH, NERButton.Styles.RED)
             remove_button.pressed.connect(
                 partial(
                     self.remove,
-                    label=label,
                     entry=combo_box,
                     button=remove_button))
+            self.layout.addWidget(combo_box, self.layout_index, 0, 1, 2)
+            self.layout.addWidget(remove_button, self.layout_index, 2)
 
-            self.layout.addWidget(label, self.next_index + 5, 0)
-            self.layout.addWidget(combo_box, self.next_index + 5, 1)
-            self.layout.addWidget(remove_button, self.next_index + 5, 2)
-
-            self.next_index += 1
+            self.layout_index += 1
 
         buttonBox = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
@@ -165,12 +186,15 @@ class EditDialog(QDialog):
         main_layout.addWidget(buttonBox)
         self.setLayout(main_layout)
 
-    def changeAutoScale(self):
-        auto_scale = self.auto_scale.isChecked()
-        self.axis_min_entry.clear()
-        self.axis_min_entry.setEnabled(auto_scale)
-        self.axis_max_entry.clear()
-        self.axis_max_entry.setEnabled(auto_scale)
+    def changeYScale(self):
+        use_yscale = self.y_scale.isChecked()
+        self.ymin_entry.setEnabled(use_yscale)
+        self.ymax_entry.setEnabled(use_yscale)
+
+    def changeXScale(self):
+        auto_xscale = self.x_scale.isChecked()
+        self.xmin_entry.setEnabled(auto_xscale)
+        self.xmax_entry.setEnabled(auto_xscale)
 
     def dataToText(self, data: int) -> str:
         """
@@ -221,19 +245,28 @@ class EditDialog(QDialog):
                         self, "Input Error", "Each data value should have matching units")
                     return
 
-        y_min = None
-        y_max = None
-        if not self.auto_scale.isChecked():
+        auto_y = self.y_scale.isChecked()
+        y_range = None
+        if not auto_y:
             try:
-                y_min = int(self.axis_min_entry.text())
-                y_max = int(self.axis_max_entry.text())
+                y_range = [float(self.ymin_entry.text()), float(self.ymax_entry.text())]
             except ValueError:
                 QMessageBox.critical(
                     self, "Input Error", "Invalid y-axis arguments")
                 return
+        
+        auto_x = self.x_scale.isChecked()
+        x_range = None
+        if not auto_x:
+            try:
+                x_range = [self.xmin_entry.dateTime().toPyDateTime(), self.xmax_entry.dateTime().toPyDateTime()]
+            except ValueError:
+                QMessageBox.critical(
+                    self, "Input Error", "Invalid x-axis arguments")
+                return
 
         format = Format[self.format_entry.currentText()]
-        state = GraphState(data, format, y_min, y_max)
+        state = GraphState(data, format, auto_y, auto_x, y_range, x_range)
         self.callback(state)
         self.accept()
 
@@ -249,26 +282,20 @@ class EditDialog(QDialog):
         combo_box.addItems(self._data_list)
         self.data_entry.append(combo_box)
 
-        label = QLabel("Data " + str(self.next_index + 1) + ":")
-
         remove_button = NERImageButton(
             NERImageButton.Icons.TRASH,
             NERButton.Styles.RED)
         remove_button.pressed.connect(
             partial(
                 self.remove,
-                label=label,
                 entry=combo_box,
                 button=remove_button))
+        self.layout.addWidget(combo_box, self.layout_index, 0, 1, 2)
+        self.layout.addWidget(remove_button, self.layout_index, 2)
 
-        self.layout.addWidget(label, self.next_index + 5, 0)
-        self.layout.addWidget(combo_box, self.next_index + 5, 1)
-        self.layout.addWidget(remove_button, self.next_index + 5, 2)
+        self.layout_index += 1
 
-        self.next_index += 1
-
-    def remove(self, label: QLabel, entry: QComboBox, button: NERImageButton):
-        label.close()
+    def remove(self, entry: QComboBox, button: NERImageButton):
         self.data_entry.remove(entry)
         entry.close()
         button.close()
@@ -316,7 +343,8 @@ class GraphWidget(QWidget):
                 self,
                 self.reset,
                 self.model,
-                self.state).exec())
+                self.state,
+                dynamic).exec())
         config_button.setToolTip("Edit the configuration of this graph")
         toolbar.addLeft(config_button)
         reset_button = NERImageButton(
@@ -377,8 +405,6 @@ class GraphWidget(QWidget):
             self.state = GraphState(format=self.format)
         else:
             self.state = new_state
-        self.range_x = None
-        self.range_y = None
 
         # Remove existing axes and data series
         self.chart.removeAllSeries()
@@ -400,10 +426,11 @@ class GraphWidget(QWidget):
             self.axis_y.setTitleText("Data")
         self.chart.addAxis(self.axis_y, Qt.AlignmentFlag.AlignLeft)
 
-        # Set y-axis if user specified
-        if self.state.y_min is not None:
-            self.range_y = [self.state.y_min, self.state.y_max]
-            self.axis_y.setRange(self.range_y[0], self.range_y[1])
+        # Set axes if user specified
+        if not self.state.auto_y:
+            self.axis_y.setRange(self.state.y_range[0], self.state.y_range[1])
+        if not self.state.auto_x:
+            self.axis_x.setRange(self.state.x_range[0], self.state.x_range[1])
 
         # Add data if provided
         for data in self.state.data:
@@ -472,23 +499,24 @@ class GraphWidget(QWidget):
             ymin = ymin - .001
             ymax = ymax + .001
 
-        if self.range_x is None:
-            self.range_x = [xmin, xmax]
-        else:
-            self.range_x[0] = xmin
-            self.range_x[1] = xmax
-
-        if self.state.y_min is None:  # only dynamically update y-axis if user did not hard code values
-            if self.range_y is None:
-                self.range_y = [ymin, ymax]
+        if self.state.auto_x:  # only dynamically update x-axis if user did not hard code values
+            if self.state.x_range is None:
+                self.state.x_range = [xmin, xmax]
             else:
-                if ymin < self.range_y[0]:
-                    self.range_y[0] = ymin
-                if ymax > self.range_y[1]:
-                    self.range_y[1] = ymax
+                self.state.x_range[0] = xmin
+                self.state.x_range[1] = xmax
 
-        self.axis_x.setRange(self.range_x[0], self.range_x[1])
-        self.axis_y.setRange(self.range_y[0], self.range_y[1])
+        if self.state.auto_y:  # only dynamically update y-axis if user did not hard code values
+            if self.state.y_range is None:
+                self.state.y_range = [ymin, ymax]
+            else:
+                if ymin < self.state.y_range[0]:
+                    self.state.y_range[0] = ymin
+                if ymax > self.state.y_range[1]:
+                    self.state.y_range[1] = ymax
+
+        self.axis_x.setRange(self.state.x_range[0], self.state.x_range[1])
+        self.axis_y.setRange(self.state.y_range[0], self.state.y_range[1])
 
     def remove(self):
         """
