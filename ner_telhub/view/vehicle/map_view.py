@@ -11,7 +11,9 @@ from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebChannel import QWebChannel
 
 from ner_telhub.model.data_models import DataModelManager
-from ner_telhub.widgets.styled_widgets import NERButton
+from start import root_dir
+
+resources = os.path.join(root_dir, 'resources')
 
 MAP_SELECT_1 = "map_google.html"
 MAP_SELECT_2 = 'map_car_perspective.html'
@@ -143,7 +145,7 @@ class MapView(QWidget):
         """
         Load the first map.
         """
-        map_path = os.path.join(os.path.dirname(__file__), MAP_SELECT_1)
+        map_path = os.path.join(resources, MAP_SELECT_1)
         with open(map_path, 'r', encoding='utf-8') as map_file:
             html = map_file.read()
             self.map_view.setHtml(html, QUrl("qrc:/"))
@@ -159,7 +161,7 @@ class MapView(QWidget):
         """
         Load the second map.
         """
-        map_path = os.path.join(os.path.dirname(__file__), MAP_SELECT_2)
+        map_path = os.path.join(resources, MAP_SELECT_2)
         with open(map_path, 'r', encoding='utf-8') as map_file:
             html = map_file.read()
             self.perspective_view.setHtml(html, QUrl("qrc:/"))

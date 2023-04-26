@@ -7,11 +7,13 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QIcon, QPixmap, QFont, QFontDatabase
 
+from start import root_dir
+
+resources = os.path.join(root_dir, 'resources')
+
 from ner_telhub.view.database.window import DatabaseWindow
 from ner_telhub.view.sd_card.window import SdCardWindow
 from ner_telhub.view.vehicle.window import VehicleWindow
-
-resources = os.path.dirname(__file__) + "/../resources"
 
 try:
     from ctypes import windll  # Only exists on Windows.

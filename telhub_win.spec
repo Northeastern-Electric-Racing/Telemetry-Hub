@@ -6,7 +6,7 @@ block_cipher = None
 
 a = Analysis(
     ['start.py'],
-    pathex=[],
+    pathex=['/ner_processing'],
     binaries=[],
     datas=[('resources', 'resources')],
     hiddenimports=[],
