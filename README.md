@@ -51,11 +51,13 @@ To avoid the overhead of the GUI on large files, the ner_processing library can 
 2. Start using the command `python -m ner_processing`. The output file will be written to `output.csv` in the project root
 
 ## Deployment
-In order to generate an executable, follow the below steps:
-- Windows:
-    - To build with the provided spec file, run: `pyinstaller telhub.spec`
-    - To generate a spec file from scratch, run: `pyinstaller start.py --windowed --name=telhub --icon=resources/ner_logo.ico --add-data="resources;resources"`
-    - The generated executable can then be found in `dist/telhub`
+In order to generate an executable, we are using [pyinstaller](https://pyinstaller.org/en/stable/usage.html#building-macos-app-bundles). 
+Follow these steps to generate the executable file:
+1. Build with the provided spec file depending on your OS by running `pyinstaller telhub_[platform].spec` (win for windows, mac for mac)
+2. A folder located at `dist/telhub/` is generated. This is what's needed to run the app. To run, execute the `telhub.exe` executable in this folder
 
-- Mac:
-    - Not supported yet
+In order to install the app on a specific OS, follow directions [here](https://www.pythonguis.com/tutorials/packaging-pyqt6-applications-windows-pyinstaller/).
+
+We shouldn't have to regenerate the spec files, but if needed, the following commands generated them:
+- Windows: `pyinstaller -n "telhub" --add-data "resources/*;./resources" -i "resources/ner_logo.ico" -p "ner_processing" start.py`
+- Mac: `pyinstaller -n "telhub" -w --add-data "resources/*:./resources" -i "resources/ner_logo.icns" -p "ner_processing" start.py`
