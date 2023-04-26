@@ -1,6 +1,6 @@
 from typing import Any
 
-from data import Data
+from .data import Data
 
 
 # Mapping from data IDs to the status bits they encode
