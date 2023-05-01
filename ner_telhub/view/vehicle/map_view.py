@@ -1,3 +1,9 @@
+"""
+Note: Removed most of the functionality of this view for the time being. 
+Must do further debugging into using an external web page for map visualization.
+"""
+
+
 import os
 import json
 from datetime import datetime
@@ -7,8 +13,8 @@ from PyQt6.QtWidgets import (
     QLabel, QVBoxLayout, QWidget, QHBoxLayout, QSizePolicy, QFrame, QTabWidget
 )
 from PyQt6.QtCore import QUrl, QTimer, Qt
-from PyQt6.QtWebEngineWidgets import QWebEngineView
-from PyQt6.QtWebChannel import QWebChannel
+# from PyQt6.QtWebEngineWidgets import QWebEngineView
+# from PyQt6.QtWebChannel import QWebChannel
 
 from ner_telhub.model.data_models import DataModelManager
 from start import root_dir
@@ -84,23 +90,23 @@ class MapView(QWidget):
         self.telemetry_frame.setFrameShadow(QFrame.Shadow.Sunken)
 
         # Initialize map view
-        self.map_view = QWebEngineView()
-        self.map_view.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Expanding)
+        # self.map_view = QWebEngineView()
+        # self.map_view.setSizePolicy(
+        #     QSizePolicy.Policy.Expanding,
+        #     QSizePolicy.Policy.Expanding)
 
-        # Initialize the perspective Google Maps view
-        self.perspective_view = QWebEngineView()
-        self.perspective_view.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Expanding)
+        # # Initialize the perspective Google Maps view
+        # self.perspective_view = QWebEngineView()
+        # self.perspective_view.setSizePolicy(
+        #     QSizePolicy.Policy.Expanding,
+        #     QSizePolicy.Policy.Expanding)
 
         # Create a QTabWidget instance
-        self.map_tabs = QTabWidget()
+        # self.map_tabs = QTabWidget()
 
-        # Add the map views to the tab widget
-        self.map_tabs.addTab(self.map_view, "Line")
-        self.map_tabs.addTab(self.perspective_view, "POV")
+        # # Add the map views to the tab widget
+        # self.map_tabs.addTab(self.map_view, "Line")
+        # self.map_tabs.addTab(self.perspective_view, "POV")
 
         # Main layout
         layout = QVBoxLayout()
@@ -109,7 +115,7 @@ class MapView(QWidget):
         layout.addWidget(title_label, stretch=0)
         layout.addWidget(telemetry_frame, stretch=0)
         # Use the map_tabs widget instead of map_stack
-        layout.addWidget(self.map_tabs, stretch=1)
+        # layout.addWidget(self.map_tabs, stretch=1)
         layout.addLayout(self.status_layout, stretch=0)
 
         # Initialize default data models
@@ -125,8 +131,8 @@ class MapView(QWidget):
         self.logging_data = 0
 
         # Load in maps
-        self.load_map1()
-        self.load_map2()
+        # self.load_map1()
+        # self.load_map2()
         self.setLayout(layout)
 
         # Start timer
@@ -134,71 +140,71 @@ class MapView(QWidget):
         self.timer.start(UPDATE_TIME_MS)
 
         # Update all data every UPDATE_TIME_MS
-        self.timer.timeout.connect(self.update_map1)
-        self.timer.timeout.connect(self.update_map2)
+        # self.timer.timeout.connect(self.update_map1)
+        # self.timer.timeout.connect(self.update_map2)
         if USE_TEST_DATA:
             self.timer.timeout.connect(self.generate_test_data)
         else:
             self.timer.timeout.connect(self.update_models)
 
-    def load_map1(self):
-        """
-        Load the first map.
-        """
-        map_path = os.path.join(resources, MAP_SELECT_1)
-        with open(map_path, 'r', encoding='utf-8') as map_file:
-            html = map_file.read()
-            self.map_view.setHtml(html, QUrl("qrc:/"))
-            page = self.map_view.page()
-            channel = QWebChannel(page)
-            page.setWebChannel(channel)
+    # def load_map1(self):
+    #     """
+    #     Load the first map.
+    #     """
+    #     map_path = os.path.join(resources, MAP_SELECT_1)
+    #     with open(map_path, 'r', encoding='utf-8') as map_file:
+    #         html = map_file.read()
+    #         self.map_view.setHtml(html, QUrl("qrc:/"))
+    #         page = self.map_view.page()
+    #         channel = QWebChannel(page)
+    #         page.setWebChannel(channel)
 
-            # init map
-            self.map_view.loadFinished.connect(
-                lambda: page.runJavaScript("initMap();"))
+    #         # init map
+    #         self.map_view.loadFinished.connect(
+    #             lambda: page.runJavaScript("initMap();"))
 
-    def load_map2(self):
-        """
-        Load the second map.
-        """
-        map_path = os.path.join(resources, MAP_SELECT_2)
-        with open(map_path, 'r', encoding='utf-8') as map_file:
-            html = map_file.read()
-            self.perspective_view.setHtml(html, QUrl("qrc:/"))
-            page = self.perspective_view.page()
-            channel = QWebChannel(page)
-            page.setWebChannel(channel)
+    # def load_map2(self):
+    #     """
+    #     Load the second map.
+    #     """
+    #     map_path = os.path.join(resources, MAP_SELECT_2)
+    #     with open(map_path, 'r', encoding='utf-8') as map_file:
+    #         html = map_file.read()
+    #         self.perspective_view.setHtml(html, QUrl("qrc:/"))
+    #         page = self.perspective_view.page()
+    #         channel = QWebChannel(page)
+    #         page.setWebChannel(channel)
 
-            lat_data_json = json.dumps(self.lat_data, cls=DateTimeEncoder)
-            lon_data_json = json.dumps(self.lon_data, cls=DateTimeEncoder)
-            heading_data_json = json.dumps(self.heading_data)
+    #         lat_data_json = json.dumps(self.lat_data, cls=DateTimeEncoder)
+    #         lon_data_json = json.dumps(self.lon_data, cls=DateTimeEncoder)
+    #         heading_data_json = json.dumps(self.heading_data)
 
-            # init map
-            self.perspective_view.loadFinished.connect(
-                lambda: page.runJavaScript(
-                    "initMap();",
-                    lambda _: page.runJavaScript(f"loadPath({lat_data_json}, {lon_data_json}, {heading_data_json});")))
+    #         # init map
+    #         self.perspective_view.loadFinished.connect(
+    #             lambda: page.runJavaScript(
+    #                 "initMap();",
+    #                 lambda _: page.runJavaScript(f"loadPath({lat_data_json}, {lon_data_json}, {heading_data_json});")))
 
-    def update_map1(self):
-        # Check if we need to update
-        if not self.gpsfix_data or self.needupdate == len(self.lat_data):
-            return
-        # Convert lat_data and lon_data to JSON
-        lat_data_json = json.dumps(self.lat_data, cls=DateTimeEncoder)
-        lon_data_json = json.dumps(self.lon_data, cls=DateTimeEncoder)
-        self.map_view.page().runJavaScript(
-            f"loadPath({lat_data_json}, {lon_data_json});")
+    # def update_map1(self):
+    #     # Check if we need to update
+    #     if not self.gpsfix_data or self.needupdate == len(self.lat_data):
+    #         return
+    #     # Convert lat_data and lon_data to JSON
+    #     lat_data_json = json.dumps(self.lat_data, cls=DateTimeEncoder)
+    #     lon_data_json = json.dumps(self.lon_data, cls=DateTimeEncoder)
+    #     self.map_view.page().runJavaScript(
+    #         f"loadPath({lat_data_json}, {lon_data_json});")
 
-    def update_map2(self):
-        # Check if we need to update
-        if not self.gpsfix_data or self.needupdate == len(self.lat_data):
-            return
-        # Convert lat_data and lon_data and heading data to JSON
-        lat_data_json = json.dumps(self.lat_data, cls=DateTimeEncoder)
-        lon_data_json = json.dumps(self.lon_data, cls=DateTimeEncoder)
-        heading_data_json = json.dumps(self.heading_data)
-        self.perspective_view.page().runJavaScript(
-            f"loadPath({lat_data_json}, {lon_data_json}, {heading_data_json});")
+    # def update_map2(self):
+    #     # Check if we need to update
+    #     if not self.gpsfix_data or self.needupdate == len(self.lat_data):
+    #         return
+    #     # Convert lat_data and lon_data and heading data to JSON
+    #     lat_data_json = json.dumps(self.lat_data, cls=DateTimeEncoder)
+    #     lon_data_json = json.dumps(self.lon_data, cls=DateTimeEncoder)
+    #     heading_data_json = json.dumps(self.heading_data)
+    #     self.perspective_view.page().runJavaScript(
+    #         f"loadPath({lat_data_json}, {lon_data_json}, {heading_data_json});")
 
     def update_models(self):
         """
