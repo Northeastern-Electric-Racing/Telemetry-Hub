@@ -4,13 +4,17 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pyqt6 = "*"
-pyqt6-charts = "*"
 numpy = "*"
 websockets = "*"
 boto3 = "*"
 python-dotenv = "*"
 darkdetect = "*"
+pyqt6-webengine = "<=6.4.0"
+pyqt6 = "<=6.4.2"
+pyqt6-charts = "<=6.4.0"
+pyqt6-qt6 = "<=6.4.3"
+pyqt6-webengine-qt6 = "<=6.4.3"
+pyqt6-charts-qt6 = "<=6.4.3"
 
 [dev-packages]
 pyinstaller = "*"
