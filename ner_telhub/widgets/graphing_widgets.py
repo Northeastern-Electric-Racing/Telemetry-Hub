@@ -97,6 +97,7 @@ class EditDialog(QDialog):
         self._data_list = [
             "None", *[self.dataToText(d) for d in model.getAvailableIds()]]
         self._format_list = [f.name for f in Format]
+        self.live = live
 
         self.setWindowTitle("Edit Graph")
 
@@ -255,15 +256,19 @@ class EditDialog(QDialog):
                     self, "Input Error", "Invalid y-axis arguments")
                 return
         
-        auto_x = self.x_scale.isChecked()
-        x_range = None
-        if not auto_x:
-            try:
-                x_range = [self.xmin_entry.dateTime().toPyDateTime(), self.xmax_entry.dateTime().toPyDateTime()]
-            except ValueError:
-                QMessageBox.critical(
-                    self, "Input Error", "Invalid x-axis arguments")
-                return
+        if not self.live:
+            auto_x = self.x_scale.isChecked()
+            x_range = None
+            if not auto_x:
+                try:
+                    x_range = [self.xmin_entry.dateTime().toPyDateTime(), self.xmax_entry.dateTime().toPyDateTime()]
+                except ValueError:
+                    QMessageBox.critical(
+                        self, "Input Error", "Invalid x-axis arguments")
+                    return
+        else:
+            auto_x = True
+            x_range = None
 
         format = Format[self.format_entry.currentText()]
         state = GraphState(data, format, auto_y, auto_x, y_range, x_range)
