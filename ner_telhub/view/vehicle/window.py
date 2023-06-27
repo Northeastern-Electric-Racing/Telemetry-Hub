@@ -2,14 +2,15 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QTabWidget, QVBoxLayout)
 from PyQt6.QtCore import QSize
 from ner_telhub.model.data_models import DataModelManager
-from ner_telhub.model.message_models import MessageModel
+from ner_telhub.model.message_model import MessageModel
 from ner_telhub.model.filter_models import ReceiveFilterModel
 from ner_telhub.view.vehicle.can_view.can_view import CanView
 from ner_telhub.view.vehicle.data_view.data_view import DataView
 from ner_telhub.view.vehicle.fault_view.fault_view import FaultView
 from ner_telhub.view.vehicle.live_toolbar import LiveToolbar
 from ner_telhub.view.vehicle.map_view.map_view import MapView
-from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
+from ner_telhub.widgets.menu_widgets.data_ids import DataIds
+from ner_telhub.widgets.menu_widgets.message_ids import MessageIds
 
 
 class VehicleWindow(QMainWindow):

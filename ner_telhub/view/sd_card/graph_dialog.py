@@ -4,7 +4,8 @@ from PyQt6.QtWidgets import (
 from ner_telhub import colors
 from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.widgets.graphing_widgets.graph_dashboard_widget import GraphDashboardWidget
-from ner_telhub.widgets.styled_widgets.styled_widgets import NERButton, NERToolbar
+from ner_telhub.widgets.styled_widgets.ner_button import NERButton
+from ner_telhub.widgets.styled_widgets.ner_toolbar import NERToolbar
 
 class GraphDialog(QDialog):
     """Shows a dashboard for data in the system."""

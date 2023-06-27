@@ -5,7 +5,8 @@ from PyQt6.QtWidgets import (
 from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.widgets.graphing_widgets.format import Format
 from ner_telhub.widgets.graphing_widgets.graph_state import GraphState
-from ner_telhub.widgets.styled_widgets.styled_widgets import NERButton, NERImageButton
+from ner_telhub.widgets.styled_widgets.ner_button import NERButton
+from ner_telhub.widgets.styled_widgets.ner_image_button import NERImageButton
 
 class EditDialog(QDialog):
     """

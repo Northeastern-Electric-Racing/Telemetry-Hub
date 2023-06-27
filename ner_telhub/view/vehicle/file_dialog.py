@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import (
       QDialog, QDialogButtonBox, QWidget, QComboBox, QLabel, QLineEdit, QGridLayout, QMessageBox, QFileDialog
 )
 from ner_telhub.model.data_models import DataModelManager
-from ner_telhub.widgets.styled_widgets.styled_widgets import NERButton
+from ner_telhub.widgets.styled_widgets.ner_button import NERButton
 
 class FileDialog(QDialog):
     """Dialog to export data to a CSV file."""

@@ -1,9 +1,9 @@
-from tkinter import filedialog
 from ner_telhub.model.file_models import FileModel
-from ner_telhub.widgets.styled_widgets.styled_widgets import NERButton
 from PyQt6.QtWidgets import (
-      QWidget, QVBoxLayout, QLabel, QListView)
+      QWidget, QVBoxLayout, QLabel, QListView, QFileDialog)
 from PyQt6.QtCore import Qt
+
+from ner_telhub.widgets.styled_widgets.ner_button import NERButton
 
 class FileView(QWidget):
     """View section with file information and control."""
@@ -36,7 +36,7 @@ class FileView(QWidget):
         self.setLayout(layout)
 
     def add_files(self):
-        filepaths = filedialog().getOpenFileNames()[0]
+        filepaths = QFileDialog().getOpenFileNames()[0]
         for fp in filepaths:
             self.file_model.addFile(fp)
 

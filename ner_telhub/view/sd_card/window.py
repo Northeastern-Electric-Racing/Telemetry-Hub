@@ -10,8 +10,11 @@ from ner_processing.decode_files import LogFormat
 from ner_telhub.view.sd_card.file_view import FileView
 from ner_telhub.view.sd_card.options_view import OptionsView
 from ner_telhub.view.sd_card.process_view import ProcessView
-from ner_telhub.widgets.menu_widgets import MessageIds, DataIds
 from PyQt6.QtCore import QSize
+from ner_telhub.widgets.menu_widgets.data_ids import DataIds
+
+from ner_telhub.widgets.menu_widgets.message_ids import MessageIds
+
 
 class SdCardWindow(QMainWindow):
     """Main window in for the SD Card connection."""

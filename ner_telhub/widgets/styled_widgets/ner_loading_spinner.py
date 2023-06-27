@@ -2,7 +2,7 @@ import os
 from PyQt6.QtWidgets import QLabel
 from PyQt6.QtGui import QMovie
 
-resources = os.path.dirname(__file__) + "/../../resources"
+resources = os.path.dirname(__file__) + "../../../../resources"
 
 class NERLoadingSpinner(QLabel):
     """

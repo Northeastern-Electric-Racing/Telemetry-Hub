@@ -5,7 +5,9 @@ from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.view.sd_card.database_dialog import DatabaseDialog
 from ner_telhub.view.sd_card.export_dialog import ExportDialog
 from ner_telhub.view.sd_card.graph_dialog import GraphDialog
-from ner_telhub.widgets.styled_widgets.styled_widgets import NERButton, NERInfoButton, NERLoadingSpinner
+from ner_telhub.widgets.styled_widgets.ner_button import NERButton
+from ner_telhub.widgets.styled_widgets.ner_info_button import NERInfoButton
+from ner_telhub.widgets.styled_widgets.ner_loading_spinner import NERLoadingSpinner
 from PyQt6.QtCore import Qt
 
 class OptionsView(QWidget):

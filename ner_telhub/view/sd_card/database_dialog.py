@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import (
 )
 from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.utils.timestream import TimestreamIngestionService
-from ner_telhub.widgets.styled_widgets.styled_widgets import NERLoadingSpinner
+from ner_telhub.widgets.styled_widgets.ner_loading_spinner import NERLoadingSpinner
 
 class DatabaseDialog(QDialog):
     """Dialog to export data to a the database."""

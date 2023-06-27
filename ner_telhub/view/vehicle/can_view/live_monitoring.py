@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QTimer
 from ner_live.utils import getConnection
 from ner_telhub.model.data_models import DataModelManager
-from ner_telhub.model.message_models import MessageModel
+from ner_telhub.model.message_model import MessageModel
 
 class LiveMonitoring(QWidget):
     """

@@ -3,7 +3,8 @@ from PyQt6.QtWidgets import (
       QMessageBox, QFileDialog
 )
 from ner_telhub.model.data_models import DataModelManager
-from ner_telhub.widgets.styled_widgets.styled_widgets import NERButton, NERLoadingSpinner
+from ner_telhub.widgets.styled_widgets.ner_button import NERButton
+from ner_telhub.widgets.styled_widgets.ner_loading_spinner import NERLoadingSpinner
 
 class ExportDialog(QDialog):
     """Dialog to export data to a CSV file."""

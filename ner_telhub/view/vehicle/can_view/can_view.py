@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 from ner_telhub.model.filter_models import ReceiveFilterModel
 from ner_telhub.model.data_models import DataModelManager
-from ner_telhub.model.message_models import MessageModel
+from ner_telhub.model.message_model import MessageModel
 from ner_telhub.view.vehicle.can_view.live_monitoring import LiveMonitoring
 from ner_telhub.view.vehicle.can_view.message_feed import MessageFeed
 from ner_telhub.view.vehicle.can_view.receive_filters import ReceiveFilters

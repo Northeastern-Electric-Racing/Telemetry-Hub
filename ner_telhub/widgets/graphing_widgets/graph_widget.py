@@ -10,9 +10,10 @@ from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.widgets.graphing_widgets.data_table import DataTable
 from ner_telhub.widgets.graphing_widgets.edit_dialog import EditDialog
 from ner_telhub.widgets.graphing_widgets.format import Format
-from ner_telhub.widgets.graphing_widgets.graph_dashboard_widget import GraphDashboardWidget
 from ner_telhub.widgets.graphing_widgets.graph_state import GraphState
-from ner_telhub.widgets.styled_widgets.styled_widgets import NERButton, NERImageButton, NERToolbar
+from ner_telhub.widgets.styled_widgets.ner_button import NERButton
+from ner_telhub.widgets.styled_widgets.ner_image_button import NERImageButton
+from ner_telhub.widgets.styled_widgets.ner_toolbar import NERToolbar
 from ner_telhub import colors
 
 class GraphWidget(QWidget):
@@ -22,7 +23,7 @@ class GraphWidget(QWidget):
 
     def __init__(
             self,
-            parent: GraphDashboardWidget,
+            parent: QWidget,
             model: DataModelManager,
             dynamic=False,
             format=Format.LINE):

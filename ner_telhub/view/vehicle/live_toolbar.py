@@ -3,10 +3,11 @@ from ner_live.live_input import InputType, LiveInputException
 from ner_live.utils import createConnection, deleteConnection, getConnection
 from ner_telhub import colors
 from ner_telhub.model.data_models import DataModelManager
-from ner_telhub.model.message_models import MessageModel
+from ner_telhub.model.message_model import MessageModel
 from ner_telhub.view.vehicle.connection_dialog import ConnectionDialog
 from ner_telhub.view.vehicle.file_dialog import FileDialog
-from ner_telhub.widgets.styled_widgets.styled_widgets import NERButton, NERToolbar
+from ner_telhub.widgets.styled_widgets.ner_button import NERButton
+from ner_telhub.widgets.styled_widgets.ner_toolbar import NERToolbar
 
 class LiveToolbar(NERToolbar):
     def __init__(

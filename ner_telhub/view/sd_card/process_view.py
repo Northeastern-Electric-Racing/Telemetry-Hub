@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import (
 from ner_telhub.model.data_models import DataModelManager
 
 from ner_telhub.model.file_models import FileModel
-from ner_telhub.widgets.styled_widgets.styled_widgets import NERButton
+from ner_telhub.widgets.styled_widgets.ner_button import NERButton
 from PyQt6.QtCore import Qt
 
 class ProcessView(QWidget):

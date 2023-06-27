@@ -2,9 +2,9 @@ from PyQt6.QtWidgets import (QComboBox, QGridLayout, QHBoxLayout, QLabel,
                                QLineEdit, QListView, QMessageBox, QVBoxLayout,   
                                  QWidget)
 from PyQt6.QtCore import Qt
+from ner_processing.master_mapping import MESSAGE_IDS
 from ner_telhub.model.filter_models import ReceiveFilterModel
-from ner_telhub.widgets.styled_widgets.styled_widgets import NERButton
-from ner_telhub.model.message_models import MESSAGE_IDS
+from ner_telhub.widgets.styled_widgets.ner_button import NERButton
 
 class ReceiveFilters(QWidget):
     """

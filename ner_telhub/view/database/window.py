@@ -5,8 +5,9 @@ from PyQt6.QtCore import QSize
 from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.view.database.query_toolbar import QueryToolbar
 from ner_telhub.widgets.graphing_widgets.graph_dashboard_widget import GraphDashboardWidget
-from ner_telhub.widgets.menu_widgets import DataIds
 from ner_telhub.utils.timestream import TimestreamQueryService
+from ner_telhub.widgets.menu_widgets.data_ids import DataIds
+
 
 
 class DatabaseWindow(QMainWindow):

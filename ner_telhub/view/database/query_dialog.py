@@ -4,8 +4,8 @@ from PyQt6.QtWidgets import (
 from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.utils.timestream import TimestreamQueryService
 from ner_telhub.utils.timestream_constants import DATE_TIME_FORMAT
-from ner_telhub.widgets.menu_widgets import DataIds
-from ner_telhub.widgets.styled_widgets.styled_widgets import NERButton
+from ner_telhub.widgets.menu_widgets.data_ids import DataIds
+from ner_telhub.widgets.styled_widgets.ner_button import NERButton
 
 
 class QueryDialog(QDialog):

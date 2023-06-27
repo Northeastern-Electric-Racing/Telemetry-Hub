@@ -1,9 +1,9 @@
-from tkinter import messagebox
 from ner_telhub.widgets.graphing_widgets.format import Format
 from ner_telhub.widgets.graphing_widgets.graph_dashboard import GraphDashboard
 from ner_telhub.widgets.graphing_widgets.graph_state import GraphState
 from ner_telhub.widgets.graphing_widgets.graph_widget import GraphWidget
-from ner_telhub.widgets.styled_widgets.styled_widgets import NERButton, NERToolbar
+from ner_telhub.widgets.styled_widgets.ner_button import NERButton
+from ner_telhub.widgets.styled_widgets.ner_toolbar import NERToolbar
 from ner_telhub.model.data_models import DataModelManager
 from PyQt6.QtWidgets import (
       QSplitter,
@@ -120,7 +120,7 @@ class GraphDashboardWidget(GraphDashboard):
         """
 
         if len(self.graphs1) + len(self.graphs2) + len(self.graphs3) == 1:
-            messagebox.critical(
+            QMessageBox.critical(
                 self,
                 "Graph Error",
                 "Must have at least 1 graph on the dashboard")

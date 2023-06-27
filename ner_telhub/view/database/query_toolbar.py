@@ -2,9 +2,11 @@ from ner_telhub import colors
 from ner_telhub.model.data_models import DataModelManager
 from ner_telhub.utils.timestream import TimestreamQueryService
 from ner_telhub.view.database.query_dialog import QueryDialog
-from ner_telhub.widgets.styled_widgets.styled_widgets import NERButton, NERToolbar
 from PyQt6.QtWidgets import (
       QWidget, QProgressBar, QLabel, QComboBox, QMessageBox)
+
+from ner_telhub.widgets.styled_widgets.ner_button import NERButton
+from ner_telhub.widgets.styled_widgets.ner_toolbar import NERToolbar
 
 class QueryToolbar(NERToolbar):
     def __init__(self,

@@ -4,7 +4,7 @@ import os
 from ner_telhub.widgets.styled_widgets.ner_button import NERButton
 from PyQt6.QtGui import QIcon
 
-resources = os.path.dirname(__file__) + "/../../resources"
+resources = os.path.dirname(__file__) + "../../../../resources"
 
 
 class NERImageButton(NERButton):
