@@ -3,7 +3,6 @@ from datetime import datetime
 import numpy as np
 import sys
 from typing import List, Any, Tuple
-
 from PyQt6.QtCore import (
     QAbstractTableModel, Qt,
     QReadWriteLock, QModelIndex,
@@ -11,7 +10,6 @@ from PyQt6.QtCore import (
     pyqtBoundSignal, pyqtSignal,
     QObject
 )
-
 from ner_processing.data import Data
 from ner_processing.decode_statuses import getStatus, getStatuses
 from ner_processing.master_mapping import DATA_IDS
