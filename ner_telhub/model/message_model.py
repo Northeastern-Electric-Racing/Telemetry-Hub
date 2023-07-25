@@ -1,11 +1,9 @@
 from typing import Any, List, Tuple, Dict
-
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import (
     QAbstractListModel, Qt,
     QModelIndex, QDateTime
 )
-
 from ner_processing.data import Data
 from ner_processing.message import Message
 from ner_telhub.model.data_models import DataModelManager

@@ -1,12 +1,10 @@
 from typing import List, Any, Tuple
-
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import (
     QAbstractListModel, Qt,
     QModelIndex
 )
-
-from ner_telhub.model.message_models import MessageModel
+from ner_telhub.model.message_model import MessageModel
 
 
 class ReceiveFilterModel(QAbstractListModel):

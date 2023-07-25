@@ -1,10 +1,8 @@
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout
 )
-
 from ner_telhub.model.data_models import DataModelManager
-from ner_telhub.widgets.graphing_widgets import GraphDashboardWidget
-
+from ner_telhub.widgets.graphing_widgets.graph_dashboard_widget import GraphDashboardWidget
 
 class DataView(QWidget):
     """

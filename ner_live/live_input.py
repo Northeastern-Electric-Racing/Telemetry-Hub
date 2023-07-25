@@ -4,7 +4,7 @@ from enum import Enum
 from PyQt6.QtSerialPort import QSerialPortInfo
 
 from ner_processing.message import Message
-from ner_telhub.model.message_models import MessageModel
+from ner_telhub.model.message_model import MessageModel
 
 
 class LiveInputException(Exception):

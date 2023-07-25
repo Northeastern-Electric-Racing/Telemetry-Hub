@@ -1,5 +1,4 @@
 from PyQt6.QtCore import QDateTime
-
 from ner_processing.data import Data
 from ner_telhub.utils.timestream_constants import DATE_TIME_FORMAT
 

@@ -4,7 +4,7 @@ from PyQt6.QtCore import QIODeviceBase
 
 from ner_processing.message import Message, MessageFormatException
 from ner_live.live_input import LiveInput, LiveInputException, InputState
-from ner_telhub.model.message_models import MessageModel
+from ner_telhub.model.message_model import MessageModel
 
 
 class XBee(LiveInput):

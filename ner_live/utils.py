@@ -1,7 +1,7 @@
 from ner_live.candapter import Candapter
 from ner_live.live_input import LiveInput, InputType
 from ner_live.xbee import XBee
-from ner_telhub.model.message_models import MessageModel
+from ner_telhub.model.message_model import MessageModel
 
 
 def createConnection(

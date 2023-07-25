@@ -11,6 +11,7 @@ from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebChannel import QWebChannel
 
 from ner_telhub.model.data_models import DataModelManager
+from ner_telhub.view.vehicle.map_view.date_time_encoder import DateTimeEncoder
 from start import root_dir
 
 resources = os.path.join(root_dir, 'resources')
@@ -19,13 +20,6 @@ MAP_SELECT_1 = "map_google.html"
 MAP_SELECT_2 = 'map_car_perspective.html'
 USE_TEST_DATA = 0  # Automatically generates model data in generate_test_data function
 UPDATE_TIME_MS = 250
-
-
-class DateTimeEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, datetime):
-            return obj.isoformat()
-        return super(DateTimeEncoder, self).default(obj)
 
 
 class MapView(QWidget):
